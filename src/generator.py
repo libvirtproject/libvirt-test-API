@@ -30,6 +30,13 @@ from testcasexml import xml_file_to_str
 import env_parser
 import env_inspect
 import format
+from utils import virtlab
+
+# for virtlab
+if virtlab.isvirtlab():
+    VirtLabFlag = True
+else:
+    VirtLabFlag = False
 
 
 class FuncGen(object):
@@ -174,7 +181,11 @@ class FuncGen(object):
                     retflag[2] += 1
 
                 self.fmt.print_end(mod_case, ret, env_logger)
-                case_retlist.append(ret)
+
+                # for virtlab
+                if VirtLabFlag:
+                    virtlab.result_log(mod_case_func, case_params, ret, case_start_time, case_end_time)
+
         # close hypervisor connection
         envck.close_hypervisor_connection()
         end_time = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -184,6 +195,11 @@ class FuncGen(object):
                         (casenumber, retflag[0], retflag[1], retflag[2]))
 
         result = (retflag[1] and "FAIL") or "PASS"
+
+        # for virtlab
+        if VirtLabFlag:
+            virtlab.create_virtlab_log(self.testrunid)
+
         fcntl.lockf(self.lockfile.fileno(), fcntl.LOCK_EX)
         self.log_xml_parser.add_test_summary(self.testrunid,
                                              self.testid,
