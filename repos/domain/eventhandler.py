@@ -21,26 +21,27 @@ optional_params = {}
 
 
 def eventToString(event):
-    eventStrings = ("Defined",
-                    "Undefined",
-                    "Started",
-                    "Suspended",
-                    "Resumed",
-                    "Stopped",
-                    "Shutdown")
-    return eventStrings[event]
-
+    eventStrings = ( "Defined",
+                     "Undefined",
+                     "Started",
+                     "Suspended",
+                     "Resumed",
+                     "Stopped",
+                     "Shutdown",
+                     "PMSuspended" );
+    return eventStrings[event];
 
 def detailToString(event, detail):
     eventStrings = (
-        ("Added", "Updated"),
-        ("Removed", ),
-        ("Booted", "Migrated", "Restored", "Snapshot"),
-        ("Paused", "Migrated", "IOError", "Watchdog"),
-        ("Unpaused", "Migrated"),
-        ("Shutdown", "Destroyed", "Crashed", "Migrated", "Saved", "Failed", "Snapshot"),
-        ("Finished", )
-    )
+        ( "Added", "Updated" ),
+        ( "Removed", ),
+        ( "Booted", "Migrated", "Restored", "Snapshot", "Wakeup" ),
+        ( "Paused", "Migrated", "IOError", "Watchdog", "Restored", "Snapshot" ),
+        ( "Unpaused", "Migrated", "Snapshot" ),
+        ( "Shutdown", "Destroyed", "Crashed", "Migrated", "Saved", "Failed", "Snapshot"),
+        ( "Finished", ),
+        ( "Memory", )
+        )
     return eventStrings[event][detail]
 
 
@@ -121,9 +122,8 @@ def shutdown_event(domobj, guestname, timeout, logger):
         if STATE == "Stopped":
             logger.info("The event is Stopped, PASS")
             break
-        elif STATE is not None:
-            logger.error("The event is %s, FAIL", STATE)
-            break
+        elif STATE != None:
+            logger.debug("The event is %s", STATE)
         else:
             timeout -= 5
             time.sleep(5)
@@ -152,9 +152,8 @@ def bootup_event(domobj, guestname, timeout, logger):
         if STATE == "Started":
             logger.info("The event is Started, PASS")
             break
-        elif STATE is not None:
-            logger.error("The event is %s, FAIL", STATE)
-            break
+        elif STATE != None:
+            logger.error("The event is %s", STATE)
         else:
             timeout -= 5
             time.sleep(5)
@@ -183,9 +182,8 @@ def suspend_event(domobj, guestname, timeout, logger):
         if STATE == "Suspended":
             logger.info("The event is Suspended, PASS")
             break
-        elif STATE is not None:
-            logger.error("The event is %s, FAIL", STATE)
-            break
+        elif STATE != None:
+            logger.error("The event is %s", STATE)
         else:
             timeout -= 5
             time.sleep(5)
@@ -214,9 +212,8 @@ def resume_event(domobj, guestname, timeout, logger):
         if STATE == "Resumed":
             logger.info("The event is Resumed, PASS")
             break
-        elif STATE is not None:
-            logger.error("The event is %s, FAIL", STATE)
-            break
+        elif STATE != None:
+            logger.debug("The event is %s", STATE)
         else:
             timeout -= 5
             time.sleep(5)
@@ -238,7 +235,7 @@ def eventhandler(params):
 
     loop_start()
 
-    conn = sharedmod.libvirtobj['conn']
+    conn = libvirt.open(None)
 
     if check_domain_running(conn, guestname, logger):
         return 1
