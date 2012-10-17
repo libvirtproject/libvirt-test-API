@@ -438,7 +438,7 @@ def detailToString(event, detail):
         ( "Shutdown", "Destroyed", "Crashed", "Migrated", "Saved", "Failed",
           "Snapshot"),
         ( "Finished", ),
-        ( "Memory", )
+        ( "Memory", "Disk" )
         )
     return eventStrings[event][detail]
 
