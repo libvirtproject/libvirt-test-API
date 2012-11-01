@@ -1,0 +1,6 @@
+<disk type='file' device='floppy'>
+  <driver name='qemu' type='raw'/>
+  <source file='FLOPPYPATH'/>
+  <target dev='fda' bus='fdc'/>
+</disk>
+
