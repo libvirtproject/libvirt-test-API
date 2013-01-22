@@ -94,7 +94,7 @@ def check_device_in_guest(devtype, guestip, username, password, logger):
     if devtype == 'cdrom':
         cmd = "mount -o loop /dev/cdrom /media"
     elif devtype == 'floppy':
-        cmd = "mount /dev/fd0 /media"
+        cmd = "modprobe floppy && mount -t msdos /dev/fd0 /media"
     else:
         logger.error("it's not a cdrom or floppy device.")
         return False, None
