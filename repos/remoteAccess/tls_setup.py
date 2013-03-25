@@ -7,6 +7,7 @@ import pexpect
 import string
 import commands
 import shutil
+import time
 
 import libvirt
 from libvirt import libvirtError
@@ -304,6 +305,7 @@ def tls_libvirtd_set(target_machine, username, password,
         logger.error("failed to restart libvirtd service")
         return 1
 
+    time.sleep(3)
     logger.info("done to libvirtd configuration")
     return 0
 
