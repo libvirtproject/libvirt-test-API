@@ -122,6 +122,8 @@ def get_hypervisor_version(ver=''):
             ver = commands.getoutput("rpm -q kvm")
         elif 'el6' in kernel_ver:
             ver = commands.getoutput("rpm -q qemu-kvm")
+        elif 'el7' in kernel_ver:
+            ver = commands.getoutput("rpm -q qemu-kvm")
         else:
             print "Unsupported kernel type!"
             sys.exit(1)
