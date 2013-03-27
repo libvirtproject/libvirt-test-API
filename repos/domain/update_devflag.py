@@ -196,6 +196,7 @@ def update_devflag(params):
     xmlpath = homepath + '/repos/domain/' + devxml
     f = open(xmlpath, 'r')
     devxml = f.read()
+    f.close()
     devxmlstr = devxml.replace(change, srcpath)
 
     if not create_image(devtype, srcpath, logger):
