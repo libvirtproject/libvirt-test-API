@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import commands
+import time
 from pwd import getpwnam
 
 import libvirt
@@ -63,6 +64,7 @@ def libvirt_configure(unix_sock_group, auth_unix_ro, auth_unix_rw, logger):
         logger.error("failed to restart libvirtd service")
         return 1
 
+    time.sleep(3)
     logger.info("done to libvirtd configuration")
     return 0
 
@@ -217,5 +219,6 @@ def unix_perm_sasl_clean(params):
 
     cmd = "service libvirtd restart"
     utils.exec_cmd(cmd, shell=True)
+    time.sleep(3)
 
     return 0
