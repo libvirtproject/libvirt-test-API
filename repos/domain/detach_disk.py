@@ -12,13 +12,12 @@ from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 
-required_params = ('guestname',
-                   'imageformat',
-                   'hddriver',)
-optional_params = {'diskpath': '/var/lib/libvirt/images/attacheddisk',
-                   'xml': 'xmls/disk.xml',
-                   }
-
+required_params = ('guestname','hddriver')
+optional_params = {'imageformat': 'raw',
+                   'diskpath' : '/var/lib/libvirt/images',
+                   'volume' : 'attacheddisk',
+                   'xml' : 'xmls/disk.xml',
+                  }
 
 def check_detach_disk(num1, num2):
     """Check detach disk result via simple disk number
@@ -34,9 +33,15 @@ def detach_disk(params):
     """Detach a disk to domain from xml"""
     logger = params['logger']
     guestname = params['guestname']
-    imageformat = params['imageformat']
     hddriver = params['hddriver']
     xmlstr = params['xml']
+
+    imageformat = params.get('imageformat', 'raw')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images')
+    volume = params.get('volume', 'attacheddisk')
+
+    disk = diskpath + "/" + volume
+    xmlstr = xmlstr.replace('DISK', disk)
 
     conn = sharedmod.libvirtobj['conn']
     domobj = conn.lookupByName(guestname)
@@ -65,7 +70,7 @@ def detach_disk(params):
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
-        logger.error("detach disk from guest %s" % guestname)
+        logger.error("detach %s disk from guest %s" % (imageformat, guestname))
         return 1
 
     return 0
