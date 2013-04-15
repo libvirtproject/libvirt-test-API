@@ -8,10 +8,11 @@ from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 
-required_params = ('guestname', 'hddriver', 'username', \
-                   'password')
+required_params = ('guestname', 'hddriver')
 optional_params = {'imagesize': 1,
                    'imageformat': 'raw',
+                   'username': 'root',
+                   'password': 'redhat',
                    'diskpath' : '/var/lib/libvirt/images',
                    'volume' : 'attacheddisk',
                    'xml' : 'xmls/disk.xml',
@@ -77,8 +78,6 @@ def attach_disk(params):
     global logger
     logger = params['logger']
     guestname = params['guestname']
-    username = params['username']
-    password = params['password']
     hddriver = params['hddriver']
     xmlstr = params['xml']
     imagesize = int(params.get('imagesize', 1))
@@ -125,6 +124,8 @@ def attach_disk(params):
 
         if "readonly" in xmlstr:
         # Check the disk in guest
+            username = params.get('username', 'root')
+            password = params.get('password', 'redhat')
             if check_disk_permission(guestname, devname, username, password):
                 return 0
             else:
