@@ -1,6 +1,6 @@
 <disk device="disk" type="file">
   <driver name="qemu" type="IMAGEFORMAT"/>
-  <source file="DISK"/>
+  <source file="DISKPATH"/>
   <target bus="HDDRIVER" dev="DEV"/>
   <readonly/>
 </disk>

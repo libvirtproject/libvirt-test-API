@@ -13,7 +13,7 @@ optional_params = {'imagesize': 1,
                    'imageformat': 'raw',
                    'username': 'root',
                    'password': 'redhat',
-                   'diskpath' : '/var/lib/libvirt/images',
+                   'volumepath' : '/var/lib/libvirt/images',
                    'volume' : 'attacheddisk',
                    'xml' : 'xmls/disk.xml',
                   }
@@ -82,11 +82,12 @@ def attach_disk(params):
     xmlstr = params['xml']
     imagesize = int(params.get('imagesize', 1))
     imageformat = params.get('imageformat', 'raw')
-    diskpath = params.get('diskpath', '/var/lib/libvirt/images')
+    volumepath = params.get('volumepath', '/var/lib/libvirt/images')
     volume = params.get('volume', 'attacheddisk')
 
-    disk = diskpath + "/" + volume
-    xmlstr = xmlstr.replace('DISK', disk)
+    disk = volumepath + "/" + volume
+    print disk
+    xmlstr = xmlstr.replace('DISKPATH', disk)
 
     conn = sharedmod.libvirtobj['conn']
     # Create image
@@ -125,7 +126,9 @@ def attach_disk(params):
         if "readonly" in xmlstr:
         # Check the disk in guest
             username = params.get('username', 'root')
+            print username
             password = params.get('password', 'redhat')
+            print password
             if check_disk_permission(guestname, devname, username, password):
                 return 0
             else:
@@ -133,7 +136,7 @@ def attach_disk(params):
     except libvirtError, e:
         logger.error("API error message: %s, error code is %s" \
                      % (e.message, e.get_error_code()))
-        logger.error("attach %s disk to guest %s" % (diskpath, guestname))
+        logger.error("attach %s disk to guest %s" % (volumepath, guestname))
         return 1
 
     return 0

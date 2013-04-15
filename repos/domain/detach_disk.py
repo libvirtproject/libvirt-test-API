@@ -14,7 +14,7 @@ from utils import utils
 
 required_params = ('guestname','hddriver')
 optional_params = {'imageformat': 'raw',
-                   'diskpath' : '/var/lib/libvirt/images',
+                   'volumepath' : '/var/lib/libvirt/images',
                    'volume' : 'attacheddisk',
                    'xml' : 'xmls/disk.xml',
                   }
@@ -37,11 +37,11 @@ def detach_disk(params):
     xmlstr = params['xml']
 
     imageformat = params.get('imageformat', 'raw')
-    diskpath = params.get('diskpath', '/var/lib/libvirt/images')
+    volumepath = params.get('diskpath', '/var/lib/libvirt/images')
     volume = params.get('volume', 'attacheddisk')
 
-    disk = diskpath + "/" + volume
-    xmlstr = xmlstr.replace('DISK', disk)
+    diskpath = volumepath + "/" + volume
+    xmlstr = xmlstr.replace('DISKPATH', diskpath)
 
     conn = sharedmod.libvirtobj['conn']
     domobj = conn.lookupByName(guestname)
