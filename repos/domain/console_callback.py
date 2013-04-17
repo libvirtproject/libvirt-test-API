@@ -102,6 +102,13 @@ def check_domain_kernel_line(guestname, username, password, logger):
 
     cmd = "cat /boot/grub/grub.conf"
     ret, output = utils.remote_exec_pexpect(ipaddr, username, password, cmd)
+    if ret:
+        return 1
+
+    if "WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!" in output:
+        logger.error("failed to login to guest for ssh key changed")
+        return 1
+
     logger.debug("guest boot grub conf is:\n%s" % output)
     out = re.split('\n', output)
     for i in range(len(out)):
