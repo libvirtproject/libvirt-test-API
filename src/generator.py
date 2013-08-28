@@ -186,6 +186,7 @@ class FuncGen(object):
                 if VirtLabFlag:
                     virtlab.result_log(mod_case_func, case_params, ret, case_start_time, case_end_time)
 
+                case_retlist.append(ret)
         # close hypervisor connection
         envck.close_hypervisor_connection()
         end_time = time.strftime("%Y-%m-%d %H:%M:%S")

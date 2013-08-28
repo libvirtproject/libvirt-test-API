@@ -140,7 +140,7 @@ class LogGenerator(object):
                             itemresult = self.doc.createElement('case')
                             caseresulttext = self.doc.createTextNode(retstr)
                             itemresult.appendChild(caseresulttext)
-                            caseresult.childNodes.insert(0, itemresult)
+                            caseresult.childNodes.insert(0,itemresult)
 
         self. __write_to_file(xmldoc, self.logxml)
 
