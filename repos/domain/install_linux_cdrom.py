@@ -41,8 +41,7 @@ VM_UNDEFINE = "virsh undefine %s"
 
 HOME_PATH = os.getcwd()
 
-
-def prepare_cdrom(ostree, ks, guestname, cache_folder, logger):
+def prepare_cdrom(ostree, ks, guestname, guestos, cache_folder, logger):
     """ to customize boot.iso file to add kickstart
         file into it for automatic guest installation
     """
@@ -72,7 +71,7 @@ def prepare_cdrom(ostree, ks, guestname, cache_folder, logger):
 
     logger.debug("enter folder: %s" % new_dir)
     os.chdir(new_dir)
-    shell_cmd = 'sh ksiso.sh %s' % ks_name
+    shell_cmd = 'sh ksiso.sh %s %s' % (ks_name, guestos)
 
     logger.info("running command %s to making the custom.iso file" % shell_cmd)
     (status, text) = commands.getstatusoutput(shell_cmd)
@@ -213,7 +212,7 @@ def install_linux_cdrom(params):
     cache_folder = envparser.get_value("variables", "domain_cache_folder")
 
     logger.info("begin to customize the custom.iso file")
-    prepare_cdrom(ostree, ks, guestname, cache_folder, logger)
+    prepare_cdrom(ostree, ks, guestname, guestos, cache_folder, logger)
 
     bootcd = '%s/custom.iso' % \
         (os.path.join(cache_folder, guestname))

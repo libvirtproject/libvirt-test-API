@@ -8,6 +8,7 @@ custom_iso="custom.iso"
 boot_iso_dir="/mnt/boot_iso_dir"
 custom_iso_dir="/mnt/new"
 kscfg=$1
+guestos=$2
 
 
 echo "- clean out any stale custom iso"
@@ -42,9 +43,18 @@ else
        echo "- edit isolinux.cfg and add kickstart entry"
        WORKING_ISO="${custom_iso_dir}/isolinux/isolinux.cfg"
 
-       echo "label custom_ks
-         kernel vmlinuz $kernel_args
-         append initrd=initrd.img ks=cdrom:/$kscfg ramdisk_size=20000">>  $WORKING_ISO
+       #use different isolinux.cfg for rhel7 ,rhel6 and rhel5 guest
+       if [[ "$guestos" =~ "rhel7" ]]; then
+		echo "label custom_ks
+                       kernel vmlinuz $kernel_args
+                       append initrd=initrd.img ks=cdrom:sr0:/$kscfg repo=cdrom:sr0 ramdisk_size=20000">>  $WORKING_ISO
+
+       else
+		echo "label custom_ks
+                       kernel vmlinuz $kernel_args
+                       append initrd=initrd.img ks=cdrom:/$kscfg ramdisk_size=20000 " >> $WORKING_ISO
+       fi
+
 
        # change default boot target and timeout
        DEFAULT_LINE=`cat $WORKING_ISO | grep default | head -1`
