@@ -13,13 +13,15 @@ from libvirt import libvirtError
 from src import sharedmod
 
 required_params = ('poolname', 'volname', 'volformat', 'capacity',)
-optional_params = {'xml' : 'xmls/dir_volume.xml', 'verformat': 'basic',
+optional_params = {'xml' : 'xmls/dir_volume.xml',
                   }
 
 def get_pool_path(poolobj):
     """ get pool xml description """
     poolxml = poolobj.XMLDesc(0)
+
     logger.debug("the xml description of pool is %s" % poolxml)
+
     doc = minidom.parseString(poolxml)
     path_element = doc.getElementsByTagName('path')[0]
     textnode = path_element.childNodes[0]
@@ -46,11 +48,10 @@ def create_dir_volume(params):
     volformat = params['volformat']
     capacity = params['capacity']
     xmlstr = params['xml']
-    verformat = params.get('verformat', 'basic')
 
-    logger.info("the poolname is %s, volname is %s, volfomat is %s, \
-    verformat is %s, capacity is %s" % \
-                (poolname, volname, volformat, verformat, capacity))
+    logger.info("the poolname is %s, volname is %s, \
+                 volfomat is %s, capacity is %s" % \
+                (poolname, volname, volformat, capacity))
 
     conn = sharedmod.libvirtobj['conn']
     storage_pool_list = conn.listStoragePools()
@@ -60,36 +61,23 @@ def create_dir_volume(params):
         return 1
 
     poolobj = conn.storagePoolLookupByName(poolname)
+
     path_value = get_pool_path(poolobj)
+
     volume_path = path_value + "/" + volname
-    
+
     xmlstr = xmlstr.replace('VOLPATH', volume_path)
     xmlstr = xmlstr.replace('SUFFIX', capacity[-1])
-    xmlstr = xmlstr.replace('CAP', capacity[:-1])  
-    # verformat includes "v3","v3_lazy_refcounts" 
-    if verformat.startswith('v3'):
-        xmlstr_qcow2 = minidom.parseString(xmlstr)
-        target = xmlstr_qcow2.getElementsByTagName("target")
-        compat = xmlstr_qcow2.createElement("compat")
-        compat_text = xmlstr_qcow2.createTextNode("1.1")
-        compat.appendChild(compat_text)
-        target[0].appendChild(compat)
-        xmlstr = xmlstr_qcow2.toxml()
- 
-        if verformat.endswith('lazy_refcounts'):
-            features = xmlstr_qcow2.createElement("features")
-            lazy_refcounts = xmlstr_qcow2.createElement("lazy_refcounts")
-            features.appendChild(lazy_refcounts)
-            target[0].appendChild(features)
-            xmlstr = xmlstr_qcow2.toxml()
-        
-    logger.debug("volume xml:\n%s" % xmlstr)
+    xmlstr = xmlstr.replace('CAP', capacity[:-1])
+
     logger.info("before create the new volume, current volume list is %s" % \
                  poolobj.listVolumes())
 
     logger.info("and using virsh command to ouput \
                  the volume information in the pool %s" % poolname)
     virsh_vol_list(poolname)
+
+    logger.debug("volume xml:\n%s" % xmlstr)
 
     try:
         logger.info("create %s volume" % volname)
