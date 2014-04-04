@@ -18,12 +18,13 @@ from utils import utils
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
-    'memory': 1048576,
-    'vcpu': 1,
-    'disksize': 10,
-    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
-    'imageformat': 'raw',
-                   'hddriver': 'virtio',
+                   'memory': 1048576,
+                   'vcpu': 1,
+                   'disksize' : 10,
+                   'diskpath' : '/var/lib/libvirt/images/libvirt-test-api',
+                   'imageformat' : 'raw',
+                   'qcow2version': 'v3',
+                   'hddriver' : 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
                    'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
@@ -167,13 +168,19 @@ def install_linux_cdrom(params):
     logger.info("disk image is %s" % diskpath)
     seeksize = params.get('disksize', 10)
     imageformat = params.get('imageformat', 'raw')
-    logger.info(
-        "create disk image with size %sG, format %s" %
-        (seeksize, imageformat))
-    disk_create = "qemu-img create -f %s %s %sG" % \
-        (imageformat, diskpath, seeksize)
-    logger.debug("the command line of creating disk images is '%s'" %
-                 disk_create)
+    qcow2version = params.get('qcow2version', 'v3')
+    logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
+    # qcow2version includes "v3","v3_lazy_refcounts"
+    if qcow2version.startswith('v3'):
+        qcow2_options = "-o compat=1.1" 
+        if qcow2version.endswith('lazy_refcounts'):
+            qcow2_options = qcow2_options + " -o lazy_refcounts=on"
+        else:
+            qcow2_options = ""
+    disk_create = "qemu-img create -f %s %s %s %sG" % \
+                    (imageformat, qcow2_options, diskpath, seeksize)
+    logger.debug("the command line of creating disk images is '%s'" % \
+                   disk_create)
 
     (status, message) = commands.getstatusoutput(disk_create)
     if status != 0:

@@ -11,6 +11,7 @@ from utils import utils
 required_params = ('guestname', 'hddriver')
 optional_params = {'imagesize': 1,
                    'imageformat': 'raw',
+                   'qcow2version': 'basic',
                    'username': 'root',
                    'password': 'redhat',
                    'volumepath' : '/var/lib/libvirt/images',
@@ -18,11 +19,17 @@ optional_params = {'imagesize': 1,
                    'xml' : 'xmls/disk.xml',
                   }
 
-def create_image(disk, xmlstr, seeksize, imageformat):
+def create_image(disk, xmlstr, seeksize, imageformat, qcow2version):
     """Create a image file"""
-
-    disk_create = "qemu-img create -f %s %s %sG" % \
-                    (imageformat, disk, seeksize)
+    if qcow2version.startswith('v3'):
+        qcow2_options = "-o compat=1.1"
+        if qcow2version.endswith('lazy_refcounts'):
+            qcow2_options = qcow2_options + " -o lazy_refcounts=on"
+    else:
+        qcow2_options = ""  
+    
+    disk_create = "qemu-img create -f %s %s %s %sG" % \
+                    (imageformat, qcow2_options, disk, seeksize)
     logger.debug("the command line of creating disk images is '%s'" % \
                    disk_create)
     (status, message) = commands.getstatusoutput(disk_create)
@@ -82,16 +89,16 @@ def attach_disk(params):
     xmlstr = params['xml']
     imagesize = int(params.get('imagesize', 1))
     imageformat = params.get('imageformat', 'raw')
+    qcow2version = params.get('qcow2version', 'v3')
     volumepath = params.get('volumepath', '/var/lib/libvirt/images')
     volume = params.get('volume', 'attacheddisk')
 
     disk = volumepath + "/" + volume
-    print disk
     xmlstr = xmlstr.replace('DISKPATH', disk)
 
     conn = sharedmod.libvirtobj['conn']
-    # Create image
-    if create_image(disk, xmlstr, imagesize, imageformat):
+    # Create image, qcow2version includes 'v3', 'v3_lazy_refcounts' 
+    if create_image(disk, xmlstr, imagesize, imageformat, qcow2version):
         logger.error("fail to create a image file")
         return 1
 
