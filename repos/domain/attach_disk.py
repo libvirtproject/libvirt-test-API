@@ -21,13 +21,13 @@ optional_params = {'imagesize': 1,
 
 def create_image(disk, xmlstr, seeksize, imageformat, qcow2version):
     """Create a image file"""
-    if qcow2version.startswith('v3'):
+
+    if imageformat == 'raw':
+        qcow2_options = ""  
+    elif qcow2version.startswith('v3'):
         qcow2_options = "-o compat=1.1"
         if qcow2version.endswith('lazy_refcounts'):
             qcow2_options = qcow2_options + " -o lazy_refcounts=on"
-    else:
-        qcow2_options = ""  
-    
     disk_create = "qemu-img create -f %s %s %s %sG" % \
                     (imageformat, qcow2_options, disk, seeksize)
     logger.debug("the command line of creating disk images is '%s'" % \
