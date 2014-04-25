@@ -24,7 +24,7 @@ table td{
 .list{
 	border-top:1px solid #666;
 	border-right:1px solid #666;
-	width:90%;
+	width:100%;
 	margin-left:auto;
 	margin-right:auto;
 }
@@ -38,7 +38,8 @@ table td{
 .list tbody td{
 	border-bottom:1px solid #666;
 	border-left:1px solid #666;
-	padding-left:5px;
+	padding-left:2px;
+    padding-bottom:0px;
 }
 
 .list .pass{
@@ -65,7 +66,7 @@ table td{
 }
 
 .pro tr td{
-	border:0px;
+    border-left: 0px;
 }
 
 .pro span{
@@ -75,7 +76,8 @@ table td{
 }
 
 .li-tit{
-	width:250px;
+	width:320px;
+    padding: 8px;
 }
 
 .statu-list{
@@ -85,6 +87,10 @@ table td{
 	margin-right:auto;
 	background:#f1f1f1;
 	border:1px solid #666;
+}
+
+.result-td{
+    width:5%;
 }
 
 .statu-list th{

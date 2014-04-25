@@ -130,17 +130,17 @@ class LogGenerator(object):
                         test.childNodes.insert(0, testendtime)
                         test.childNodes.insert(0, teststarttime)
                         test.childNodes.insert(0, testresult)
-                        test.childNodes.insert(0, caseresult)
-                        for ret in reversed(case_retlist):
+                        test_cases = test.getElementsByTagName('test_procedure')
+                        for i in range(len(test_cases)):
                             retstr = ''
-                            if ret == 0:
+                            if case_retlist[i] == 0:
                                 retstr = 'PASS'
                             else:
-                                retstr = 'FAIL'
-                            itemresult = self.doc.createElement('case')
+                                retstr = 'FAIL' 
+                            itemresult = self.doc.createElement('result')
                             caseresulttext = self.doc.createTextNode(retstr)
                             itemresult.appendChild(caseresulttext)
-                            caseresult.childNodes.insert(0,itemresult)
+                            test_cases[i].appendChild(itemresult)
 
         self. __write_to_file(xmldoc, self.logxml)
 

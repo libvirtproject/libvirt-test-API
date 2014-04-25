@@ -122,7 +122,7 @@
               <th width="10%">Start</th>
               <th width="10%">End</th>
               <th width="65%">Test Procedure</th>
-              <th width="5%">Case Result</th>
+             <!-- <th width="5%">Case Result</th>-->
             </tr>
           </thead>
           <tbody>
@@ -146,7 +146,7 @@
                 <td><xsl:value-of select="start_time"/></td>
                 <td><xsl:value-of select="end_time"/></td>
                 <td>
-                  <table class="pro" cellspacing="1" cellspan="0" >
+                  <table class="pro" cellspacing="0" cellspan="0" >
                     <xsl:for-each select="test_procedure">
                       <tr>
                         <td class="li-tit">
@@ -161,24 +161,18 @@
                             </span>
                           </xsl:for-each>
                         </td>
+                        <td class="result-td">
+                        <xsl:for-each select="result">
+                           <xsl:if test="self::node()[text()='FAIL']">
+                             <tr class="fail"><xsl:value-of select="current()"/></tr>
+                           </xsl:if>
+                           <xsl:if test="self::node()[text()='PASS']">
+                             <tr class="pass"><xsl:value-of select="current()"/></tr>
+                           </xsl:if>
+                        </xsl:for-each>
+                        </td>
                       </tr>
                     </xsl:for-each>
-                  </table>
-                </td>
-                <td>
-                  <table class="pro" cellspacing="1" cellspan="0" >
-                     <xsl:for-each select="caseresult/case">
-                        <tr>
-                          <td>
-                            <xsl:if test="self::node()[text()='FAIL']">
-                               <tr class="fail"><xsl:value-of select="current()"/></tr>
-                            </xsl:if>
-                            <xsl:if test="self::node()[text()='PASS']">
-                               <tr class="pass"><xsl:value-of select="current()"/></tr>
-                            </xsl:if>
-                          </td>
-                        </tr>
-                     </xsl:for-each>
                   </table>
                 </td>
               </tr>
