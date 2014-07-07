@@ -26,6 +26,7 @@ def get_nwfilterlist_dir():
             nwfilter_list_api_dir.append(output[i][:-4])
         logger.info("Get nwfilters name list under dir: %s"
                     % nwfilter_list_api_dir)
+        nwfilter_list_api_dir.sort()
         return nwfilter_list_api_dir
 
 
@@ -38,6 +39,7 @@ def nwfilter_list(params):
     try:
         # Get the nwfilter name list from API """
         nwfilter_namelist_api = conn.listNWFilters()
+        nwfilter_namelist_api.sort()
 
         # Get the nwfilter object list
         nwfilter_list_api = conn.listAllNWFilters(0)
