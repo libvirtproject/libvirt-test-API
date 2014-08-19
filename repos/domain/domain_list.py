@@ -2,183 +2,148 @@
 # To test "virsh list" command
 
 import os
-import sys
-import re
-import commands
 
-required_params = ('listopt',)
+import libvirt
+from libvirt import libvirtError
+from src import sharedmod
+
+required_params = ('flags',)
 optional_params = {}
 
 CONFIG_DIR = '/etc/libvirt/qemu'
+AUTOSTART_DIR = '/etc/libvirt/qemu/autostart'
 RUNNING_DIR = '/var/run/libvirt/qemu'
-VIRSH_QUIET_LIST = "virsh --quiet list %s|awk '{print $2}'"
-VIRSH_LIST = "virsh list %s"
+SAVE_DIR = '/var/lib/libvirt/qemu/save'
+SNAPSHOT_DIR = '/var/lib/libvirt/qemu/snapshot/'
+flag_list = {"default": 0,
+         "active": libvirt.VIR_CONNECT_LIST_DOMAINS_ACTIVE,
+         "persistent": libvirt.VIR_CONNECT_LIST_DOMAINS_PERSISTENT,
+         "running": libvirt.VIR_CONNECT_LIST_DOMAINS_RUNNING,
+         "paused": libvirt.VIR_CONNECT_LIST_DOMAINS_PAUSED,
+         "shutoff": libvirt.VIR_CONNECT_LIST_DOMAINS_SHUTOFF,
+         "managedsave": libvirt.VIR_CONNECT_LIST_DOMAINS_MANAGEDSAVE,
+         "autostart": libvirt.VIR_CONNECT_LIST_DOMAINS_AUTOSTART,
+         "snapshot": libvirt.VIR_CONNECT_LIST_DOMAINS_HAS_SNAPSHOT}
 
-
-def get_option_list(params):
-    """return options we need to test
+def get_dir_entires(domain_dir, end_string):
+    """get the domains list from the specified directory
     """
-    logger = params['logger']
-    option_list = []
+    guest_list = []
+    end_length = len(end_string)
+    try:
+        dir_entries = os.listdir(domain_dir)
+    except:
+        dir_entries = []
 
-    value = params['listopt']
-
-    if value == 'all':
-        option_list = [' ', '--all', '--inactive']
-    elif value == '--all' or value == '--inactive':
-        option_list.append(value)
+    if dir_entries == []:
+        guest_list = []
     else:
-        logger.error("value %s is not supported" % value)
-        return 1, option_list
-
-    return 0, option_list
-
-
-def check_all_option(logger):
-    """check the output of virsh list with --all option
-    """
-    entries = os.listdir(CONFIG_DIR)
-    logger.debug("%s in %s" % (entries, CONFIG_DIR))
-    status, ret = commands.getstatusoutput(VIRSH_QUIET_LIST % '--all')
-    if status:
-        logger.error("executing " + "\"" + VIRSH_QUIET_LIST % "--all" + "\""
-                     + " failed")
-        logger.error(ret)
-        return 1
-
-    for entry in entries:
-        if not entry.endswith('.xml'):
-            continue
-        else:
-            guest = entry[:-4]
-            if guest not in ret:
-                logger.error(
-                    "guest %s not in the output of virsh list" %
-                    guest)
-                return 1
-    return 0
-
-
-def check_inactive_option(logger):
-    """check the output of virsh list with --inactive option
-    """
-    entries = os.listdir(CONFIG_DIR)
-    logger.debug("%s in %s" % (entries, CONFIG_DIR))
-
-    running_dir_entries = os.listdir(RUNNING_DIR)
-    logger.debug("%s in %s" % (running_dir_entries, RUNNING_DIR))
-
-    status, ret = commands.getstatusoutput(VIRSH_QUIET_LIST % '--inactive')
-    if status:
-        logger.error(
-            "executing " +
-            "\"" +
-            VIRSH_QUIET_LIST %
-            "--inactive" +
-            "\"" +
-            " failed")
-        logger.error(ret)
-        return 1
-
-    inactive_guest = []
-
-    for entry in entries:
-        if not entry.endswith('.xml'):
-            continue
-        else:
-            if entry in running_dir_entries:
+        for entry in dir_entries:
+            if not entry.endswith(end_string):
                 continue
             else:
-                guest = entry[:-4]
-                inactive_guest.append(guest)
+                guest = entry[:-end_length]
+                guest_list.append(guest)
 
-    inactive_output = ret.split('\n')
-    if inactive_output[0] == '':
-        inactive_output = []
+    return guest_list
 
-    if sorted(inactive_guest) != sorted(inactive_output):
-        logger.error("virsh list --inactive error")
-        return 1
-
-    return 0
-
-
-def check_default_option(logger):
-    """check the output of virsh list"""
-    running_dir_entries = os.listdir(RUNNING_DIR)
-    logger.debug("%s in %s" % (running_dir_entries, RUNNING_DIR))
-    status, ret = commands.getstatusoutput(VIRSH_QUIET_LIST % '')
-    if status:
-        logger.error("executing " + "\"" + VIRSH_QUIET_LIST % " " + "\""
-                     + " failed")
-        logger.error(ret)
-        return 1
-
-    running_guest = []
-    for entry in running_dir_entries:
-        if not entry.endswith('.xml'):
-            continue
-        else:
-            guest = entry[:-4]
-            running_guest.append(guest)
-
-    active_output = ret.split('\n')
-    if active_output[0] == '':
-        active_output = []
-
-    if sorted(running_guest) != sorted(active_output):
-        logger.error("virsh list error")
-        return 1
-
-    return 0
-
-
-def execute_virsh_list(logger, option):
-    """execute virsh list command with appropriate option given
+def check_domain_list(name_list, flag):
+    """check the domains list
     """
-    status, ret = commands.getstatusoutput(VIRSH_LIST % option)
-    if status:
-        logger.error("executing " + "\"" + VIRSH_LIST % option + "\""
-                     + " failed")
-        logger.error(ret)
-        return 1
+    domains_config = get_dir_entires(CONFIG_DIR, ".xml")
+    domains_active = get_dir_entires(RUNNING_DIR, ".xml")
+    domains_autostart = get_dir_entires(AUTOSTART_DIR, ".xml")
+    domains_save = get_dir_entires(SAVE_DIR, ".save")
+    domains_inactive = list(set(domains_config) - set(domains_active))
+    domain_list = []
 
-    logger.info(ret)
+    all_domains = list(set((domains_config + domains_active)))
+
+    if len(domains_active) != conn.numOfDomains():
+        logger.error("check the number of active domains failed")
+        return 1
+    else:
+        logger.info("check the number of active domains succeeded")
+
+    if len(domains_inactive) != conn.numOfDefinedDomains():
+        logger.error("check the number of defined inactive domains failed")
+        return 1
+    else:
+        logger.info("check the number of defined inactive domains succeeded")
+
+    #Check the domain list with default flag
+    if flag_list[flag] == 0:
+        domain_list = all_domains
+    #Check the domains list with active flag
+    elif flag_list[flag] == libvirt.VIR_CONNECT_LIST_DOMAINS_ACTIVE:
+        domain_list = domains_active
+    #Check the domains list with defined flag
+    elif flag_list[flag] == libvirt.VIR_CONNECT_LIST_DOMAINS_PERSISTENT:
+        domain_list = domains_config
+    #Check the domains list with running status
+    elif flag_list[flag] == libvirt.VIR_CONNECT_LIST_DOMAINS_RUNNING:
+        for name in all_domains:
+            guest = conn.lookupByName(name)
+            if guest.info()[0] == libvirt.VIR_DOMAIN_RUNNING:
+                domain_list.append(guest.name())
+    #Check the domains list with paused status
+    elif flag_list[flag] == libvirt.VIR_CONNECT_LIST_DOMAINS_PAUSED:
+        for name in all_domains:
+            guest = conn.lookupByName(name)
+            if guest.info()[0] == libvirt.VIR_DOMAIN_PAUSED:
+                domain_list.append(guest.name())
+    #Check the domains list with shutoff status
+    elif flag_list[flag] == libvirt.VIR_CONNECT_LIST_DOMAINS_SHUTOFF:
+        for name in all_domains:
+            guest = conn.lookupByName(name)
+            if guest.info()[0] == libvirt.VIR_DOMAIN_SHUTOFF:
+                domain_list.append(guest.name())
+    #Check the domains with a managed save image
+    elif flag_list[flag] == libvirt.VIR_CONNECT_LIST_DOMAINS_MANAGEDSAVE:
+        domain_list = domains_save
+    #Check the domains list with autostart flag
+    elif flag_list[flag] == libvirt.VIR_CONNECT_LIST_DOMAINS_AUTOSTART:
+        domain_list = domains_autostart
+    #Check the domains with sanpshot
+    elif flag_list[flag] == libvirt.VIR_CONNECT_LIST_DOMAINS_HAS_SNAPSHOT:
+        for guest in all_domains:
+            if get_dir_entires(SNAPSHOT_DIR + guest, ".xml") == []:
+                continue
+            else:
+                domain_list.append(guest)
+
+    logger.info("check the %s domains list is %s" % (flag, domain_list))
+    if cmp(sorted(domain_list), sorted(name_list)):
+        return 1
+    else:
+        return 0
 
 
 def domain_list(params):
-    """test list command to virsh with default, --all, --inactive
+    """get the domains list by API listAllDomains
     """
+    global conn, logger
+    conn = sharedmod.libvirtobj['conn']
     logger = params['logger']
-    ret, option_list = get_option_list(params)
+    name_list = []
 
-    if ret:
+    flag = params['flags']
+    logger.info("The given flag is %s" % flag)
+
+    try:
+        domain_obj_list = conn.listAllDomains(flag_list[flag])
+        for domain in domain_obj_list:
+            name_list.append(domain.name())
+        logger.info("the domains list is %s" % name_list)
+
+        if check_domain_list(name_list, flag) == 1:
+            logger.error("get the domains list failed")
+            return 1
+        else:
+            logger.info("get the domains list succeeded")
+
+    except libvirtError, e:
+        logger.error("API error message: %s" % e.message)
         return 1
-
-    for option in option_list:
-        if option == ' ':
-            logger.info("check the output of virsh list")
-            if not check_default_option(logger):
-                logger.info("virsh list checking succeeded")
-                execute_virsh_list(logger, option)
-            else:
-                logger.error("virsh list checking failed")
-                return 1
-        elif option == '--inactive':
-            logger.info("check the output of virsh list --inactive")
-            if not check_inactive_option(logger):
-                logger.info("virsh list --inactive checking succeeded")
-                execute_virsh_list(logger, option)
-            else:
-                logger.error("virsh list --inactive checking failed")
-                return 1
-        elif option == '--all':
-            logger.info("check the output of virsh list --all")
-            if not check_all_option(logger):
-                logger.info("virsh list --all checking succeeded")
-                execute_virsh_list(logger, option)
-            else:
-                logger.error("virsh list --all checking failed")
-                return 1
 
     return 0
