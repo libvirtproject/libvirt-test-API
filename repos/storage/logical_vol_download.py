@@ -86,7 +86,7 @@ def logical_vol_download(params):
 
         f = open(test_path, 'w')
         logger.info("start download")
-        st.download(vol, offset, length, 0)
+        vol.download(st, offset, length, 0)
         logger.info("downloaded all data")
         st.recvAll(handler, f)
         logger.info("finished stream")

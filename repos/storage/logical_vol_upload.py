@@ -93,7 +93,7 @@ def logical_vol_upload(params):
 
         f = open(test_path, 'r')
         logger.info("start upload")
-        st.upload(vol, offset, length, 0)
+        vol.upload(st, offset, length, 0)
         logger.info("sent all data")
         st.sendAll(handler, f)
         logger.info("finished stream")
