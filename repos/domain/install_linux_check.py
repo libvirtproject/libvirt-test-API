@@ -121,17 +121,17 @@ def install_linux_check(params):
     # Check whether mem in guest is equal to the value set in domain config xml
     logger.info("check point4: check whether mem in guest is equal to \
                  the value set in domain config xml")
-    mem_expect = utils.get_size_mem(domain_name)
+    mem_expect = int(utils.get_size_mem(domain_name))
     logger.info("current mem size in domain config xml - %s is %s" %
-                (domain_name, mem_expect))
-    mem_actual = utils.get_remote_memory(ipaddr, "root", "redhat")
+                 (domain_name, mem_expect))
+    cmd = "dmidecode -t 17 | awk -F: '/Size/ {print $2}'"
+    out = utils.remote_exec_pexpect(ipaddr, "root", "redhat", cmd)
+    mem_actual = int(out[1].split(" ")[0])*1024
     logger.info("The actual mem size in guest - %s is %s" %
                 (domain_name, mem_actual))
-    diff_range = int(mem_expect) * 0.07
-    diff = int(mem_expect) - int(mem_actual)
-    if int(math.fabs(diff)) < int(diff_range):
-        logger.info("The actual mem size in guest is almost equal to \
-                    the setting your domain config xml")
+    if mem_expect == mem_actual:
+        logger.info("The actual mem size in guest is equal to the\
+                    setting your domain config xml")
     else:
         logger.error("Error: The actual mem size in guest is NOT equal to \
                       the setting your domain config xml")
