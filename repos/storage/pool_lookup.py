@@ -35,7 +35,7 @@ def pool_lookup(params):
             retval += 1
 
         uuid = poolobj.UUID()
-        logger.info("lookup the pool object by UUID: %s" % uuid)
+        #logger.info("lookup the pool object by UUID: %s" % uuid)
         poolobj_uuid = conn.storagePoolLookupByUUID(uuid)
         if poolobj_uuid.name() == poolname:
             logger.info("pool object lookup by UUID succeed")
