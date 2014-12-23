@@ -58,6 +58,9 @@ def detach_disk(params):
     disk_num1 = utils.dev_num(guestname, "disk")
     logger.debug("original disk number: %s" % disk_num1)
 
+    #Sleep time for windows guest
+    time.sleep(180)
+
     try:
         domobj.detachDevice(xmlstr)
         disk_num2 = utils.dev_num(guestname, "disk")
