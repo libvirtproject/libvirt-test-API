@@ -2,8 +2,6 @@
   <name>POOLNAME</name>
   <source/>
   <target>
-    <path>
-      TARGETPATH
-    </path>
+    <path>TARGETPATH</path>
   </target>
 </pool>
