@@ -146,15 +146,17 @@ def vcpu_affinity_check(domain_name, vcpu, expected_pinned_cpu, hypervisor):
                           the running virtual machine process")
             return 1
         if 'el6' or 'el7' in host_kernel_version:
-            cmd_get_task_list = "grep Cpus_allowed_list /proc/%s/task/*/status" % pid
+            cmd_vcpu_task_id = "virsh qemu-monitor-command %s --hmp info cpus|grep '#%s'|cut -d '=' -f3"\
+                                % (domain_name,vcpu)
+            status, output = commands.getstatusoutput(cmd_vcpu_task_id)
+            vcpu_task_id = output[:output.find("^")]
+            logger.debug("vcpu id %s:" % vcpu_task_id)
+            cmd_get_task_list = "grep Cpus_allowed_list /proc/%s/task/%s/status" % (pid , vcpu_task_id)
             status, output = commands.getstatusoutput(cmd_get_task_list)
             logger.debug("the output of command 'grep Cpus_allowed_list \
-                          /proc/%s/task/%s/status' is %s" % (pid, vcpu_task_id, output))
+                          /proc/%s/task/%s/status' is %s" % (pid,vcpu_task_id,output))
             actual_pinned_cpu = int(output.split('\t')[1])
 
-            task_list = output.split('\n')[1:]
-            vcpu_task = task_list[int(vcpu)+2]
-            actual_pinned_cpu = int(vcpu_task.split('\t')[1])
         elif 'el5' in host_kernel_version:
             cmd_get_task_list = "grep Cpus_allowed /proc/%s/task/*/status" % pid
             status, output = commands.getstatusoutput(cmd_get_task_list)
