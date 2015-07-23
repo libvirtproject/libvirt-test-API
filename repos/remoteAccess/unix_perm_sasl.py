@@ -4,7 +4,6 @@ import os
 import re
 import sys
 import commands
-import time
 from pwd import getpwnam
 
 import libvirt
@@ -64,7 +63,6 @@ def libvirt_configure(unix_sock_group, auth_unix_ro, auth_unix_rw, logger):
         logger.error("failed to restart libvirtd service")
         return 1
 
-    time.sleep(3)
     logger.info("done to libvirtd configuration")
     return 0
 
@@ -74,11 +72,27 @@ def group_sasl_set(unix_sock_group, auth_unix_ro, auth_unix_rw, logger):
     logger.info("add unix socket group and sasl authentication if we need")
 
     # add unix socket group
+
     libvirt_group_add = "groupadd %s" % unix_sock_group
-    status, output = get_output(libvirt_group_add, 0, logger)
-    if status:
-        logger.error("failed to add %s group" % unix_sock_group)
-        return 1
+    libvirt_group_del = "groupdel %s" % unix_sock_group
+    group_check = "grep %s /etc/group" % unix_sock_group
+    (status, output) = utils.exec_cmd(group_check, shell=True)
+    # if the group already exists, remove it
+    if len(output):
+	(status, output) = utils.exec_cmd(libvirt_group_del, shell=True)
+        if status:
+            logger.error("Fail to delete %s group" % unix_sock_group)
+            return 1
+
+	(status, output) = utils.exec_cmd(libvirt_group_add, shell=True)
+        if status:
+            logger.error("Fail to add %s group" % unix_sock_group)
+            return 1
+    else:
+        status, output = get_output(libvirt_group_add, 0, logger)
+        if status:
+	    logger.error("failed to add %s group" % unix_sock_group)
+            return 1
 
     # add "testapi" as the testing user
     libvirt_user_add = "useradd -g %s %s" % (unix_sock_group, TESTING_USER)
@@ -189,8 +203,8 @@ def unix_perm_sasl_clean(params):
     auth_unix_ro = params['auth_unix_ro']
     auth_unix_rw = params['auth_unix_rw']
 
-    unix_sock_group = 'libvirt'
-    if 'unix_sock_group' in params:
+    unix_sock_group = 'libvirt-api'
+    if params.has_key('unix_sock_group'):
         unix_sock_group = params['unix_sock_group']
 
     # delete "testapi" user
@@ -219,6 +233,5 @@ def unix_perm_sasl_clean(params):
 
     cmd = "service libvirtd restart"
     utils.exec_cmd(cmd, shell=True)
-    time.sleep(3)
 
     return 0
