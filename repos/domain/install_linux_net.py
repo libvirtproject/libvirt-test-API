@@ -35,7 +35,7 @@ optional_params = {'memory': 1048576,
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
 VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
 VM_DESTROY = "virsh destroy %s"
-VM_UNDEFINE = "virsh undefine %s"
+VM_UNDEFINE = "virsh undefine %s --snapshots-metadata"
 
 BOOT_DIR = "/var/lib/libvirt/boot"
 VMLINUZ = os.path.join(BOOT_DIR, 'vmlinuz')

@@ -38,7 +38,7 @@ optional_params = {
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
 VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
 VM_DESTROY = "virsh destroy %s"
-VM_UNDEFINE = "virsh undefine %s"
+VM_UNDEFINE = "virsh undefine %s --snapshots-metadata"
 
 HOME_PATH = os.getcwd()
 
