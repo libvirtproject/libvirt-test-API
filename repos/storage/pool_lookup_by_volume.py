@@ -1,14 +1,13 @@
 #!/usr/bin/env python
-# test storagePoolLookupByVolume() API for libvirt
+#test storagePoolLookupByVolume() API for libvirt
 
 import os
 import libvirt
 from libvirt import libvirtError
 from src import sharedmod
 
-required_params = ('poolname', 'volname',)
+required_params = ('poolname','volname',)
 optional_params = {}
-
 
 def pool_lookup_by_volume(params):
     """
@@ -37,10 +36,10 @@ def pool_lookup_by_volume(params):
         logger.info("The pool name is %s from API" % (pool_name))
 
         if not pool_name == poolname:
-            return 1
+           return 1
 
-    except libvirtError as e:
-        logger.error("API error message: %s, error code is %s"
+    except libvirtError, e:
+        logger.error("API error message: %s, error code is %s" \
                      % (e.message, e.get_error_code()))
         return 1
 
