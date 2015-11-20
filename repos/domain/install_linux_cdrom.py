@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Install a linux domain from CDROM
-
+# The iso file may be locked by other proces, and cause the failure of installation
 import os
 import sys
 import re
@@ -23,7 +23,6 @@ optional_params = {
                    'disksize' : 10,
                    'diskpath' : '/var/lib/libvirt/images/libvirt-test-api',
                    'imageformat' : 'raw',
-                   'qcow2version': 'v3',
                    'hddriver' : 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
@@ -33,27 +32,32 @@ optional_params = {
                    'guestmachine': 'pc',
                    'networksource': 'default',
                    'bridgename': 'virbr0',
-}
+                   'graphic': "spice",
+                   'disksymbol' : 'sdb'
+                  }
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
 VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
 VM_DESTROY = "virsh destroy %s"
-VM_UNDEFINE = "virsh undefine %s --snapshots-metadata"
+VM_UNDEFINE = "virsh undefine %s"
 
 HOME_PATH = os.getcwd()
 
-def prepare_cdrom(ostree, ks, guestname, guestos, cache_folder, logger):
+def prepare_cdrom(ostree, ks, guestname, cache_folder, logger):
     """ to customize boot.iso file to add kickstart
         file into it for automatic guest installation
     """
     ks_name = os.path.basename(ks)
 
-    new_dir = os.path.join(cache_folder, guestname)
+    new_dir = os.path.join(cache_folder, guestname + "_folder")
     logger.info("creating a workshop folder for customizing custom.iso file")
 
-    if os.path.exists(new_dir):
-        logger.info("the folder exists, remove it")
-        shutil.rmtree(new_dir)
+    if  os.path.exists(new_dir):
+        if os.path.isdir(new_dir):
+            logger.info("the folder exists, remove it")
+            shutil.rmtree(new_dir)
+        else:
+            os.remove(new_dir)
 
     os.makedirs(new_dir)
     logger.info("the directory is %s" % new_dir)
@@ -72,7 +76,7 @@ def prepare_cdrom(ostree, ks, guestname, guestos, cache_folder, logger):
 
     logger.debug("enter folder: %s" % new_dir)
     os.chdir(new_dir)
-    shell_cmd = 'sh ksiso.sh %s %s' % (ks_name, guestos)
+    shell_cmd = 'sh ksiso.sh %s' % ks_name
 
     logger.info("running command %s to making the custom.iso file" % shell_cmd)
     (status, text) = commands.getstatusoutput(shell_cmd)
@@ -162,41 +166,68 @@ def install_linux_cdrom(params):
     logger.info("the macaddress is %s" %
                 params.get('macaddr', '52:54:00:97:e4:28'))
 
-    diskpath = params.get(
-        'diskpath',
-        '/var/lib/libvirt/images/libvirt-test-api')
-    logger.info("disk image is %s" % diskpath)
-    seeksize = params.get('disksize', 10)
-    imageformat = params.get('imageformat', 'raw')
-    qcow2version = params.get('qcow2version', 'v3')
-    logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
-    # qcow2version includes "v3","v3_lazy_refcounts"
-    if qcow2version.startswith('v3'):
-        qcow2_options = "-o compat=1.1" 
-        if qcow2version.endswith('lazy_refcounts'):
-            qcow2_options = qcow2_options + " -o lazy_refcounts=on"
-        else:
-            qcow2_options = ""
-    disk_create = "qemu-img create -f %s %s %s %sG" % \
-                    (imageformat, qcow2_options, diskpath, seeksize)
-    logger.debug("the command line of creating disk images is '%s'" % \
-                   disk_create)
+    hddriver = params.get('hddriver', 'virtio')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    tmpdiskpath = diskpath
+    if not os.path.exists(tmpdiskpath):
+        os.mkdir(tmpdiskpath)
+    if hddriver != "lun" and hddriver != 'scsilun':
+        diskpath = diskpath + '/' + guestname
+        logger.info("disk image is %s" % diskpath)
+        seeksize = params.get('disksize', 10)
+        imageformat = params.get('imageformat', 'raw')
+        logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
+        disk_create = "qemu-img create -f %s %s %sG" % \
+                       (imageformat, diskpath, seeksize)
+        logger.debug("the command line of creating disk images is '%s'" % \
+                       disk_create)
+        (status, message) = commands.getstatusoutput(disk_create)
+        if status != 0:
+            logger.debug(message)
+            logger.info("creating disk images file is fail")
+            return 1
+    xmlstr = xmlstr.replace(tmpdiskpath, diskpath)
 
-    (status, message) = commands.getstatusoutput(disk_create)
-    if status != 0:
-        logger.debug(message)
-        return 1
 
     os.chown(diskpath, 107, 107)
     logger.info("creating disk images file is successful.")
 
-    hddriver = params.get('hddriver', 'virtio')
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
     elif hddriver == 'ide':
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
         xmlstr = xmlstr.replace('DEV', 'sda')
+    elif hddriver == "sata":
+        xmlstr = xmlstr.replace("DEV", 'sda')
+    elif hddriver == 'lun':
+        xmlstr = xmlstr.replace("'lun'","'virtio'")
+        xmlstr = xmlstr.replace('DEV','vda')
+        xmlstr = xmlstr.replace('"file"','"block"')
+        xmlstr = xmlstr.replace('"disk"','"lun"')
+        tmp = params.get('diskpath', '/var/lib/libvirt/images') 
+        xmlstr = xmlstr.replace("file='%s'"% tmp, \
+                                "dev='/dev/SDX'")
+        disksymbol = params.get('disksymbol','sdb')
+        xmlstr = xmlstr.replace('SDX',disksymbol)
+        xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
+    elif hddriver == 'scsilun':
+        xmlstr = xmlstr.replace("'scsilun'","'scsi'")
+        xmlstr = xmlstr.replace('DEV','sda')
+        xmlstr = xmlstr.replace('"file"','"block"')
+        xmlstr = xmlstr.replace('"disk"','"lun"')
+        tmp = params.get('diskpath', '/var/lib/libvirt/images') 
+        xmlstr = xmlstr.replace("file='%s'"% tmp, \
+                                "dev='/dev/SDX'")
+        disksymbol = params.get('disksymbol','sdb')
+        xmlstr = xmlstr.replace('SDX',disksymbol)
+        xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
+
+    graphic = params.get('graphic', 'spice')
+    if graphic == 'spice':
+        xmlstr = xmlstr.replace('vnc', 'spice')
+    logger.info('the graphic type of VM is %s' % graphic)
+
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
@@ -219,12 +250,11 @@ def install_linux_cdrom(params):
     cache_folder = envparser.get_value("variables", "domain_cache_folder")
 
     logger.info("begin to customize the custom.iso file")
-    prepare_cdrom(ostree, ks, guestname, guestos, cache_folder, logger)
+    prepare_cdrom(ostree, ks, guestname, cache_folder, logger)
 
     bootcd = '%s/custom.iso' % \
-        (os.path.join(cache_folder, guestname))
+                       (os.path.join(cache_folder, guestname + "_folder"))
     xmlstr = xmlstr.replace('CUSTOMISO', bootcd)
-
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
 
     installtype = params.get('type', 'define')
@@ -369,9 +399,16 @@ def install_linux_cdrom_clean(params):
                 logger.error("failed to undefine guest %s" % guestname)
                 logger.error("%s" % output)
 
-    if os.path.exists(diskpath):
-        os.remove(diskpath)
+    if os.path.exists(diskpath + '/' + guestname):
+        os.remove(diskpath + '/' + guestname)
+    
+    envfile = os.path.join(HOME_PATH, 'global.cfg')
+    envparser = env_parser.Envparser(envfile)
+    cache_folder = envparser.get_value("variables", "domain_cache_folder")
 
+    if os.path.exists(cache_folder + '/' + guestname + "_folder"):
+        shutil.rmtree(cache_folder + '/' + guestname + "_folder")
+    
     guest_dir = os.path.join(HOME_PATH, guestname)
     if os.path.exists(guest_dir):
         shutil.rmtree(guest_dir)
