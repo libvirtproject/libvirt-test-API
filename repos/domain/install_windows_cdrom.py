@@ -37,8 +37,9 @@ optional_params = {'memory': 1048576,
                    'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
                    'xml': 'xmls/kvm_windows_guest_install_cdrom.xml',
                    'guestmachine': 'pc',
-                   }
-
+                   'driverpath': '/usr/share/virtio-win/virtio-win-1.7.4_amd64.vfd',
+                   'graphic': 'vnc',
+                  }
 
 def cleanup(mount):
     """Clean up a previously used mountpoint.
@@ -58,8 +59,9 @@ def prepare_iso(iso_file):
     # download iso_file into /tmp
     windows_iso = iso_file.split('/')[-1]
     iso_local_path = os.path.join("/tmp", windows_iso)
-    urllib.urlretrieve(iso_file, iso_local_path)
-
+    if not os.path.exists(iso_local_path):
+        cmd = "wget " + iso_file + " -P " + "/tmp"
+        utils.exec_cmd(cmd, shell=True)
     return iso_local_path
 
 
@@ -98,7 +100,8 @@ def prepare_floppy_image(guestname, guestos, guestarch,
                 "failed to mount /tmp/floppy.img to /mnt/libvirt_floppy")
             return 1
 
-        if '2008' in guestos or '7' in guestos or 'vista' in guestos:
+        if '2008' in guestos or '7' in guestos or 'vista' in guestos \
+            or 'win8' in guestos or "win2012" in guestos:
             dest_fname = "autounattend.xml"
             source = os.path.join(windows_unattended_path, "%s_%s.xml" %
                                   (guestos, guestarch))
@@ -122,11 +125,16 @@ def prepare_floppy_image(guestname, guestos, guestarch,
 
         logger.debug("Unattended install %s contents:" % dest_fname)
         logger.debug(unattended_contents)
-
+        
+        driverpath = guestos[0].upper() + guestos[1:]
+        unattended_contents = unattended_contents.replace('PATHOFDRIVER',driverpath)
         open(dest, 'w').write(unattended_contents)
 
     finally:
         umount_cmd = 'umount %s' % floppy_mount
+        r = 'check mounting status'
+        while r != '':
+            (s, r) = commands.getstatusoutput("lsof /mnt/libvirt_floppy|grep mount")
         (status, text) = commands.getstatusoutput(umount_cmd)
         if status:
             logger.error("failed to umount %s" % floppy_mount)
@@ -147,6 +155,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype):
     xmlstr = xmlstr.replace('<boot dev="cdrom"/>', '<boot dev="hd"/>')
     xmlstr = re.sub('<disk device="floppy".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
     xmlstr = re.sub('<disk device="cdrom".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
+    xmlstr = re.sub('<disk type="file".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
 
     if installtype != 'create':
         domobj.undefine()
@@ -219,39 +228,72 @@ def install_windows_cdrom(params):
     logger.info("the macaddress is %s" %
                 params.get('macaddr', '52:54:00:97:e4:28'))
 
-    diskpath = params.get(
-        'diskpath',
-        '/var/lib/libvirt/images/libvirt-test-api')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+
+    if not os.path.exists(diskpath):
+        os.mkdir(diskpath)
+    
+    tmpdiskpath = diskpath
+    diskpath = diskpath + "/" + guestname
+    xmlstr = xmlstr.replace(tmpdiskpath, diskpath)
     logger.info("disk image is %s" % diskpath)
     seeksize = params.get('disksize', 20)
     imageformat = params.get('imageformat', 'raw')
-    logger.info(
-        "create disk image with size %sG, format %s" %
-        (seeksize, imageformat))
+    if  os.path.exists(diskpath):
+        os.remove(diskpath)
+
+    logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
     disk_create = "qemu-img create -f %s %s %sG" % \
         (imageformat, diskpath, seeksize)
     logger.debug("the command line of creating disk images is '%s'" %
                  disk_create)
 
     (status, message) = commands.getstatusoutput(disk_create)
+    status=1
+    message = "fuck"
     if status != 0:
         logger.debug(message)
-        return 1
 
     os.chown(diskpath, 107, 107)
     logger.info("creating disk images file is successful.")
+    
+    # NICDRIVER
+    nicdriver = params.get('nicdriver', 'virtio')
+    if nicdriver == 'virtio' or nicdriver == 'e1000' or nicdriver == 'rtl8139':
+        xmlstr = xmlstr.replace("type='virtio'", "type='%s'" %nicdriver)
+    else:
+        logger.error('the %s is unspported by KVM' % nicdriver)
+        return 1
+    logger.info('the nicdriver is %s' % nicdriver)
 
+    # Hard disk type 
     hddriver = params.get('hddriver', 'virtio')
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
+        driverpath = params.get('driverpath','/usr/share/virtio-win/virtio-win-1.7.4_amd64.vfd')
+        xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win-1.7.4_amd64.vfd', 
+                                 driverpath)
     elif hddriver == 'ide':
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
         xmlstr = xmlstr.replace('DEV', 'sda')
+        driverpath = params.get('driverpath','/usr/share/virtio-win/virtio-win-1.7.4_amd64.vfd')
+        xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win-1.7.4_amd64.vfd', 
+                                 driverpath)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     logger.info("the environment file is %s" % envfile)
+    
+    # Graphic type
+    graphic = params.get('graphic', 'vnc')
+    if graphic != 'vnc' and graphic != 'spice':
+        logger.error("the %s is unspported" %graphic)
+        return 1
+    else:
+        xmlstr = xmlstr.replace('vnc', graphic)
+    logger.info("the graphic of guests is %s" % graphic)
+
 
     # Get iso file based on guest os and arch from global.cfg
     envparser = env_parser.Envparser(envfile)
@@ -275,7 +317,7 @@ def install_windows_cdrom(params):
     xmlstr = xmlstr.replace('FLOPPY', FLOOPY_IMG)
 
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
-
+    
     # Generate guest xml
     installtype = params.get('type', 'define')
     if installtype == 'define':
@@ -384,10 +426,9 @@ def install_windows_cdrom_clean(params):
     logger = params['logger']
     guestname = params.get('guestname')
 
-    diskpath = params.get(
-        'diskpath',
-        '/var/lib/libvirt/images/libvirt-test-api')
-
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    diskpath = diskpath + params['guestname']
+    
     (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
     if not status:
         logger.info("remove guest %s, and its disk image file" % guestname)
