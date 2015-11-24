@@ -1,6 +1,5 @@
 <domain type="kvm">
   <name>GUESTNAME</name>
-  <uuid>UUID</uuid>
   <memory>MEMORY</memory>
   <vcpu>VCPU</vcpu>
   <os>
@@ -22,14 +21,19 @@
       <source file='DISKPATH'/>
       <target bus='HDDRIVER' dev='DEV'/>
     </disk>
-    <disk device="floppy" type="file">
-      <source file='FLOPPY'/>
-      <target bus="fdc" dev="fda"/>
-      <readonly/>
-    </disk>
     <disk device="cdrom" type="file">
       <source file='WINDOWSISO'/>
       <target bus="ide" dev="hdc"/>
+      <readonly/>
+    </disk>
+    <disk type="file" device='floppy'>
+      <driver name='qemu' type='raw'/>
+      <source file='DRIVERPATH'/>
+      <target dev='fda' bus='fdc'/>
+    </disk>
+    <disk device="floppy" type="file">
+      <source file='FLOPPY'/>
+      <target bus="fdc" dev="fdb"/>
       <readonly/>
     </disk>
     <interface type="network">
