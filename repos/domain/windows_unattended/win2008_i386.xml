@@ -15,11 +15,36 @@
 			<UILanguageFallback>en-us</UILanguageFallback>
 			<UserLocale>en-us</UserLocale>
 		</component>
+		<component name="Microsoft-Windows-PnpCustomizationsWinPE" 
+			processorArchitecture="x86" publicKeyToken="31bf3856ad364e35" 
+			language="neutral" versionScope="nonSxS" 
+			xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" 
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			<DriverPaths>
+				<PathAndCredentials wcm:keyValue="1" wcm:action="add">
+					<Path>A:\i386\PATHOFDRIVER</Path>
+				</PathAndCredentials>
+			</DriverPaths>
+		</component>
 		<component name="Microsoft-Windows-Setup"
 			processorArchitecture="x86" publicKeyToken="31bf3856ad364e35"
 			language="neutral" versionScope="nonSxS"
 			xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
 			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			<ImageInstall>
+				<OSImage>
+					<InstallFrom>
+						<MetaData wcm:action="add">
+							<Key>/IMAGE/INDEX</Key>
+							<Value>5</Value>
+						</MetaData>
+					</InstallFrom>
+					<InstallTo>
+						<DiskID>0</DiskID>
+						<PartitionID>1</PartitionID>
+					</InstallTo>
+				</OSImage>
+			</ImageInstall>
 			<DiskConfiguration>
 				<Disk wcm:action="add">
 					<CreatePartitions>
@@ -45,20 +70,6 @@
 				</Disk>
 				<WillShowUI>OnError</WillShowUI>
 			</DiskConfiguration>
-			<ImageInstall>
-				<OSImage>
-					<InstallFrom>
-						<MetaData wcm:action="add">
-							<Key>/IMAGE/INDEX</Key>
-							<Value>1</Value>
-						</MetaData>
-					</InstallFrom>
-					<InstallTo>
-						<DiskID>0</DiskID>
-						<PartitionID>1</PartitionID>
-					</InstallTo>
-				</OSImage>
-			</ImageInstall>
 			<UserData>
 				<ProductKey>
 					<Key>LIBVIRT_TEST_CDKEY</Key>

@@ -12,7 +12,7 @@
 					<CreatePartitions>
 						<CreatePartition wcm:action="add">
 							<Order>1</Order>
-							<Size>20000</Size>
+							<Size>12000</Size>
 							<Type>Primary</Type>
 						</CreatePartition>
 					</CreatePartitions>
@@ -36,7 +36,7 @@
 					<InstallFrom>
 						<MetaData wcm:action="add">
 							<Key>/IMAGE/INDEX</Key>
-							<Value>1</Value>
+							<Value>5</Value>
 						</MetaData>
 					</InstallFrom>
 					<InstallTo>
@@ -109,13 +109,13 @@
 			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 			<UserAccounts>
 				<AdministratorPassword>
-					<Value>virtTest</Value>
+					<Value>1q2w3eP</Value>
 					<PlainText>true</PlainText>
 				</AdministratorPassword>
 			</UserAccounts>
 			<AutoLogon>
 				<Password>
-					<Value>virtTest</Value>
+					<Value>1q2w3eP</Value>
 					<PlainText>true</PlainText>
 				</Password>
 				<Enabled>true</Enabled>

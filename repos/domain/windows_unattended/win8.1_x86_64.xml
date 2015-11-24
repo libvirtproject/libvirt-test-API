@@ -67,7 +67,6 @@
 			</ImageInstall>
 			<UserData>
 				<ProductKey>
-					<Key>LIBVIRT_TEST_CDKEY</Key>
 					<WillShowUI>OnError</WillShowUI>
 				</ProductKey>
 				<AcceptEula>true</AcceptEula>
