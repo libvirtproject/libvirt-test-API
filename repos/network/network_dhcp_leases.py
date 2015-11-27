@@ -3,6 +3,8 @@
 
 import os
 import time
+import json
+
 import libvirt
 from libvirt import libvirtError
 from utils import utils
@@ -54,6 +56,7 @@ def get_bridge_name(network, logger):
         logger.error("\"" + GREP_BRIDGE + "\"" + "error")
         logger.error(output)
         return False
+
     return output[0]
 
 
@@ -76,65 +79,15 @@ def get_ip_prefix(network, iptype, logger):
         return False
     return output[0]
 
-
-def get_info_from_dnsmasq(network, macaddr, logger):
+def get_info_from_dnsmasq(status_file, logger):
     """
-       generate dict for lease info from virtual network's lease file
+       generate info from bridge's status file
     """
-    title = ['expirytime', 'mac', 'ipaddr', 'hostname', 'clientid']
-    output_list = []
-    lease_dnsmasq = []
-    temp = []
-    remove_list = []
-    GREP_MAC = "grep -w %s" + " " + LEASE_FILE_DNSMASQ
-    CAT_FILE = "cat" + " " + LEASE_FILE_DNSMASQ
+    f = open(status_file, 'r')
+    output = json.load(f)
 
-    status, output = utils.exec_cmd(CAT_FILE, shell=True)
-    if not status:
-        for i in range(0, len(output)):
-            output_list = []
-            output_str = output[i]
-            for item in output_str.split(" "):
-                output_list.append(item)
-            lease_dnsmasq.append(dict(zip(title, output_list)))
-
-        # due to no mac field in IPv6 line, so do nothing here temporarily.
-        if macaddr is not None:
-            pass
-
-        # remove bridge duid line
-        for i in range(0, len(lease_dnsmasq)):
-            if lease_dnsmasq[i]['expirytime'] == 'duid':
-                remove_list.append(lease_dnsmasq[i])
-
-        for i in range(0, len(remove_list)):
-            lease_dnsmasq.remove(remove_list[i])
-
-        # remove expiry leases
-        for i in range(0, len(lease_dnsmasq)):
-            temp = int(lease_dnsmasq[i]['expirytime'])
-            lease_dnsmasq[i]['expirytime'] = temp
-
-        remove_list = []
-        for i in range(0, len(lease_dnsmasq)):
-            if time.time() >= int(lease_dnsmasq[i]['expirytime']):
-                remove_list.append(lease_dnsmasq[i])
-
-        for i in range(0, len(remove_list)):
-            lease_dnsmasq.remove(remove_list[i])
-
-        # replace * to None
-        for i in range(0, len(lease_dnsmasq)):
-            if lease_dnsmasq[i]['hostname'] == "*":
-                lease_dnsmasq[i]['hostname'] = None
-            if lease_dnsmasq[i]['clientid'] == "*":
-                lease_dnsmasq[i]['clientid'] = None
-
-        return lease_dnsmasq
-    else:
-        logger.error("\"" + CAT_FILE + "\"" + "error")
-        logger.error(output)
-        return False
+    return output
+ 
 
 
 def compare_values(op1, op2, network, iptype, logger):
@@ -146,115 +99,67 @@ def compare_values(op1, op2, network, iptype, logger):
     temp = int(api['expirytime'])
     api['expirytime'] = temp
 
-    for j in range(0, len(dnsmasq)):
-        if dnsmasq[j]['hostname'] == api['hostname'] and \
-           dnsmasq[j]['expirytime'] == api['expirytime']:
-            if dnsmasq[j]['ipaddr'] == api['ipaddr'] and \
-               dnsmasq[j]['clientid'] == api['clientid']:
-
-                if iptype == "ipv4":
-                    logger.debug(
-                        "PASS: hostname:%s expirytime:%s ipaddr:%s" %
-                        (api['hostname'], api['expirytime'], api['ipaddr']))
-                    logger.debug("Unsupported: clientid: %s in IPv4"
-                                 % (api['clientid']))
-                elif iptype == "ipv6":
-                    logger.debug("PASS: hostname: %s expirytime: %s ipaddr: %s"
-                                 "clientid: %s" % (api['hostname'], api['expirytime'],
-                                                   api['ipaddr'], api['clientid']))
-
-                if iptype == "ipv4" and api['mac'] == dnsmasq[j]['mac']:
-                    logger.debug("PASS: mac: %s" % api['mac'])
-                elif iptype == "ipv6" and api['iaid'] == dnsmasq[j]['mac']:
-                    logger.debug("PASS: iaid: %s" % api['iaid'])
+    for j in range(0,len(dnsmasq)):
+        if dnsmasq[j]['expiry-time'] == api['expirytime']:
+            if dnsmasq[j]['mac-address'] == api['mac']:
+                if dnsmasq[j]['ip-address'] == api['ipaddr']:
+                    logger.info("PASS: mac: %s" % api['mac'])
+                    logger.info("PASS: ip: %s" % api['ipaddr'])
+                    logger.info("PASS: expiry-time: %s" % api['expirytime'])
                 else:
-                    logger.error("Fail: mac/iaid: %s/%s" % (api['mac'],
-                                                            api['iaid']))
+                    logger.error("FAIL: ip: %s" % api['ipaddr'])
                     return False
-
                 break
             else:
                 if j == len(dnsmasq) - 1:
-                    logger.debug("Last loop %d, FAIL: %s" % (j, api))
-                    logger.debug("failed on ipaddr or clientid")
+                    logger.error("Last loop %d, FAIL: mac: %s" % (j,api['mac']))
                     return False
-                else:
-                    logger.debug("Skipped loop %d,Warning: ipaddr: %s \
-clientid: %s" % (j, api['ipaddr'], api['clientid']))
-                    continue
+           
         else:
             if j == len(dnsmasq) - 1:
-                logger.error("Fail: hostname: %s expirytime: %s ipaddr: %s \
-clientid: %s" % (api['hostname'], api['expirytime'], api['ipaddr'],
-                 api['clientid']))
-                logger.error("Last loop %d, FAIL: %s" % (j, api))
+                logger.error("Last loop %d, FAIL: expirttime: %s" % (j,api['expirttime']))
                 return False
-            else:
-                logger.debug("Skipped loop %d,Warning: hostname: \
-%s expirytime: %s" % (j, api['hostname'], api['expirytime']))
-                continue
-    if not api['iface'] == get_bridge_name(network, logger):
-        logger.error("FAIL: iface: %s" % api['iface'])
-        return False
-    else:
-        logger.debug("PASS: iface: %s" % api['iface'])
-    if not api['type'] == get_network_type(api['ipaddr'], logger):
+
+    if not api['type'] == get_network_type(api['ipaddr'],logger):
         logger.error("FAIL: type: %s" % api['type'])
         return False
     else:
-        logger.debug("PASS: type: %s" % api['type'])
+        logger.info("PASS: type: %s" % api['type'])
 
     if not api['prefix'] == int(get_ip_prefix(network, iptype, logger)):
         logger.error("FAIL: prefix: %s" % api['prefix'])
-        logger.error("FAIL: %s" % api)
         return False
     else:
-        logger.debug("PASS: prefix: %s" % api['prefix'])
+        logger.info("PASS: prefix: %s" % api['prefix'])
+
     if iptype == "ipv4":
         if not api['iaid'] is None:
             logger.error("FAIL: iaid: %s" % api['iaid'])
             return False
         else:
-            logger.debug("Unsupported: iaid: %s in IPv4" % api['iaid'])
-            logger.debug("PASS: %s" % api)
-    elif iptype == "ipv6":
-        logger.debug("Ignoring mac checking on IPv6 line %s" % api['mac'])
-        logger.debug("PASS: %s" % api)
+            logger.debug("PASS: unsupported iaid: %s in IPv4" % api['iaid'])
 
     return True
 
+def check_values(op1, op2, networkname, logger):
+     """
+        check each line accorting to ip type, if ipv4 go to check_ipv4_values
+        if ipv6, go to check_ipv6_values.
+     """
+     dnsmasq = op1
+     api = op2
 
-def check_values(op1, op2, network, logger):
-    """
-       check each line accorting to ip type, if ipv4 go to check_ipv4_values
-       if ipv6, go to check_ipv6_values.
-    """
-    networkname = network
-    dnsmasq = op1
-    api = op2
-
-    for i in range(0, len(api)):
-        if check_ip(api[i]['ipaddr'], logger) == "ipv4":
-            if not compare_values(
-                dnsmasq,
-                api[i],
-                networkname,
-                "ipv4",
-                    logger):
-                return False
-        elif check_ip(api[i]['ipaddr'], logger) == "ipv6":
-            if not compare_values(
-                dnsmasq,
-                api[i],
-                networkname,
-                "ipv6",
-                    logger):
-                return False
-        else:
-            logger.error("invalid list element for ipv4 and ipv6")
-            return False
-    return True
-
+     for i in range(0, len(api)):
+         if check_ip(api[i]['ipaddr'],logger) == "ipv4":
+             if not compare_values(dnsmasq, api[i], networkname, "ipv4", logger):
+                 return False
+         elif check_ip(api[i]['ipaddr'],logger) == "ipv6":
+             if not compare_values(dnsmasq, api[i], networkname, "ipv6", logger):
+                 return False
+         else:
+             logger.error("invalid list element for ipv4 and ipv6")
+             return False
+     return True
 
 def network_dhcp_leases(params):
     """
@@ -263,34 +168,29 @@ def network_dhcp_leases(params):
     global LEASE_FILE_DNSMASQ
     logger = params['logger']
     networkname = params['networkname']
-    LEASE_FILE_DNSMASQ = "/var/lib/libvirt/dnsmasq/" + networkname + ".leases"
+
+    bridgename = get_bridge_name(networkname, logger)
+
+    LEASE_FILE_DNSMASQ = "/var/lib/libvirt/dnsmasq/" + bridgename + ".status"
     mac_value = params.get('macaddr', None)
     conn = sharedmod.libvirtobj['conn']
     logger.info("The given mac is %s" % (mac_value))
 
     if not os.path.exists(LEASE_FILE_DNSMASQ):
-        logger.error("leases file for %s is not exist" % networkname)
-        logger.error("%s" % LEASE_FILE_DNSMASQ)
+        logger.error("%s file is not exist." % LEASE_FILE_DNSMASQ)
         return 1
-    dhcp_lease_dns = get_info_from_dnsmasq(networkname, mac_value, logger)
+
+    dhcp_lease_dns = get_info_from_dnsmasq(LEASE_FILE_DNSMASQ, logger)
     logger.info("From dnsmasq: %s" % (dhcp_lease_dns))
-    if not dhcp_lease_dns:
-        return 1
 
     netobj = conn.networkLookupByName(networkname)
 
     try:
-        dhcp_lease_api = netobj.DHCPLeases(mac_value, 0)
-        if not dhcp_lease_api and dhcp_lease_dns:
-            logger.info("From API: %s" % (dhcp_lease_api))
-            return 1
+        dhcp_lease_api = netobj.DHCPLeases(mac_value,0)
         logger.info("From API: %s" % (dhcp_lease_api))
-        if not check_values(
-                dhcp_lease_dns,
-                dhcp_lease_api,
-                networkname,
-                logger):
-            return 1
+
+        if not check_values(dhcp_lease_dns, dhcp_lease_api, networkname, logger):
+           return 1
 
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
