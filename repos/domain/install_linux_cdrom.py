@@ -168,11 +168,7 @@ def install_linux_cdrom(params):
 
     hddriver = params.get('hddriver', 'virtio')
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-    tmpdiskpath = diskpath
-    if not os.path.exists(tmpdiskpath):
-        os.mkdir(tmpdiskpath)
     if hddriver != "lun" and hddriver != 'scsilun':
-        diskpath = diskpath + '/' + guestname
         logger.info("disk image is %s" % diskpath)
         seeksize = params.get('disksize', 10)
         imageformat = params.get('imageformat', 'raw')
@@ -186,7 +182,6 @@ def install_linux_cdrom(params):
             logger.debug(message)
             logger.info("creating disk images file is fail")
             return 1
-    xmlstr = xmlstr.replace(tmpdiskpath, diskpath)
 
 
     os.chown(diskpath, 107, 107)
@@ -398,9 +393,8 @@ def install_linux_cdrom_clean(params):
             if status:
                 logger.error("failed to undefine guest %s" % guestname)
                 logger.error("%s" % output)
-
-    if os.path.exists(diskpath + '/' + guestname):
-        os.remove(diskpath + '/' + guestname)
+    if os.path.exists(diskpath):
+        os.remove(diskpath)
     
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     envparser = env_parser.Envparser(envfile)
