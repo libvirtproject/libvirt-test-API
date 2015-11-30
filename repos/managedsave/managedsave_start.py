@@ -75,9 +75,9 @@ def managedsave_start(params):
         else:
             # this covers flags = None as well as flags = 'noping'
             domobj.create()
-    except libvirtError as e:
-        logger.error("API error message: %s, error code is %s"
-                     % e.message)
+    except libvirtError, e:
+        logger.error("API error message: %s, error code is %s" \
+                     % (e.message, e.get_error_code()))
         logger.error("start failed")
         return 1
 
@@ -114,9 +114,9 @@ def managedsave_start(params):
             try:
                 domobj.resume()
 
-            except libvirtError as e:
-                logger.error("API error message: %s, error code is %s"
-                             % e.message)
+            except libvirtError, e:
+                logger.error("API error message: %s, error code is %s" \
+                     % (e.message, e.get_error_code()))
                 logger.error("resume failed")
                 return 1
             stateresume = domobj.info()[0]

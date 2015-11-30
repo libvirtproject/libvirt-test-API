@@ -53,8 +53,8 @@ def managedsave_remove(params):
             logger.error("Fail to remove managedsave domain")
             return 1
 
-    except libvirtError as e:
-        logger.error("API error message: %s, error code is %s" % e.message)
+    except libvirtError, e:
+        logger.error("API error message: %s, error code is %s" % (e.message, e.get_error_code()))
         logger.error("Fail to managedsave %s domain" % guestname)
         return 1
 
