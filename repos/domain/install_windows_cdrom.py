@@ -37,7 +37,7 @@ optional_params = {'memory': 1048576,
                    'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
                    'xml': 'xmls/kvm_windows_guest_install_cdrom.xml',
                    'guestmachine': 'pc',
-                   'driverpath': '/usr/share/virtio-win/virtio-win-1.7.4_amd64.vfd',
+                   'driverpath': '/usr/share/virtio-win/virtio-win_amd64.vfd',
                    'graphic': 'vnc',
                   }
 
@@ -230,12 +230,6 @@ def install_windows_cdrom(params):
 
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
 
-    if not os.path.exists(diskpath):
-        os.mkdir(diskpath)
-    
-    tmpdiskpath = diskpath
-    diskpath = diskpath + "/" + guestname
-    xmlstr = xmlstr.replace(tmpdiskpath, diskpath)
     logger.info("disk image is %s" % diskpath)
     seeksize = params.get('disksize', 20)
     imageformat = params.get('imageformat', 'raw')
@@ -249,8 +243,6 @@ def install_windows_cdrom(params):
                  disk_create)
 
     (status, message) = commands.getstatusoutput(disk_create)
-    status=1
-    message = "fuck"
     if status != 0:
         logger.debug(message)
 
@@ -270,15 +262,15 @@ def install_windows_cdrom(params):
     hddriver = params.get('hddriver', 'virtio')
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
-        driverpath = params.get('driverpath','/usr/share/virtio-win/virtio-win-1.7.4_amd64.vfd')
-        xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win-1.7.4_amd64.vfd', 
+        driverpath = params.get('driverpath','/usr/share/virtio-win/virtio-win_amd64.vfd')
+        xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd', 
                                  driverpath)
     elif hddriver == 'ide':
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
         xmlstr = xmlstr.replace('DEV', 'sda')
-        driverpath = params.get('driverpath','/usr/share/virtio-win/virtio-win-1.7.4_amd64.vfd')
-        xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win-1.7.4_amd64.vfd', 
+        driverpath = params.get('driverpath','/usr/share/virtio-win/virtio-win_amd64.vfd')
+        xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd', 
                                  driverpath)
 
     logger.info("get system environment information")
