@@ -37,6 +37,13 @@ if [ -n "`echo $vlmid|grep ppc`" ];then
        cd $custom_iso_dir
        mkisofs -R -V "$vlmid" -sysid PPC -chrp-boot -U -prep-boot ppc/chrp/yaboot -hfs-bless ppc/mac -no-desktop -allow-multidot -volset 4 -volset-size 1 -volset-seqno 1 -hfs-volid 4 -o $cwd/$custom_iso .
 else
+       echo "- setting qemu-guest-agent autostart"
+       if [[ $kscfg == ks-rhel7* ]]; then
+                cat $kscfg | sed "s#%post#%post \nsystemctl enable qemu-guest-agent.service\n#" > test-api-kscfg-file
+                mv test-api-kscfg-file $kscfg
+                rm -f test-api-kscfg-file
+       fi
+
        echo "- copy kickstart to custom work directory"
        cp $kscfg $custom_iso_dir
 
