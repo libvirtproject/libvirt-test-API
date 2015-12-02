@@ -172,6 +172,7 @@ def network_dhcp_leases(params):
     bridgename = get_bridge_name(networkname, logger)
 
     LEASE_FILE_DNSMASQ = "/var/lib/libvirt/dnsmasq/" + bridgename + ".status"
+    logger.info("Bridge name is %s" % (bridgename))
     mac_value = params.get('macaddr', None)
     conn = sharedmod.libvirtobj['conn']
     logger.info("The given mac is %s" % (mac_value))
@@ -180,7 +181,12 @@ def network_dhcp_leases(params):
         logger.error("%s file is not exist." % LEASE_FILE_DNSMASQ)
         return 1
 
-    dhcp_lease_dns = get_info_from_dnsmasq(LEASE_FILE_DNSMASQ, logger)
+    file_len = os.stat(LEASE_FILE_DNSMASQ).st_size
+    if file_len == 0:
+        dhcp_lease_dns = []
+    else:
+        dhcp_lease_dns = get_info_from_dnsmasq(LEASE_FILE_DNSMASQ, logger)
+
     logger.info("From dnsmasq: %s" % (dhcp_lease_dns))
 
     netobj = conn.networkLookupByName(networkname)
