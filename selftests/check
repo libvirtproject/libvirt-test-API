@@ -2,13 +2,14 @@
 ret=0
 run_cmd() {
     echo "Running '$1'"
-    $1
+    $1  
     if [ $? != 0 ]; then
         ret=1
-    fi
+    fi  
     echo ""
 }
 run_cmd 'inspekt lint'
 run_cmd 'inspekt indent'
 run_cmd 'inspekt style'
 exit ${ret}
+
