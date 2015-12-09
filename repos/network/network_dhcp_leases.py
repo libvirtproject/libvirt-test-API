@@ -87,7 +87,7 @@ def get_info_from_dnsmasq(status_file, logger):
     output = json.load(f)
 
     return output
- 
+
 
 
 def compare_values(op1, op2, network, iptype, logger):
@@ -114,7 +114,7 @@ def compare_values(op1, op2, network, iptype, logger):
                 if j == len(dnsmasq) - 1:
                     logger.error("Last loop %d, FAIL: mac: %s" % (j,api['mac']))
                     return False
-           
+
         else:
             if j == len(dnsmasq) - 1:
                 logger.error("Last loop %d, FAIL: expirttime: %s" % (j,api['expirttime']))
@@ -142,24 +142,24 @@ def compare_values(op1, op2, network, iptype, logger):
     return True
 
 def check_values(op1, op2, networkname, logger):
-     """
-        check each line accorting to ip type, if ipv4 go to check_ipv4_values
-        if ipv6, go to check_ipv6_values.
-     """
-     dnsmasq = op1
-     api = op2
+    """
+       check each line accorting to ip type, if ipv4 go to check_ipv4_values
+       if ipv6, go to check_ipv6_values.
+    """
+    dnsmasq = op1
+    api = op2
 
-     for i in range(0, len(api)):
-         if check_ip(api[i]['ipaddr'],logger) == "ipv4":
-             if not compare_values(dnsmasq, api[i], networkname, "ipv4", logger):
-                 return False
-         elif check_ip(api[i]['ipaddr'],logger) == "ipv6":
-             if not compare_values(dnsmasq, api[i], networkname, "ipv6", logger):
-                 return False
-         else:
-             logger.error("invalid list element for ipv4 and ipv6")
-             return False
-     return True
+    for i in range(0, len(api)):
+        if check_ip(api[i]['ipaddr'],logger) == "ipv4":
+            if not compare_values(dnsmasq, api[i], networkname, "ipv4", logger):
+                return False
+        elif check_ip(api[i]['ipaddr'],logger) == "ipv6":
+            if not compare_values(dnsmasq, api[i], networkname, "ipv6", logger):
+                return False
+        else:
+            logger.error("invalid list element for ipv4 and ipv6")
+            return False
+    return True
 
 def network_dhcp_leases(params):
     """
@@ -196,7 +196,7 @@ def network_dhcp_leases(params):
         logger.info("From API: %s" % (dhcp_lease_api))
 
         if not check_values(dhcp_lease_dns, dhcp_lease_api, networkname, logger):
-           return 1
+            return 1
 
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"

@@ -150,4 +150,3 @@ def snapshot_list(params):
         return 1
 
     return 0
-

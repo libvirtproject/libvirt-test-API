@@ -108,8 +108,8 @@ def iface_list(params):
         logger.debug("interface list from ifcfg: %s" % ifcfg)
         for interface in iface_list_ifconfig:
             if interface not in ifcfg:
-               iface_list_ifconfig.remove(interface)
-               logger.debug("%s has not regular ifcfg file" % interface)
+                iface_list_ifconfig.remove(interface)
+                logger.debug("%s has not regular ifcfg file" % interface)
 
         logger.info("interface list from ifconfig cmd: %s" % iface_list_ifconfig)
         for interface in iface_list:

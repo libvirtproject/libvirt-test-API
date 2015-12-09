@@ -165,7 +165,6 @@ def cpu_topology_chk(ip, username, password,
         logger.error("The data doesn't match!!!")
         return 1
 
-
 def cpu_topology(params):
     """ edit domain xml description according to the values
         and login to the guest to check the results
@@ -202,7 +201,7 @@ def cpu_topology(params):
         return 1
 
     if cpu_topology_chk(ip, username, password,
-                        sockets, cores, threads, logger):
+                          sockets, cores, threads, logger):
         return 1
 
     return 0

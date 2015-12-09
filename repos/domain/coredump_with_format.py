@@ -214,7 +214,7 @@ def coredump_with_format(params):
             if not check_dump_file(topath, logger):
                 return 1
             if Udumpformat == "RAW":
-                if not check_dumpfile_type(topath, flags, logger):
+                if not check_dumpfile_type(topath,flags,logger):
                     return 1
             else:
                 if not check_crash_command(logger):

@@ -200,7 +200,7 @@ def install_linux_cdrom(params):
         xmlstr = xmlstr.replace('DEV','vda')
         xmlstr = xmlstr.replace('"file"','"block"')
         xmlstr = xmlstr.replace('"disk"','"lun"')
-        tmp = params.get('diskpath', '/var/lib/libvirt/images') 
+        tmp = params.get('diskpath', '/var/lib/libvirt/images')
         xmlstr = xmlstr.replace("file='%s'"% tmp, \
                                 "dev='/dev/SDX'")
         disksymbol = params.get('disksymbol','sdb')
@@ -211,7 +211,7 @@ def install_linux_cdrom(params):
         xmlstr = xmlstr.replace('DEV','sda')
         xmlstr = xmlstr.replace('"file"','"block"')
         xmlstr = xmlstr.replace('"disk"','"lun"')
-        tmp = params.get('diskpath', '/var/lib/libvirt/images') 
+        tmp = params.get('diskpath', '/var/lib/libvirt/images')
         xmlstr = xmlstr.replace("file='%s'"% tmp, \
                                 "dev='/dev/SDX'")
         disksymbol = params.get('disksymbol','sdb')
@@ -395,14 +395,14 @@ def install_linux_cdrom_clean(params):
                 logger.error("%s" % output)
     if os.path.exists(diskpath):
         os.remove(diskpath)
-    
+
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     envparser = env_parser.Envparser(envfile)
     cache_folder = envparser.get_value("variables", "domain_cache_folder")
 
     if os.path.exists(cache_folder + '/' + guestname + "_folder"):
         shutil.rmtree(cache_folder + '/' + guestname + "_folder")
-    
+
     guest_dir = os.path.join(HOME_PATH, guestname)
     if os.path.exists(guest_dir):
         shutil.rmtree(guest_dir)

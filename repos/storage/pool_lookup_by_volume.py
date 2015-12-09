@@ -36,7 +36,7 @@ def pool_lookup_by_volume(params):
         logger.info("The pool name is %s from API" % (pool_name))
 
         if not pool_name == poolname:
-           return 1
+            return 1
 
     except libvirtError, e:
         logger.error("API error message: %s, error code is %s" \

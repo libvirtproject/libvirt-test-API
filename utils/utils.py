@@ -237,9 +237,8 @@ def get_dom_mac_addr(domname):
 
        Return mac address on SUCCESS or None on FAILURE
     """
-    cmd = \
-        "virsh dumpxml " + domname \
-        + " | grep 'mac address' | awk -F'=' '{print $2}' | tr -d \"[\'/>]\""
+    cmd = ("virsh dumpxml %s | grep 'mac address' | "
+           "awk -F'=' '{print $2}' | tr -d \"[\'/>]\"" % domname)
 
     (ret, out) = commands.getstatusoutput(cmd)
     if ret == 0:
@@ -252,8 +251,8 @@ def get_num_vcpus(domname):
     """Get mac address of a domain
        Return mac address on SUCCESS or None on FAILURE
     """
-    cmd = "virsh dumpxml " + domname + \
-        " | grep 'vcpu' | awk -F'<' '{print $2}' | awk -F'>' '{print $2}'"
+    cmd = ("virsh dumpxml %s | grep 'vcpu' | awk -F'<' '{print $2}'"
+           " | awk -F'>' '{print $2}'" % domname)
 
     (ret, out) = commands.getstatusoutput(cmd)
     if ret == 0:
@@ -266,8 +265,8 @@ def get_size_mem(domname):
     """Get mem size of a domain
        Return mem size on SUCCESS or None on FAILURE
     """
-    cmd = "virsh dumpxml " + domname + \
-        " | grep 'currentMemory'|awk -F'<' '{print $2}'|awk -F'>' '{print $2}'"
+    cmd = ("virsh dumpxml %s | grep 'currentMemory'|awk -F'<' '{print $2}'"
+           "|awk -F'>' '{print $2}'" % domname)
 
     (ret, out) = commands.getstatusoutput(cmd)
     if ret == 0:
@@ -296,8 +295,7 @@ def get_capacity_suffix_size(capacity):
         if capacity.endswith(suffix):
             dicts['suffix'] = suffix
             dicts['capacity'] = capacity.split(suffix)[0]
-            dicts['capacity_byte'] = \
-                int(dicts['capacity']) * change_to_byte[suffix]
+            dicts['capacity_byte'] = int(dicts['capacity']) * change_to_byte[suffix]
     return dicts
 
 
@@ -329,7 +327,7 @@ def stop_firewall(ip):
     if ip == "127.0.0.1":
         stopfire = commands.getoutput("service iptables stop")
     else:
-        stopfire = commands.getoutput("ssh %s service iptables stop") % ip
+        stopfire = commands.getoutput("ssh %s service iptables stop" % ip)
     if stopfire.find("stopped"):
         print "Firewall is stopped."
     else:
@@ -433,19 +431,12 @@ def do_ping(ip, timeout):
     return (timeout and 1) or 0
 
 
-def exec_cmd(
-        command,
-        sudo=False,
-        cwd=None,
-        infile=None,
-        outfile=None,
-        shell=False,
-        data=None):
+def exec_cmd(command, sudo=False, cwd=None, infile=None, outfile=None, shell=False, data=None):
     """
     Executes an external command, optionally via sudo.
     """
     if sudo:
-        if isinstance(command, type("")):
+        if isinstance(command, str):
             command = "sudo " + command
         else:
             command = ["sudo"] + command
@@ -528,7 +519,7 @@ def remote_exec(hostname, username, password, cmd):
         try:
             os.execv("/usr/bin/ssh", ["/usr/bin/ssh", "-l",
                                       username, hostname, cmd])
-        except OSError as e:
+        except OSError, e:
             print "OSError: " + str(e)
             return -1
     else:
@@ -875,18 +866,17 @@ def validate_remote_nic_type(hostname, username,
             for key in nic_type_to_driver_dict.keys():
                 logger.info("now try to grep other nic type \
                           in lsmod output: %s" % key)
-                other_driver_cmd = """echo '%s' | grep '%s'""" % \
-                    (lsmod_cmd_ret,
-                     nic_type_to_driver_dict[key])
+                other_driver_cmd = ("""echo '%s' | grep '%s'""" %
+                                    (lsmod_cmd_ret, nic_type_to_driver_dict[key]))
                 ret1, out1 = commands.getstatusoutput(other_driver_cmd)
                 if ret1 == 0:
                     logger.info("unspecified nic driver is seen \
                                in guest's lsmod command: %s" % out)
                     return 1
 
-            logger.info("lspci ouput about nic is: \n %s; \n \
-                        lsmod output about nic is \n %s \n" %
-                        (output1, output2))
+            logger.info("lspci ouput about nic is: \n %s; \n"
+                        "lsmod output about nic is \n %s \n"
+                        % (output1, output2))
             return 0
         else:
             logger.info("lspci and lsmod and grep fail")
@@ -949,9 +939,8 @@ def validate_remote_blk_type(hostname, username, password,
                 logger.info(
                     "now try to grep other blk type in lsmod output: %s" %
                     key)
-                other_driver_cmd = """echo '%s' | grep '%s'""" % \
-                                   (lsmod_cmd_ret,
-                                    blk_type_to_driver_dict[key])
+                other_driver_cmd = ("""echo '%s' | grep '%s'""" %
+                                    (lsmod_cmd_ret, blk_type_to_driver_dict[key]))
                 ret1, out1 = commands.getstatusoutput(other_driver_cmd)
                 if ret1 == 0:
                     logger.info("unspecified blk driver is seen \
@@ -977,6 +966,7 @@ def get_standard_deviation(cb1, cb2, opaque1, opaque2, number=1000):
         a2 = cb1(opaque1)
         D += ((int(a1) + int(a2)) / 2 - int(b)) ** 2
     return math.sqrt(D / number)
+
 
 
 def param_to_tuple_nolength(paramlist):

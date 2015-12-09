@@ -67,7 +67,6 @@ def checking_uuid(logger, poolname, pooluuid):
     else:
         return False
 
-
 def pool_uuid(params):
     """ 1. call appropriate API to generate the UUIDStirng
         of a pool , then compared to the output of command

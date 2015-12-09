@@ -44,8 +44,8 @@ class Format(object):
         console = "    %s" % msg
         num = (128 - len(msg)) / 2 - 2
         tpl = Template("\n$sep   $str  $sep\n")
-        msgs = tpl.substitute(sep='-' * num, str=msg)
-        if 'AUTODIR' in os.environ:
+        msgs = tpl.substitute(sep='-'*num, str=msg)
+        if os.environ.has_key('AUTODIR'):
             env_logger.info(msg)
         else:
             env_logger.info(console)
@@ -68,8 +68,8 @@ class Format(object):
         msg = msg + ' ' + result
         num = (128 - len(msg)) / 2 - 2
         tpl = Template("$sep   $str  $sep")
-        msgs = tpl.substitute(sep='-' * num, str=msg)
-        if 'AUTODIR' in os.environ:
+        msgs = tpl.substitute(sep='-'*num, str=msg)
+        if os.environ.has_key('AUTODIR'):
             env_logger.info(result)
         else:
             print console

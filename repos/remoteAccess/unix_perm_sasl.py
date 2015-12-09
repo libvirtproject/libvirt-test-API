@@ -79,19 +79,19 @@ def group_sasl_set(unix_sock_group, auth_unix_ro, auth_unix_rw, logger):
     (status, output) = utils.exec_cmd(group_check, shell=True)
     # if the group already exists, remove it
     if len(output):
-	(status, output) = utils.exec_cmd(libvirt_group_del, shell=True)
+        (status, output) = utils.exec_cmd(libvirt_group_del, shell=True)
         if status:
             logger.error("Fail to delete %s group" % unix_sock_group)
             return 1
 
-	(status, output) = utils.exec_cmd(libvirt_group_add, shell=True)
+        (status, output) = utils.exec_cmd(libvirt_group_add, shell=True)
         if status:
             logger.error("Fail to add %s group" % unix_sock_group)
             return 1
     else:
         status, output = get_output(libvirt_group_add, 0, logger)
         if status:
-	    logger.error("failed to add %s group" % unix_sock_group)
+            logger.error("failed to add %s group" % unix_sock_group)
             return 1
 
     # add "testapi" as the testing user

@@ -59,19 +59,19 @@ def cleanup(mount, logger):
     logger.info("making the directory %s" %mount)
 
 def prepare_ks(ks, guestos, hddriver, ks_path,logger):
-    """Prepare the ks file for suse installation 
-       virtio bus use the vda instead of sda in ide or scsi bus 
+    """Prepare the ks file for suse installation
+       virtio bus use the vda instead of sda in ide or scsi bus
     """
     urllib.urlretrieve(ks, ks_path)
     logger.info("the url of kickstart is %s" % ks)
     if (hddriver == "virtio" or hddriver == "lun") and "suse" in guestos:
-       with open(ks_path, "r+") as f:
-           ks_content = f.read()
-           f.close()
-       ks_content = ks_content.replace("sda", 'vda')
-       with open(ks_path, "w+") as f:
-           f.write(ks_content)
-           f.close()
+        with open(ks_path, "r+") as f:
+            ks_content = f.read()
+            f.close()
+        ks_content = ks_content.replace("sda", 'vda')
+        with open(ks_path, "w+") as f:
+            f.write(ks_content)
+            f.close()
 
 def prepare_floppy(ks_path, mount_point, floppy_path, logger):
     """ Prepare a floppy containing autoinst.xml
@@ -113,7 +113,7 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
     if not os.path.exists(cache_folder):
         os.makedirs(cache_folder)
         logger.info("making directory %s"  %cache_folder)
-    
+
     if os.path.exists(new_dir):
         logger.info("the folder exists, remove it")
         shutil.rmtree(new_dir)
@@ -128,9 +128,9 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
     logger.info("Downloading the iso file")
     cmd = "wget " + ostree + " -P " + new_dir
     utils.exec_cmd(cmd, shell=True)
- 
+
     # copy iso file
-    mount_command = "mount -o loop %s %s" %(iso_path, mount_point)    
+    mount_command = "mount -o loop %s %s" %(iso_path, mount_point)
     (status, message) = commands.getstatusoutput(mount_command)
     if status:
         logger.error("mount iso failure")
@@ -159,7 +159,7 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
         if flag == 1:
             logger.info("Create floppy file failing")
             return 1
-        
+
         isolinux_location = new_dir + "/custom/boot/" + guestarch + "/loader/"
         os.remove(isolinux_location + "isolinux.cfg")
         shutil.copy(HOME_PATH + "/repos/domain/isolinux/suse/isolinux.cfg", \
@@ -270,7 +270,7 @@ def install_ubuntu(params):
 
     logger.info("the macaddress is %s" %
                 params.get('macaddr', '52:54:00:97:e4:28'))
-    
+
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     tmpdiskpath = diskpath
     if not os.path.exists(tmpdiskpath):
@@ -278,7 +278,7 @@ def install_ubuntu(params):
     diskpath = diskpath + '/' + guestname
     xmlstr = xmlstr.replace(tmpdiskpath, diskpath)
 
-    # prepare the image 
+    # prepare the image
     hddriver = params.get('hddriver', 'virtio')
     logger.info("disk image is %s" % diskpath)
     seeksize = params.get('disksize', 10)
@@ -334,7 +334,7 @@ def install_ubuntu(params):
     if graphic == 'spice':
         xmlstr = xmlstr.replace('vnc', 'spice')
     logger.info('the graphic type of VM is %s' % graphic)
-    
+
     # prepare the custom iso
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
@@ -355,7 +355,7 @@ def install_ubuntu(params):
 
     logger.info('prepare installation...')
     cache_folder = envparser.get_value("variables", "domain_cache_folder")
-    
+
     logger.info("begin to customize the custom.iso file")
     custom = prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_folder, logger)
     xmlstr = xmlstr.replace("<disk type='block' device='floppy'>\n", \
@@ -470,7 +470,7 @@ def install_ubuntu(params):
     time.sleep(60)
 
     return 0
- 
+
 def install_ubuntu_clean(params):
     """ clean testing environment """
     logger = params['logger']
@@ -500,7 +500,7 @@ def install_ubuntu_clean(params):
 
     if os.path.exists(diskpath + '/' + guestname):
         os.remove(diskpath + '/' + guestname)
-    
+
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     envparser = env_parser.Envparser(envfile)
     ostree_search = params.get('guestos') + "_" + params.get('guestarch') + "_iso"
@@ -509,7 +509,7 @@ def install_ubuntu_clean(params):
                    ostree.split("/")[-1].split(".iso")[0]
     if os.path.exists(cache_folder):
         shutil.rmtree(cache_folder)
-    
+
     guest_dir = os.path.join(HOME_PATH, guestname)
     if os.path.exists(guest_dir):
         shutil.rmtree(guest_dir)

@@ -24,20 +24,20 @@ def nwfilter_undefine(params):
         nwfilter_uuid = conn.nwfilterLookupByUUID(uuid)
 
         # Check if the nwfilter lookup by name/uuid/uuidstr is the same one
-        if cmp(nwfilter, nwfilter_uuidstr) and cmp(nwfilter_uuidstr,
-                                                   nwfilter_uuid):
+        if cmp(nwfilter,nwfilter_uuidstr) and cmp(nwfilter_uuidstr,\
+                                                  nwfilter_uuid):
             # Undefine the nwfilter
             nwfilter.undefine()
             # Check if the nwfiler list includes the undefined nwfilter
             if nwfiltername not in conn.listNWFilters():
-                logger.info("Successfully undefine the nwfilter %s" %
-                            nwfiltername)
+                logger.info("Successfully undefine the nwfilter %s" % \
+                        nwfiltername)
                 return 0
         else:
             logger.error("Failed to undefine the nwfilter %s" % nwfiltername)
             return 1
 
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s" % e.message)
         return 1
 

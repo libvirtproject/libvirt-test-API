@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# Filename: virtlab.py 
-# Summary: Writing test logs and case generator for virtlab.  
+# Filename: virtlab.py
+# Summary: Writing test logs and case generator for virtlab.
 # Description: This module is for test logs and case generation use.
 # Maintainer: nzhang@redhat.com, xhu@redhat.com
 # Updated: Thu Apr 1, 2010
@@ -40,6 +40,7 @@ memory['8G'] = '8388608'
 
 test_run_params = {}
 
+
 def result_log(mod_case_func, case_params, ret, case_start_time, case_end_time):
     # get test run parameters
     global test_run_params
@@ -53,7 +54,7 @@ def result_log(mod_case_func, case_params, ret, case_start_time, case_end_time):
     else:
         status = 'FAIL'
 
-    line = '-' *120 + "\nSTART\t[%s][][libvirt_version=%s][hypervisor_version=%s][kernel_version=%s]" %(testcase, libvirt_ver, hypervisor_ver, kernel_ver)
+    line = '-' * 120 + "\nSTART\t[%s][][libvirt_version=%s][hypervisor_version=%s][kernel_version=%s]" % (testcase, libvirt_ver, hypervisor_ver, kernel_ver)
     for key in case_params.keys():
         if key != "xml":
             line += "[%s=%s]" % (key, case_params[key])
@@ -61,7 +62,7 @@ def result_log(mod_case_func, case_params, ret, case_start_time, case_end_time):
     logfile = 'result/result.log'
     if os.path.isfile(logfile):
         try:
-            fp = open(logfile,'a+')
+            fp = open(logfile, 'a+')
             line = '\n' + line
             fp.writelines(line)
             fp.close()
@@ -73,8 +74,8 @@ def result_log(mod_case_func, case_params, ret, case_start_time, case_end_time):
             if os.path.exists('result'):
                 pass
             else:
-               os.makedirs('result')
-            fp = open(logfile,'w+')
+                os.makedirs('result')
+            fp = open(logfile, 'w+')
             line = '\n' + line
             fp.writelines(line)
             fp.close()
@@ -82,6 +83,7 @@ def result_log(mod_case_func, case_params, ret, case_start_time, case_end_time):
             print "ERROR: error writing to file '" + logfile + "'!"
             return False
     return True
+
 
 def case_spawn(filename, str1, str2):
     fp_read = open(filename, 'r')
@@ -92,6 +94,7 @@ def case_spawn(filename, str1, str2):
     fp_write.write(sub)
     fp_write.close()
 
+
 def isvirtlab():
     cmd = "ps aux | grep STAFProc |grep -v grep"
     stat, ret = commands.getstatusoutput(cmd)
@@ -100,7 +103,7 @@ def isvirtlab():
     else:
         return False
 
+
 def create_virtlab_log(testrunid):
     create_virtlab_cmd = 'cp -Rf log/%s result' % testrunid
     os.system(create_virtlab_cmd)
-

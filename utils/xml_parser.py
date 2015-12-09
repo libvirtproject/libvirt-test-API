@@ -106,11 +106,11 @@ class xml_parser(object):
                                     out[key] = valdic
                             else:
                                 out[key] = value
-                        elif isinstance(out[key], list):
+                        elif type(out[key]) == list:
                             if attrdic is not None:
                                 newdict.update(attrdic)
                             out[key].append(newdict)
-                        elif isinstance(out[key], dict):
+                        elif type(out[key]) == dict:
                             if attrdic is not None:
                                 newdict.update(attrdic)
                             out[key].update(newdict)

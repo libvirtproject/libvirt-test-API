@@ -23,7 +23,7 @@ def create_image(disk, xmlstr, seeksize, imageformat, qcow2version):
     """Create a image file"""
 
     if imageformat == 'raw':
-        qcow2_options = ""  
+        qcow2_options = ""
     elif qcow2version.startswith('v3'):
         qcow2_options = "-o compat=1.1"
         if qcow2version.endswith('lazy_refcounts'):
@@ -97,7 +97,7 @@ def attach_disk(params):
     xmlstr = xmlstr.replace('DISKPATH', disk)
 
     conn = sharedmod.libvirtobj['conn']
-    # Create image, qcow2version includes 'v3', 'v3_lazy_refcounts' 
+    # Create image, qcow2version includes 'v3', 'v3_lazy_refcounts'
     if create_image(disk, xmlstr, imagesize, imageformat, qcow2version):
         logger.error("fail to create a image file")
         return 1

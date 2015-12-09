@@ -86,11 +86,11 @@ def validate_caps_from_hv(emulatorbin, logger):
         else:
             flags.append(False)
             logger.debug("Got: %s from vh" % temp)
-    if get_hypervisor_ver(emulatorbin, logger) >= 11000:
+    if get_hypervisor_ver(emulatorbin,logger) >= 11000:
         flags.append(True)
     else:
         flags.append(False)
-    libvirt_f = [drive, drive_forma, drive_readonly, device, blk_sg_io]
+    libvirt_f = [drive,drive_forma,drive_readonly,device,blk_sg_io]
     if flags == libvirt_f:
         return True
     else:

@@ -12,7 +12,7 @@ def check_secretList(flags, secretobjs, conn):
     """check the secret list result
     """
     if (flags == 'none') and (len(secretobjs) == conn.numOfSecrets()):
-            return 0
+        return 0
     elif flags == 'ephemeral':
         for i in secretobjs:
             ephemeral = minidom.parseString(i.XMLDesc(0)).\

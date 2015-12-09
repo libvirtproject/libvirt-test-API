@@ -226,8 +226,7 @@ class CaseFileParser(object):
 
                 if self.debug:
                     self.debug_print(
-                        "the option_value we are parsing is",
-                        tripped_valuename)
+                        "the option_value we are parsing is", tripped_valuename)
                     self.debug_print("the temp_list is", temp_list)
 
                 filterter_list = []
@@ -242,15 +241,14 @@ class CaseFileParser(object):
                         if (tripped_valuelist[1] == "only" and
                                 len(tripped_valuelist) == 3):
                             if self.debug:
-                                self.debug_print(
-                                    "the value with a keywords which is", tripped_valuelist[1])
+                                self.debug_print("the value with a keywords which is",
+                                                 tripped_valuelist[1])
 
                             filterters = tripped_valuelist[2].split("|")
                             for filterter in filterters:
                                 if self.debug:
-                                    self.debug_print(
-                                        "the filterter we will filt the"
-                                        " temp_list is", filterter)
+                                    self.debug_print("the filterter we will filt the"
+                                                     " temp_list is", filterter)
 
                                 if re.findall(filterter, str(caselist)):
                                     self.add_option_value(
@@ -268,7 +266,7 @@ class CaseFileParser(object):
                                     "the value with a keywords which is", tripped_valuelist[1])
 
                             if re.findall(tripped_valuename, str(caselist)):
-                                f = lambda s: (casename in s) is False
+                                f = lambda s: s.has_key(casename) is False
                                 temp_list = [filter(f, caselist)]
                         elif (tripped_valuelist[1] == "no" and
                               len(tripped_valuelist) == 3):

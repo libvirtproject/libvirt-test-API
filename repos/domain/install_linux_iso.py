@@ -46,7 +46,7 @@ INITRD = os.path.join(BOOT_DIR, 'initrd.img')
 HOME_PATH = os.getcwd()
 
 def prepare_iso(isolink, cache_floder):
-    """ Download iso file from isolink to cache_floder 
+    """ Download iso file from isolink to cache_floder
         file into it for automatic guest installation
     """
     cmd = "wget " + isolink + " -P " + cache_floder
@@ -142,7 +142,7 @@ def install_linux_iso(params):
         logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
         # qcow2version includes "v3","v3_lazy_refcounts"
         if qcow2version.startswith('v3'):
-            qcow2_options = "-o compat=1.1" 
+            qcow2_options = "-o compat=1.1"
             if qcow2version.endswith('lazy_refcounts'):
                 qcow2_options = qcow2_options + " -o lazy_refcounts=on"
             else:
@@ -232,8 +232,8 @@ def install_linux_iso(params):
         prepare_iso(ioslink, cache_floder)
 
     logger.info("Finish download the iso file: %s" % bootcd)
-    
-    if "rhel" in guestos:          
+
+    if "rhel" in guestos:
         vmlinuzpath = os.path.join(ostree, 'isolinux/vmlinuz')
         initrdpath = os.path.join(ostree, 'isolinux/initrd.img')
     elif "ubuntu" in guestos:
@@ -246,7 +246,7 @@ def install_linux_iso(params):
     urllib.urlretrieve(vmlinuzpath, VMLINUZ)
     urllib.urlretrieve(initrdpath, INITRD)
     logger.debug("vmlinuz and initrd.img are located in %s" % BOOT_DIR)
-    
+
     xmlstr = xmlstr.replace(params.get('diskpath', '/var/lib/libvirt/images'),
                             diskpath)
     xmlstr = xmlstr.replace('MACADDR', macaddr)
@@ -259,7 +259,7 @@ def install_linux_iso(params):
     xmlstr = xmlstr.replace('KS', ks)
 
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
- 
+
     installtype = params.get('type', 'define')
     if installtype == 'define':
         logger.info('define guest from xml description')
@@ -389,7 +389,7 @@ def install_linux_iso_clean(params):
     guestname = params.get('guestname')
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
- 
+
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     os_arch = guestos + "_" + guestarch
     envparser = env_parser.Envparser(envfile)
@@ -433,4 +433,3 @@ def install_linux_iso_clean(params):
         os.remove(VMLINUZ)
     if os.path.exists(INITRD):
         os.remove(INITRD)
-

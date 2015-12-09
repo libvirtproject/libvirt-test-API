@@ -125,7 +125,7 @@ def prepare_floppy_image(guestname, guestos, guestarch,
 
         logger.debug("Unattended install %s contents:" % dest_fname)
         logger.debug(unattended_contents)
-        
+
         driverpath = guestos[0].upper() + guestos[1:]
         unattended_contents = unattended_contents.replace('PATHOFDRIVER',driverpath)
         open(dest, 'w').write(unattended_contents)
@@ -248,7 +248,7 @@ def install_windows_cdrom(params):
 
     os.chown(diskpath, 107, 107)
     logger.info("creating disk images file is successful.")
-    
+
     # NICDRIVER
     nicdriver = params.get('nicdriver', 'virtio')
     if nicdriver == 'virtio' or nicdriver == 'e1000' or nicdriver == 'rtl8139':
@@ -258,25 +258,25 @@ def install_windows_cdrom(params):
         return 1
     logger.info('the nicdriver is %s' % nicdriver)
 
-    # Hard disk type 
+    # Hard disk type
     hddriver = params.get('hddriver', 'virtio')
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
         driverpath = params.get('driverpath','/usr/share/virtio-win/virtio-win_amd64.vfd')
-        xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd', 
+        xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd',
                                  driverpath)
     elif hddriver == 'ide':
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
         xmlstr = xmlstr.replace('DEV', 'sda')
         driverpath = params.get('driverpath','/usr/share/virtio-win/virtio-win_amd64.vfd')
-        xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd', 
+        xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd',
                                  driverpath)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     logger.info("the environment file is %s" % envfile)
-    
+
     # Graphic type
     graphic = params.get('graphic', 'vnc')
     if graphic != 'vnc' and graphic != 'spice':
@@ -309,7 +309,7 @@ def install_windows_cdrom(params):
     xmlstr = xmlstr.replace('FLOPPY', FLOOPY_IMG)
 
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
-    
+
     # Generate guest xml
     installtype = params.get('type', 'define')
     if installtype == 'define':
@@ -420,7 +420,7 @@ def install_windows_cdrom_clean(params):
 
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     diskpath = diskpath + params['guestname']
-    
+
     (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
     if not status:
         logger.info("remove guest %s, and its disk image file" % guestname)

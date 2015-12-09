@@ -102,12 +102,9 @@ def define_dir_pool_clean(params):
                 logger.error("failed to destroy storage pool %s" % poolname)
                 logger.error("%s" % output)
             else:
-                (status, output) = commands.getstatusoutput(
-                    POOL_UNDEFINE % poolname)
+                (status, output) = commands.getstatusoutput(POOL_UNDEFINE % poolname)
                 if status:
-                    logger.error(
-                        "failed to undefine storage pool %s" %
-                        poolname)
+                    logger.error("failed to undefine storage pool %s" % poolname)
                     logger.error("%s" % output)
         else:
             (status, output) = commands.getstatusoutput(POOL_UNDEFINE % poolname)

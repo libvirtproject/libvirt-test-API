@@ -129,8 +129,7 @@ class Proxy(object):
                     [casemod_ref.required_params, casemod_ref.optional_params]
             else:
                 raise exception.TestCaseError(
-                    "required_params or optional_params not found in %s" %
-                    modcase)
+                    "required_params or optional_params not found in %s" % modcase)
         return case_params
 
     def get_testcase_params(self, modcase):

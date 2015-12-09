@@ -67,7 +67,6 @@ def checking_uuid(logger, nwname, nwuuid):
     else:
         return False
 
-
 def network_uuid(params):
     """ 1.call appropriate API to generate the UUIDStirng
           of a network , then compared to the output of command

@@ -174,8 +174,8 @@ class Main(object):
         # will call the module process to run the testcases
         # which stored in the list of procs, if disable,
         # will call them one by one
-        if "multiprocess" in options_list[0]['options']:
-            if options_list[0]['options']["multiprocess"] == "enable":
+        if options_list[0]['options'].has_key("multiprocess"):
+            if  options_list[0]['options']["multiprocess"] == "enable":
                 proc = process.Process(procs)
                 proc.fork()
                 passnum, failnum = proc.wait()

@@ -55,7 +55,7 @@ def get_remote_hypervisor_uri(hostip, user, password):
     elif strip == "xen":
         return "xen+ssh://%s" %hostip
     else:
-        return "No hypervisor running" 
+        return "No hypervisor running"
 
 def prepare_boot_guest(domobj, xmlstr, guestname, logger, installtype, installmethod):
     """After guest installa/kvm_linux_guest_install_net.xml
@@ -66,7 +66,7 @@ on is over, undefine the guest with
     xmlstr = re.sub("<kernel>.*</kernel>\n", "", xmlstr)
     xmlstr = re.sub("<initrd>.*</initrd>\n", "", xmlstr)
     xmlstr = re.sub("<cmdline>.*</cmdline>\n", "", xmlstr)
- 
+
     if installmethod == "nfs":
         xmlstr = re.sub("<interface type='direct'>", \
                         "<interface type='network'>", \
@@ -76,7 +76,7 @@ on is over, undefine the guest with
                         xmlstr)
         xmlstr = re.sub("\n.*<target dev='macvtap0'/>", "", xmlstr)
         xmlstr = re.sub("<alias name=.*>\n", "", xmlstr)
-   
+
 
     if installtype != 'create':
         domobj.undefine()
@@ -144,12 +144,12 @@ def install_linux_net_remote(params):
     user = params.get('user','root')
     password = params.get('password','redhat')
     graphic = params.get('graphic','spice')
-   
+
     diskpath = params.get('diskpath',"/var/lib/libvirt/images")
 
     logger.info("the name of guest is %s" % guestname)
     logger.info("the installation method is %s" % installmethod)
-    #Remote or local installation 
+    #Remote or local installation
     if hostip == "127.0.0.1":
         conn = sharedmod.libvirtobj['conn']
     else:
@@ -165,12 +165,12 @@ def install_linux_net_remote(params):
             logger.info("Please check the interface, ping host fails~")
             logger.debug("Internet fail")
             return 1
-    
+
     check_domain_state(conn, guestname, logger)
     macaddr = utils.get_rand_mac()
 
     logger.info("the macaddress is %s" % macaddr)
-    
+
     # Seize the path and command
     # Beware of that the generation will replace the DISKPATH automatically
     xmlstr = xmlstr.replace(diskpath, "DISKPATH")
@@ -188,7 +188,7 @@ def install_linux_net_remote(params):
 
         if hostip == "127.0.0.1":
             (status, message) = commands.getstatusoutput(disk_create)
-            os.chown(diskpath, 107, 107) 
+            os.chown(diskpath, 107, 107)
         else:
             (status, message) = utils.remote_exec_pexpect(hostip,user,password,disk_create)
             chowncommand = "chown 107:107" + diskpath
@@ -197,7 +197,7 @@ def install_linux_net_remote(params):
         if status != 0:
             logger.debug(message)
             return 1
-        
+
         logger.info("creating disk images file is successful.")
 
 
@@ -229,7 +229,7 @@ def install_linux_net_remote(params):
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     logger.info("the environment file is %s" % envfile)
-    
+
     #Setting grahoic work
     if graphic == "vnc":
         xmlstr = xmlstr.replace('spice','vnc')
@@ -425,7 +425,7 @@ def install_linux_net_remote_clean(params):
     guestname = params.get('guestname')
 
     diskpath = params.get('diskpath', "/var/lib/libvirt/images") + "/" + guestname
- 
+
     (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
     if not status:
         logger.info("remove guest %s, and its disk image file" % guestname)
@@ -458,8 +458,8 @@ def install_linux_net_remote_clean(params):
         remoteuri = utils.get_uri(hostip)
         if sharedmod.libvirtobj.has_key(remoteuri):
             try:
-                 sharedmod.libvirtobj[remoteuri].close()
-                 time.sleep(10)
+                sharedmod.libvirtobj[remoteuri].close()
+                time.sleep(10)
             except libvirtError,e:
                 logger.error("API error message: %s, error code is %s" \
                          % (e.message, e.get_error_code()))

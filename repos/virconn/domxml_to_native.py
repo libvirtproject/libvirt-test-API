@@ -1,4 +1,4 @@
-#!/usr/bin/python 
+#!/usr/bin/python
 
 from libvirt import libvirtError
 
@@ -13,16 +13,16 @@ optional_params = {}
 
 def check_domxml_to_native(nativeconfig, guestname):
     """Check the result form API domainXMLFromNative,
-       compare the result with the native config in 
+       compare the result with the native config in
        /var/log/libvirt/qemu/$vm.log, and remove vnc
-       port and netdev part before compare.      
+       port and netdev part before compare.
     """
     (status, output) = utils.exec_cmd(GET_NATIVE_CONFIG % \
                     (guestname, guestname), shell=True)
     if status:
         logger.error("Fail to get native config of domain %s" % guestname)
         return 1
-    nativeconLog = output[0] 
+    nativeconLog = output[0]
 
     nativeconLog = nativeconLog.split(SPLIT_STR)
     nativeconfig = nativeconfig.split(SPLIT_STR)
@@ -32,7 +32,7 @@ def check_domxml_to_native(nativeconfig, guestname):
     # Remove vnc port because the port will change if there are
     # other vnc guests on the host, and this is not a problem for
     # this API.
-    
+
     #convert native config from log
     temp = nativeconLog[:]
     for item in temp:
@@ -101,8 +101,8 @@ def domxml_to_native(params):
                         successfully!")
             return 0
     except libvirtError, e:
-            logger.error("API error message: %s, error code is %s" \
-                         % (e.message, e.get_error_code()))
-            return 1
+        logger.error("API error message: %s, error code is %s" \
+                     % (e.message, e.get_error_code()))
+        return 1
 
     return 0

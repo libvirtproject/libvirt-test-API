@@ -26,6 +26,7 @@ import exception
 
 
 class LogGenerator(object):
+
     """ Generate and parser log xml file
     """
 
@@ -136,7 +137,7 @@ class LogGenerator(object):
                             if case_retlist[i] == 0:
                                 retstr = 'PASS'
                             else:
-                                retstr = 'FAIL' 
+                                retstr = 'FAIL'
                             itemresult = self.doc.createElement('result')
                             caseresulttext = self.doc.createTextNode(retstr)
                             itemresult.appendChild(caseresulttext)
@@ -207,8 +208,7 @@ class LogGenerator(object):
                         (testrunid, testid))
         if len(testrunattrlist) == 0:
             raise exception.NoTestRunFound(
-                "In the xmllog file no testrunid %s found" %
-                testrunid)
+                "In the xmllog file no testrunid %s found" % testrunid)
 
         self. __write_to_file(xmldoc, self.logxml)
 
@@ -226,8 +226,7 @@ class LogGenerator(object):
 
         if len(testrunattrlist) == 0:
             raise exception.NoTestRunFound(
-                "In the xmllog file no testrunid %s found" %
-                testrunid)
+                "In the xmllog file no testrunid %s found" % testrunid)
 
         self. __write_to_file(xmldoc, self.logxml)
 
