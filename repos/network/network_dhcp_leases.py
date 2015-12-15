@@ -74,7 +74,10 @@ def get_ip_prefix(network, iptype, logger):
     if not status:
         pass
     else:
-        logger.error("\"" + "show bridge %s" % br + "error")
+        if iptype == "ipv4":
+            logger.error("\"" + PREFIX + "\"" + "error")
+        if iptype == "ipv6":
+            logger.error("\"" + PREFIX_6 + "\"" + "error")
         logger.error(output)
         return False
     return output[0]

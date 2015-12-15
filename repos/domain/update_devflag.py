@@ -120,7 +120,7 @@ def check_device_in_guest(devtype, guestip, username, password, logger):
 
     ret = utils.remote_exec_pexpect(guestip, username, password, "umount /media")
     if ret[0]:
-        logger.error("failed to unmount %s device." % params['devtype'])
+        logger.error("failed to unmount %s device." % devtype)
         return False, ret[1]
 
     return True, output

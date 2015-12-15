@@ -8,7 +8,7 @@
 # Start off by implementing a general purpose event loop for anyones use
 #################################################################################
 
-import sys
+import errno
 import os
 import libvirt
 import select

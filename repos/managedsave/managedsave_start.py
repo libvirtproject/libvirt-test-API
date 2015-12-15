@@ -147,6 +147,6 @@ def managedsave_start(params):
                     % domname)
         return 0
     else:
-        logger.error("Fail to start domain s% with managedsave image"
+        logger.error("Fail to start domain %s with managedsave image"
                      % domname)
         return 1

@@ -312,6 +312,7 @@ class CaseFileParser(object):
     def parse(self, fh, list):
         """ For the testcase name parsing. """
 
+        tripped_casename = ''
         while True:
             if self.debug:
                 self.debug_print("the list is", list)

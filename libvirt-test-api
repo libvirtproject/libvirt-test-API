@@ -313,7 +313,7 @@ class Main(object):
         activities_list = []
         for testid in testid_list:
             activities = eval(CASEINFO.readlines()[testid - 1])
-            activities_list.append(activites)
+            activities_list.append(activities)
 
         self.run(activities_list)
 

@@ -57,8 +57,7 @@ def console_io(params):
                 instr = f.read()
                 f.close()
             except Exception as e:
-                raise TestError(
-                    "Can't read input file '%s': %s" % (infile, str(e)))
+                raise TestError("Can't read input file '%s': %s" % (infile, str(e)))
 
             logger.info(
                 "Sending %d bytes of contents of file '%s' to console '%s'" %
