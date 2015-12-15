@@ -16,8 +16,8 @@ from utils import utils
 required_params = ('guestname', 'diskpath',)
 optional_params = {'memory': 1048576,
                    'vcpu': 1,
-                   'imageformat': 'raw',
-                   'hddriver': 'virtio',
+                   'imageformat' : 'qcow2',
+                   'hddriver' : 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
                    'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
