@@ -137,8 +137,7 @@ def pin_iothread(params):
                 if not tmp_cpuset:
                     fail = 1
                 elif tmp_cpuset != tu_cpu:
-                    logger.info(
-                        "FAIL: the cpuset in xml is not equal the cpuset we set")
+                    logger.info("FAIL: the cpuset in xml is not equal the cpuset we set")
                     fail = 1
             else:
                 logger.info("FAIL: cannot find iothreadpin in XML")
@@ -157,8 +156,7 @@ def pin_iothread(params):
             if not tmp_cpuset:
                 fail = 1
             elif tmp_cpuset != tu_cpu:
-                logger.info(
-                    "FAIL: the cpuset in xml is not equal the cpuset we set")
+                logger.info("FAIL: the cpuset in xml is not equal the cpuset we set")
                 fail = 1
         else:
             logger.info("FAIL: cannot find iothreadpin in XML")

@@ -14,6 +14,7 @@ required_params = ('guestname', 'vcpuquota', 'vcpuperiod', 'emulatorperiod',
                    'emulatorquota', 'cpushares', 'flag',)
 optional_params = {}
 
+
 def check_sched_params_flag(guestname, domobj, sched_params_after, domstate,
                             flags_value):
     """Check scheduler parameters validity after setting
@@ -76,6 +77,7 @@ def check_sched_params_flag(guestname, domobj, sched_params_after, domstate,
     logger.info("set scheduler parameters success")
     return 0
 
+
 def sched_params_flag(params):
     """ Change and get the scheduler parameters
     """
@@ -113,8 +115,8 @@ def sched_params_flag(params):
         elif domstate == libvirt.VIR_DOMAIN_SHUTOFF:
             logger.info("the state of virtual machine is ***shutoff***")
         else:
-            logger.error("the state of virtual machine is not running or " \
-                         "shutoff now, it is out of the check range of this " \
+            logger.error("the state of virtual machine is not running or "
+                         "shutoff now, it is out of the check range of this "
                          "script. Please check the domain status.")
             return 1
 
@@ -131,7 +133,7 @@ def sched_params_flag(params):
         elif flags == "config":
             flags_value = libvirt.VIR_DOMAIN_AFFECT_CONFIG
         else:
-            logger.error("the value of flags is not correct, please check " \
+            logger.error("the value of flags is not correct, please check "
                          "the conf file")
             return 1
 

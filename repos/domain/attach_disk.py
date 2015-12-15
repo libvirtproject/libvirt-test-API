@@ -14,10 +14,11 @@ optional_params = {'imagesize': 1,
                    'qcow2version': 'basic',
                    'username': 'root',
                    'password': 'redhat',
-                   'volumepath' : '/var/lib/libvirt/images',
-                   'volume' : 'attacheddisk',
-                   'xml' : 'xmls/disk.xml',
-                  }
+                   'volumepath': '/var/lib/libvirt/images',
+                   'volume': 'attacheddisk',
+                   'xml': 'xmls/disk.xml',
+                   }
+
 
 def create_image(disk, xmlstr, seeksize, imageformat, qcow2version):
     """Create a image file"""
@@ -29,9 +30,9 @@ def create_image(disk, xmlstr, seeksize, imageformat, qcow2version):
         if qcow2version.endswith('lazy_refcounts'):
             qcow2_options = qcow2_options + " -o lazy_refcounts=on"
     disk_create = "qemu-img create -f %s %s %s %sG" % \
-                    (imageformat, qcow2_options, disk, seeksize)
-    logger.debug("the command line of creating disk images is '%s'" % \
-                   disk_create)
+        (imageformat, qcow2_options, disk, seeksize)
+    logger.debug("the command line of creating disk images is '%s'" %
+                 disk_create)
     (status, message) = commands.getstatusoutput(disk_create)
     if status != 0:
         logger.debug(message)
@@ -54,6 +55,7 @@ def check_attach_disk(num1, num2):
     else:
         return False
 
+
 def check_disk_permission(guestname, devname, username, password):
     """Check the permission of attached disk in guest"""
     mac = utils.get_dom_mac_addr(guestname)
@@ -65,20 +67,21 @@ def check_disk_permission(guestname, devname, username, password):
     (ret, output) = utils.remote_exec_pexpect(ip, username, password, cmd)
 
     if not ret:
-        logger.info("Login guest to run mount /dev/%s /mnt : %s" % (devname, \
+        logger.info("Login guest to run mount /dev/%s /mnt : %s" % (devname,
                                                                     output))
         if "is write-protected, mounting read-only" in output:
             touchcmd = "touch test /mnt"
-            (ret, output) = utils.remote_exec_pexpect(ip, username, password,\
+            (ret, output) = utils.remote_exec_pexpect(ip, username, password,
                                                       touchcmd)
             if not ret:
                 logger.info("Login guest to touch test /mnt : %s" % output)
                 if "Read-only file system" in output:
-                    (ret, output) = utils.remote_exec_pexpect(ip, username, \
-                                                    password, "umount /mnt")
+                    (ret, output) = utils.remote_exec_pexpect(ip, username,
+                                                              password, "umount /mnt")
                     return True
     else:
         return False
+
 
 def attach_disk(params):
     """ Attach a disk to domain from xml """
@@ -122,16 +125,16 @@ def attach_disk(params):
         #Attach disk to domain
         domobj.attachDevice(xmlstr)
         disk_num2 = utils.dev_num(guestname, "disk")
-        logger.debug("update disk number to %s" %disk_num2)
+        logger.debug("update disk number to %s" % disk_num2)
 
-        if  check_attach_disk(disk_num1, disk_num2):
-            logger.info("current disk number: %s\n" %disk_num2)
+        if check_attach_disk(disk_num1, disk_num2):
+            logger.info("current disk number: %s\n" % disk_num2)
         else:
             logger.error("fail to attach a disk to guest: %s\n" % disk_num2)
             return 1
 
         if "readonly" in xmlstr:
-        # Check the disk in guest
+            # Check the disk in guest
             username = params.get('username', 'root')
             print username
             password = params.get('password', 'redhat')
@@ -141,7 +144,7 @@ def attach_disk(params):
             else:
                 return 1
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("attach %s disk to guest %s" % (volumepath, guestname))
         return 1

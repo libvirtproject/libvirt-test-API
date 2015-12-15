@@ -8,7 +8,8 @@ from src import sharedmod
 
 required_params = ('poolname', 'volname',)
 optional_params = {
-                  }
+}
+
 
 def vol_lookup(params):
     """storage pool volume lookup testing"""

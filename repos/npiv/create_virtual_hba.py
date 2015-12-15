@@ -13,7 +13,8 @@ from libvirt import libvirtError
 from src import sharedmod
 
 required_params = ('wwpn',)
-optional_params = {'xml': 'xmls/virtual_hba.xml', }
+optional_params = {'xml': 'xmls/virtual_hba.xml',
+                   }
 
 
 def check_nodedev_create(wwpn, device_name):
@@ -83,8 +84,8 @@ def create_virtual_hba(params):
         nodedev_obj = conn.nodeDeviceCreateXML(xmlstr, 0)
         dev_name = nodedev_obj.name()
 
-        if (check_nodedev_create(wwpn, dev_name) and
-                check_nodedev_parent(nodedev_obj, device_parent, dev_name)):
+        if check_nodedev_create(wwpn, dev_name) and \
+                check_nodedev_parent(nodedev_obj, device_parent, dev_name):
             logger.info("the virtual HBA '%s' was created successfully"
                         % dev_name)
             return 0

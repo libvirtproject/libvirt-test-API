@@ -39,8 +39,8 @@ def write_file(path):
     """
     logger.info("write data into file %s" % path)
     f = open(path, 'w')
-    datastr = ''.join(string.lowercase + string.uppercase
-                      + string.digits + '.' + '\n')
+    datastr = ''.join(string.lowercase + string.uppercase +
+                      string.digits + '.' + '\n')
     data = ''.join(16384 * datastr)
     f.write(data)
     f.close()

@@ -126,6 +126,7 @@ def check_DAC_label(api, domain, logger):
         logger.debug("Fail: '%s'" % api[0])
         return False
 
+
 def securitylabel(params):
     """
        test APIs for securityLabel and securityLabelList in class virDomain

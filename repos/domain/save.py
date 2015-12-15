@@ -91,7 +91,7 @@ def save(params):
         else:
             logger.error("Error: fail to check save domain")
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Error: fail to save %s domain" % guestname)

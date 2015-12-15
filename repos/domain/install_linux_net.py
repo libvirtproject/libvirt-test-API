@@ -59,7 +59,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, logger, installtype):
     try:
         conn = domobj._conn
         domobj = conn.defineXML(xmlstr)
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to define domain %s" % guestname)
@@ -73,7 +73,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, logger, installtype):
 
     try:
         domobj.create()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
@@ -205,7 +205,7 @@ def install_linux_net(params):
         logger.info('define guest from xml description')
         try:
             domobj = conn.defineXML(xmlstr)
-        except libvirtError as e:
+        except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
@@ -215,7 +215,7 @@ def install_linux_net(params):
 
         try:
             domobj.create()
-        except libvirtError as e:
+        except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to start domain %s" % guestname)
@@ -224,7 +224,7 @@ def install_linux_net(params):
         logger.info('create guest from xml description')
         try:
             domobj = conn.createXML(xmlstr, 0)
-        except libvirtError as e:
+        except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
@@ -239,8 +239,7 @@ def install_linux_net(params):
             interval += 10
 
         domobj.destroy()
-        ret = prepare_boot_guest(
-            domobj, xmlstr, guestname, logger, installtype)
+        ret = prepare_boot_guest(domobj, xmlstr, guestname, logger, installtype)
 
         if ret:
             logger.info("booting guest vm off harddisk failed")

@@ -32,8 +32,7 @@ def vcpupin_check(guestname, vcpu, cpulist):
         return 1
 
     logger.debug("vcpu id %s:" % vcpu_task_id[0])
-    cmd_cpus_allowed_list = "grep Cpus_allowed_list /proc/%s/task/%s/status" % (pid[
-                                                                                0], vcpu_task_id[0])
+    cmd_cpus_allowed_list = "grep Cpus_allowed_list /proc/%s/task/%s/status" % (pid[0], vcpu_task_id[0])
     status, output = utils.exec_cmd(cmd_cpus_allowed_list, shell=True)
     if status:
         logger.error("failed to get the cpu_allowed_list of vcpu %s")

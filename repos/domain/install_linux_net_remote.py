@@ -20,22 +20,22 @@ from utils import utils
 required_params = ('guestname', 'guestos', 'guestarch', 'netmethod')
 optional_params = {'memory': 1048576,
                    'vcpu': 2,
-                   'disksize' : 10,
-                   'imageformat' : 'qcow2',
-                   'hddriver' : 'virtio',
+                   'disksize': 10,
+                   'imageformat': 'qcow2',
+                   'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'nettype': 'network',
                    'netsource': 'default',
-                   'type' : 'define',
+                   'type': 'define',
                    'xml': 'xmls/kvm_linux_guest_install_net.xml',
                    'guestmachine': 'pc',
-                   'graphic':'spice',
-                   'hostip':'127.0.0.1',
-                   'user':'root',
-                   'password':'redhat',
-                   'disksymbol':'sdb',
-                   'diskpath':"/var/lib/libvirt/images"
-                  }
+                   'graphic': 'spice',
+                   'hostip': '127.0.0.1',
+                   'user': 'root',
+                   'password': 'redhat',
+                   'disksymbol': 'sdb',
+                   'diskpath': "/var/lib/libvirt/images"
+                   }
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
 VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
@@ -47,15 +47,17 @@ VMLINUZ = os.path.join(BOOT_DIR, 'vmlinuz')
 INITRD = os.path.join(BOOT_DIR, 'initrd.img')
 HOME_PATH = os.getcwd()
 
+
 def get_remote_hypervisor_uri(hostip, user, password):
     (ret1, out1) = utils.remote_exec_pexpect(hostip, user, password, 'lsmod|grep kvm')
     (ret2, out2) = utils.remote_exec_pexpect(hostip, user, password, 'ls /proc|grep xen')
     if strip(out1) != "":
-        return "qemu+ssh://%s/system" %hostip
+        return "qemu+ssh://%s/system" % hostip
     elif strip == "xen":
-        return "xen+ssh://%s" %hostip
+        return "xen+ssh://%s" % hostip
     else:
         return "No hypervisor running"
+
 
 def prepare_boot_guest(domobj, xmlstr, guestname, logger, installtype, installmethod):
     """After guest installa/kvm_linux_guest_install_net.xml
@@ -68,15 +70,14 @@ on is over, undefine the guest with
     xmlstr = re.sub("<cmdline>.*</cmdline>\n", "", xmlstr)
 
     if installmethod == "nfs":
-        xmlstr = re.sub("<interface type='direct'>", \
-                        "<interface type='network'>", \
+        xmlstr = re.sub("<interface type='direct'>",
+                        "<interface type='network'>",
                         xmlstr)
-        xmlstr = re.sub("<source dev=.* mode='bridge'/>", \
-                        "<source network='default'/>", \
+        xmlstr = re.sub("<source dev=.* mode='bridge'/>",
+                        "<source network='default'/>",
                         xmlstr)
         xmlstr = re.sub("\n.*<target dev='macvtap0'/>", "", xmlstr)
         xmlstr = re.sub("<alias name=.*>\n", "", xmlstr)
-
 
     if installtype != 'create':
         domobj.undefine()
@@ -86,7 +87,7 @@ on is over, undefine the guest with
         conn = domobj._conn
         domobj = conn.defineXML(xmlstr)
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to define domain %s" % guestname)
         return 1
@@ -100,12 +101,13 @@ on is over, undefine the guest with
     try:
         domobj.create()
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
         return 1
 
     return 0
+
 
 def check_domain_state(conn, guestname, logger):
     """ if a guest with the same name exists, remove it """
@@ -128,6 +130,7 @@ def check_domain_state(conn, guestname, logger):
         domobj = conn.lookupByName(guestname)
         domobj.undefine()
 
+
 def install_linux_net_remote(params):
     """install a new virtual machine"""
     # Initiate and check parameters
@@ -140,12 +143,12 @@ def install_linux_net_remote(params):
     netsource = params.get('netsource')
     xmlstr = params['xml']
     installmethod = params['netmethod']
-    hostip = params.get('hostip','127.0.0.1')
-    user = params.get('user','root')
-    password = params.get('password','redhat')
-    graphic = params.get('graphic','spice')
+    hostip = params.get('hostip', '127.0.0.1')
+    user = params.get('user', 'root')
+    password = params.get('password', 'redhat')
+    graphic = params.get('graphic', 'spice')
 
-    diskpath = params.get('diskpath',"/var/lib/libvirt/images")
+    diskpath = params.get('diskpath', "/var/lib/libvirt/images")
 
     logger.info("the name of guest is %s" % guestname)
     logger.info("the installation method is %s" % installmethod)
@@ -182,15 +185,15 @@ def install_linux_net_remote(params):
         imageformat = params.get('imageformat', 'qcow2')
         logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
         disk_create = "qemu-img create -f %s %s %sG" % \
-                        (imageformat, diskpath, seeksize)
-        logger.debug("the command line of creating disk images is '%s'" % \
-                       disk_create)
+            (imageformat, diskpath, seeksize)
+        logger.debug("the command line of creating disk images is '%s'" %
+                     disk_create)
 
         if hostip == "127.0.0.1":
             (status, message) = commands.getstatusoutput(disk_create)
             os.chown(diskpath, 107, 107)
         else:
-            (status, message) = utils.remote_exec_pexpect(hostip,user,password,disk_create)
+            (status, message) = utils.remote_exec_pexpect(hostip, user, password, disk_create)
             chowncommand = "chown 107:107" + diskpath
 
     #Authorize the file and directory
@@ -200,7 +203,6 @@ def install_linux_net_remote(params):
 
         logger.info("creating disk images file is successful.")
 
-
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
     elif hddriver == 'ide':
@@ -208,23 +210,23 @@ def install_linux_net_remote(params):
     elif hddriver == 'scsi':
         xmlstr = xmlstr.replace('DEV', 'sda')
     elif hddriver == 'scsilun':
-        xmlstr = xmlstr.replace("'scsilun'","'scsi'")
-        xmlstr = xmlstr.replace('DEV','vda')
-        xmlstr = xmlstr.replace('"file"','"block"')
-        xmlstr = xmlstr.replace('"disk"','"lun"')
-        xmlstr = xmlstr.replace("file='DISKPATH'","dev='/dev/SDX'")
-        disksymbol = params.get('disksymbol','sdb')
-        xmlstr = xmlstr.replace('SDX',disksymbol)
+        xmlstr = xmlstr.replace("'scsilun'", "'scsi'")
+        xmlstr = xmlstr.replace('DEV', 'vda')
+        xmlstr = xmlstr.replace('"file"', '"block"')
+        xmlstr = xmlstr.replace('"disk"', '"lun"')
+        xmlstr = xmlstr.replace("file='DISKPATH'", "dev='/dev/SDX'")
+        disksymbol = params.get('disksymbol', 'sdb')
+        xmlstr = xmlstr.replace('SDX', disksymbol)
     elif hddriver == 'lun':
-        xmlstr = xmlstr.replace("'lun'","'virtio'")
-        xmlstr = xmlstr.replace('DEV','vda')
-        xmlstr = xmlstr.replace('"file"','"block"')
-        xmlstr = xmlstr.replace('"disk"','"lun"')
-        xmlstr = xmlstr.replace("file='DISKPATH'","dev='/dev/SDX'")
-        disksymbol = params.get('disksymbol','sdb')
-        xmlstr = xmlstr.replace('SDX',disksymbol)
+        xmlstr = xmlstr.replace("'lun'", "'virtio'")
+        xmlstr = xmlstr.replace('DEV', 'vda')
+        xmlstr = xmlstr.replace('"file"', '"block"')
+        xmlstr = xmlstr.replace('"disk"', '"lun"')
+        xmlstr = xmlstr.replace("file='DISKPATH'", "dev='/dev/SDX'")
+        disksymbol = params.get('disksymbol', 'sdb')
+        xmlstr = xmlstr.replace('SDX', disksymbol)
     elif hddriver == 'sata':
-        xmlstr = xmlstr.replace('DEV','sda')
+        xmlstr = xmlstr.replace('DEV', 'sda')
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
@@ -232,9 +234,9 @@ def install_linux_net_remote(params):
 
     #Setting grahoic work
     if graphic == "vnc":
-        xmlstr = xmlstr.replace('spice','vnc')
+        xmlstr = xmlstr.replace('spice', 'vnc')
     elif graphic == "spice":
-        xmlstr = xmlstr.replace('spice','spice')
+        xmlstr = xmlstr.replace('spice', 'spice')
     else:
         logger.info("graphic type unsupported")
         return 1
@@ -283,9 +285,9 @@ def install_linux_net_remote(params):
     else:
         urlcommand = """echo "import urllib;urllib.urlretrieve('%s','%s');\
                      urllib.urlretrieve('%s','%s')">/var/lib/libvirt/temp.py """ \
-                     %(vmlinuzpath, VMLINUZ, initrdpath, INITRD)
-        utils.remote_exec_pexpect(hostip, user, password, urlcommand+
-                                 ";python /var/lib/libvirt/temp.py;\
+                     % (vmlinuzpath, VMLINUZ, initrdpath, INITRD)
+        utils.remote_exec_pexpect(hostip, user, password, urlcommand +
+                                  ";python /var/lib/libvirt/temp.py;\
                                  rm -rf /var/lib/libvirt/temp.py")
 
     logger.debug("vmlinuz and initrd.img are located in %s" % BOOT_DIR)
@@ -305,7 +307,7 @@ def install_linux_net_remote(params):
         try:
             domobj = conn.defineXML(xmlstr)
         except libvirtError, e:
-            logger.error("API error message: %s, error code is %s" \
+            logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
@@ -315,7 +317,7 @@ def install_linux_net_remote(params):
         try:
             domobj.create()
         except libvirtError, e:
-            logger.error("API error message: %s, error code is %s" \
+            logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to start domain %s" % guestname)
             return 1
@@ -324,7 +326,7 @@ def install_linux_net_remote(params):
         try:
             domobj = conn.createXML(xmlstr, 0)
         except libvirtError, e:
-            logger.error("API error message: %s, error code is %s" \
+            logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
@@ -338,8 +340,8 @@ def install_linux_net_remote(params):
             interval += 10
 
         domobj.destroy()
-        ret =  prepare_boot_guest(domobj, xmlstr, guestname, logger, installtype, \
-                                  installmethod)
+        ret = prepare_boot_guest(domobj, xmlstr, guestname, logger, installtype,
+                                 installmethod)
 
         if ret:
             logger.info("booting guest vm off harddisk failed")
@@ -350,13 +352,13 @@ def install_linux_net_remote(params):
         interval = 0
         while(interval < 3600):
             time.sleep(10)
-            if installtype == None or installtype == 'define':
+            if installtype is None or installtype == 'define':
                 state = domobj.info()[0]
                 if(state == libvirt.VIR_DOMAIN_SHUTOFF):
                     logger.info("guest installaton of define type is complete")
                     logger.info("boot guest vm off harddisk")
-                    ret  = prepare_boot_guest(domobj, xmlstr, guestname, logger, \
-                                              installtype, installmethod)
+                    ret = prepare_boot_guest(domobj, xmlstr, guestname, logger,
+                                             installtype, installmethod)
                     if ret:
                         logger.info("booting guest vm off harddisk failed")
                         return 1
@@ -374,7 +376,7 @@ def install_linux_net_remote(params):
                 if guestname not in guest_names:
                     logger.info("guest installation of create type is complete")
                     logger.info("define the vm and boot it up")
-                    ret = prepare_boot_guest(domobj, xmlstr, guestname, logger, \
+                    ret = prepare_boot_guest(domobj, xmlstr, guestname, logger,
                                              installtype, installmethod)
                     if ret:
                         logger.info("booting guest vm off harddisk failed")
@@ -419,6 +421,7 @@ def install_linux_net_remote(params):
 
     return 0
 
+
 def install_linux_net_remote_clean(params):
     """ clean testing environment """
     logger = params['logger']
@@ -453,16 +456,16 @@ def install_linux_net_remote_clean(params):
         os.remove(VMLINUZ)
     if os.path.exists(INITRD):
         os.remove(INITRD)
-    hostip = params.get('hostip','127.0.0.1')
+    hostip = params.get('hostip', '127.0.0.1')
     if hostip != "127.0.0.1":
         remoteuri = utils.get_uri(hostip)
         if sharedmod.libvirtobj.has_key(remoteuri):
             try:
                 sharedmod.libvirtobj[remoteuri].close()
                 time.sleep(10)
-            except libvirtError,e:
-                logger.error("API error message: %s, error code is %s" \
-                         % (e.message, e.get_error_code()))
+            except libvirtError, e:
+                logger.error("API error message: %s, error code is %s"
+                             % (e.message, e.get_error_code()))
                 logger.error("fail to close the connection: %s" % remoteuri)
             sharedmod.libvirtobj.pop(remoteuri)
             logger.info("Close the connect %s" % remoteuri)

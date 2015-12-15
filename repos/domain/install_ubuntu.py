@@ -18,23 +18,23 @@ from utils import utils
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
-                   'memory': 1048576,
-                   'vcpu': 1,
-                   'disksize' : 10,
-                   'diskpath' : '/var/lib/libvirt/images/libvirt-test-api',
-                   'imageformat' : 'raw',
-                   'hddriver' : 'virtio',
+    'memory': 1048576,
+    'vcpu': 1,
+    'disksize': 10,
+    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
+    'imageformat': 'raw',
+                   'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
-                   'uuid' : '05867c1a-afeb-300e-e55e-2673391ae080',
-                   'type' : 'define',
+                   'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
+                   'type': 'define',
                    'xml': 'xmls/kvm_linux_guest_install_ubuntu.xml',
                    'guestmachine': 'pc',
                    'networksource': 'default',
                    'bridgename': 'virbr0',
                    'graphic': "spice",
-                   'disksymbol' : 'sdb'
-                  }
+                   'disksymbol': 'sdb'
+}
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
 VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
@@ -42,6 +42,8 @@ VM_DESTROY = "virsh destroy %s"
 VM_UNDEFINE = "virsh undefine %s"
 
 HOME_PATH = os.getcwd()
+
+
 def cleanup(mount, logger):
     """Clean up a previously used mountpoint.
        @param mount: Mountpoint to be cleaned up.
@@ -49,16 +51,17 @@ def cleanup(mount, logger):
     if os.path.isdir(mount):
         if os.path.ismount(mount):
             logger.info("Path %s is still mounted, please verify" % mount)
-            commands.getstatusoutput("umount -l  %s" %mount)
+            commands.getstatusoutput("umount -l  %s" % mount)
             logger.info("the floppy mount point folder exists, remove it")
             shutil.rmtree(mount)
         else:
             logger.info("Removing mount point %s" % mount)
             os.rmdir(mount)
     os.makedirs(mount)
-    logger.info("making the directory %s" %mount)
+    logger.info("making the directory %s" % mount)
 
-def prepare_ks(ks, guestos, hddriver, ks_path,logger):
+
+def prepare_ks(ks, guestos, hddriver, ks_path, logger):
     """Prepare the ks file for suse installation
        virtio bus use the vda instead of sda in ide or scsi bus
     """
@@ -73,12 +76,13 @@ def prepare_ks(ks, guestos, hddriver, ks_path,logger):
             f.write(ks_content)
             f.close()
 
+
 def prepare_floppy(ks_path, mount_point, floppy_path, logger):
     """ Prepare a floppy containing autoinst.xml
     """
     if os.path.exists(floppy_path):
         os.remove(floppy_path)
-    create_cmd =  'dd if=/dev/zero of=%s bs=1440k count=1' % floppy_path
+    create_cmd = 'dd if=/dev/zero of=%s bs=1440k count=1' % floppy_path
     (status, text) = commands.getstatusoutput(create_cmd)
     if status:
         logger.error("failed to create floppy image")
@@ -90,7 +94,7 @@ def prepare_floppy(ks_path, mount_point, floppy_path, logger):
         return 1
     if os.path.exists(mount_point):
         logger.info("the floppy mount point folder exists, remove it")
-        commands.getstatusoutput("umount -l %s" %mount_point)
+        commands.getstatusoutput("umount -l %s" % mount_point)
         shutil.rmtree(mount_point)
     logger.info("create mount point %s" % mount_point)
     os.makedirs(mount_point)
@@ -98,10 +102,11 @@ def prepare_floppy(ks_path, mount_point, floppy_path, logger):
     (status, text) = commands.getstatusoutput(mount_cmd)
     if status:
         logger.error(
-        "failed to mount /tmp/floppy.img to /mnt/libvirt_floppy")
+            "failed to mount /tmp/floppy.img to /mnt/libvirt_floppy")
         return 1
     shutil.copy(ks_path, mount_point)
     return 0
+
 
 def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_folder, logger):
     """ to customize boot.iso file to add kickstart
@@ -112,7 +117,7 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
     # prepare the cache_folder
     if not os.path.exists(cache_folder):
         os.makedirs(cache_folder)
-        logger.info("making directory %s"  %cache_folder)
+        logger.info("making directory %s" % cache_folder)
 
     if os.path.exists(new_dir):
         logger.info("the folder exists, remove it")
@@ -124,37 +129,37 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
     # mount point is /mnt/custom
     mount_point = "/mnt/custom"
     cleanup(mount_point, logger)
-    iso_path = new_dir + "/"  + ostree.split("/")[-1]
+    iso_path = new_dir + "/" + ostree.split("/")[-1]
     logger.info("Downloading the iso file")
     cmd = "wget " + ostree + " -P " + new_dir
     utils.exec_cmd(cmd, shell=True)
 
     # copy iso file
-    mount_command = "mount -o loop %s %s" %(iso_path, mount_point)
+    mount_command = "mount -o loop %s %s" % (iso_path, mount_point)
     (status, message) = commands.getstatusoutput(mount_command)
     if status:
         logger.error("mount iso failure")
         return 1
     logger.info("Copying the iso file to working directory")
-    commands.getstatusoutput("cp -rf %s/* %s" %(mount_point, new_dir + "/custom") )
+    commands.getstatusoutput("cp -rf %s/* %s" % (mount_point, new_dir + "/custom"))
 
     # prepare the custom iso
-    if "ubuntu"  in guestos:
-        commands.getstatusoutput("cp -rf %s/.disk %s" %(mount_point, new_dir + "/custom"))
+    if "ubuntu" in guestos:
+        commands.getstatusoutput("cp -rf %s/.disk %s" % (mount_point, new_dir + "/custom"))
         prepare_ks(ks, guestos, hddriver, new_dir + "/custom/install/ks.cfg", logger)
         os.remove(new_dir + "/custom/isolinux/isolinux.cfg")
-        shutil.copy(HOME_PATH + "/repos/domain/isolinux/ubuntu/isolinux.cfg", \
+        shutil.copy(HOME_PATH + "/repos/domain/isolinux/ubuntu/isolinux.cfg",
                     new_dir + "/custom/isolinux/")
         MAKE_ISO = "mkisofs -o %s/custom.iso -J -r -v -R -b \
                     isolinux/isolinux.bin -c isolinux/boot.cat \
                     -no-emul-boot -boot-load-size 4 \
                     -boot-info-table %s"
         logger.info("Making the custom.iso file")
-        (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO %(new_dir, new_dir + "/custom"))
+        (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO % (new_dir, new_dir + "/custom"))
     else:
         prepare_ks(ks, guestos, hddriver, new_dir + "/custom/autoinst.xml", logger)
-        flag = prepare_floppy(new_dir + "/custom/autoinst.xml", \
-                              "/mnt/floppy", \
+        flag = prepare_floppy(new_dir + "/custom/autoinst.xml",
+                              "/mnt/floppy",
                               new_dir + "/floppy.img", logger)
         if flag == 1:
             logger.info("Create floppy file failing")
@@ -162,7 +167,7 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
 
         isolinux_location = new_dir + "/custom/boot/" + guestarch + "/loader/"
         os.remove(isolinux_location + "isolinux.cfg")
-        shutil.copy(HOME_PATH + "/repos/domain/isolinux/suse/isolinux.cfg", \
+        shutil.copy(HOME_PATH + "/repos/domain/isolinux/suse/isolinux.cfg",
                     isolinux_location)
         logger.info("Making the custom.iso file")
         if guestarch == "i386":
@@ -170,13 +175,13 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
                         boot/i386/loader/isolinux.bin -c boot.cat \
                         -no-emul-boot -boot-load-size 4 \
                         -boot-info-table %s'
-            (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO %(new_dir, new_dir + "/custom"))
+            (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO % (new_dir, new_dir + "/custom"))
         else:
             MAKE_ISO = 'mkisofs -o %s/custom.iso -J -r -v -R -b \
                         boot/x86_64/loader/isolinux.bin -c boot.cat \
                         -no-emul-boot -boot-load-size 4 \
                         -boot-info-table %s'
-            (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO %(new_dir, new_dir + "/custom"))
+            (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO % (new_dir, new_dir + "/custom"))
 
     if statusiso:
         logger.error(messageiso)
@@ -187,10 +192,11 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
     (status, text) = commands.getstatusoutput("umount -l /mnt/floppy")
     if status:
         logger.error(
-        "failed to umount %s" %mount_point)
+            "failed to umount %s" % mount_point)
 
-    (statusumount, messageumount) = commands.getstatusoutput("umount -l %s" %mount_point)
+    (statusumount, messageumount) = commands.getstatusoutput("umount -l %s" % mount_point)
     return new_dir
+
 
 def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     """ After guest installation is over, undefine the guest with
@@ -208,7 +214,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
         conn = domobj._conn
         domobj = conn.defineXML(xmlstr)
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to define domain %s" % guestname)
         return 1
@@ -222,12 +228,13 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     try:
         domobj.create()
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
         return 1
 
     return 0
+
 
 def check_domain_state(conn, guestname, logger):
     """ if a guest with the same name exists, remove it """
@@ -252,6 +259,7 @@ def check_domain_state(conn, guestname, logger):
 
     return 0
 
+
 def install_ubuntu(params):
     """ install a new virtual machine """
 
@@ -261,7 +269,7 @@ def install_ubuntu(params):
     guestname = params.get('guestname')
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
-    br = params.get('bridgename','virbr0')
+    br = params.get('bridgename', 'virbr0')
 
     logger.info("the name of guest is %s" % guestname)
 
@@ -286,9 +294,9 @@ def install_ubuntu(params):
     if hddriver != 'lun' and hddriver != "scsilun":
         logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
         disk_create = "qemu-img create -f %s %s %sG" % \
-                        (imageformat, diskpath, seeksize)
-        logger.debug("the command line of creating disk images is '%s'" % \
-                      disk_create)
+            (imageformat, diskpath, seeksize)
+        logger.debug("the command line of creating disk images is '%s'" %
+                     disk_create)
         (status, message) = commands.getstatusoutput(disk_create)
         if status != 0:
             logger.debug(message)
@@ -305,28 +313,28 @@ def install_ubuntu(params):
     elif hddriver == "sata":
         xmlstr = xmlstr.replace("DEV", 'sda')
     elif hddriver == 'lun':
-        xmlstr = xmlstr.replace("'lun'","'virtio'")
-        xmlstr = xmlstr.replace('DEV','vda')
-        xmlstr = xmlstr.replace("'file'","'block'")
-        xmlstr = xmlstr.replace("'disk'","'lun'")
+        xmlstr = xmlstr.replace("'lun'", "'virtio'")
+        xmlstr = xmlstr.replace('DEV', 'vda')
+        xmlstr = xmlstr.replace("'file'", "'block'")
+        xmlstr = xmlstr.replace("'disk'", "'lun'")
         tmp = params.get('diskpath', '/var/lib/libvirt/images') + '/' + guestname
-        xmlstr = xmlstr.replace("file='%s'"% tmp, \
+        xmlstr = xmlstr.replace("file='%s'" % tmp,
                                 "dev='/dev/SDX'")
-        disksymbol = params.get('disksymbol','sdb')
-        xmlstr = xmlstr.replace('SDX',disksymbol)
-        xmlstr = xmlstr.replace("<disk type='block' device='cdrom'>",  \
+        disksymbol = params.get('disksymbol', 'sdb')
+        xmlstr = xmlstr.replace('SDX', disksymbol)
+        xmlstr = xmlstr.replace("<disk type='block' device='cdrom'>",
                                 "<disk type='file' device='cdrom'>")
     elif hddriver == 'scsilun':
-        xmlstr = xmlstr.replace("'scsilun'","'scsi'")
-        xmlstr = xmlstr.replace('DEV','sda')
-        xmlstr = xmlstr.replace("'file'","'block'")
-        xmlstr = xmlstr.replace("'disk'","'lun'")
+        xmlstr = xmlstr.replace("'scsilun'", "'scsi'")
+        xmlstr = xmlstr.replace('DEV', 'sda')
+        xmlstr = xmlstr.replace("'file'", "'block'")
+        xmlstr = xmlstr.replace("'disk'", "'lun'")
         tmp = params.get('diskpath', '/var/lib/libvirt/images') + '/' + guestname
-        xmlstr = xmlstr.replace("file='%s'"% tmp, \
+        xmlstr = xmlstr.replace("file='%s'" % tmp,
                                 "dev='/dev/SDX'")
-        disksymbol = params.get('disksymbol','sdb')
-        xmlstr = xmlstr.replace('SDX',disksymbol)
-        xmlstr = xmlstr.replace("<disk type='block' device='cdrom'>",  \
+        disksymbol = params.get('disksymbol', 'sdb')
+        xmlstr = xmlstr.replace('SDX', disksymbol)
+        xmlstr = xmlstr.replace("<disk type='block' device='cdrom'>",
                                 "<disk type='file' device='cdrom'>")
 
     # prepare the graphic
@@ -343,7 +351,7 @@ def install_ubuntu(params):
     os_arch = guestos + "_" + guestarch
 
     envparser = env_parser.Envparser(envfile)
-    ostree = envparser.get_value("guest", os_arch  + "_iso")
+    ostree = envparser.get_value("guest", os_arch + "_iso")
     ks = envparser.get_value("guest", os_arch + "_iso_ks")
 
     logger.debug('install source:\n    %s' % ostree)
@@ -358,7 +366,7 @@ def install_ubuntu(params):
 
     logger.info("begin to customize the custom.iso file")
     custom = prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_folder, logger)
-    xmlstr = xmlstr.replace("<disk type='block' device='floppy'>\n", \
+    xmlstr = xmlstr.replace("<disk type='block' device='floppy'>\n",
                             "<disk type='file' device='floppy'>\n")
     if "suse" in guestos:
         xmlstr = xmlstr.replace("FLOPPY", custom + "/floppy.img")
@@ -378,7 +386,7 @@ def install_ubuntu(params):
         try:
             domobj = conn.defineXML(xmlstr)
         except libvirtError, e:
-            logger.error("API error message: %s, error code is %s" \
+            logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
@@ -388,7 +396,7 @@ def install_ubuntu(params):
         try:
             domobj.create()
         except libvirtError, e:
-            logger.error("API error message: %s, error code is %s" \
+            logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to start domain %s" % guestname)
             return 1
@@ -397,7 +405,7 @@ def install_ubuntu(params):
         try:
             domobj = conn.createXML(xmlstr, 0)
         except libvirtError, e:
-            logger.error("API error message: %s, error code is %s" \
+            logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
@@ -408,8 +416,8 @@ def install_ubuntu(params):
         if installtype == 'define':
             try:
                 state = domobj.info()[0]
-            except libvirtError,e:
-                logger.error("API error message: %s, error code is %s" \
+            except libvirtError, e:
+                logger.error("API error message: %s, error code is %s"
                              % (e.message, e.get_error_code()))
                 return 1
             if(state == libvirt.VIR_DOMAIN_SHUTOFF):
@@ -454,7 +462,7 @@ def install_ubuntu(params):
         time.sleep(10)
         timeout -= 10
 
-        ip = utils.mac_to_ip(mac,180,br)
+        ip = utils.mac_to_ip(mac, 180, br)
 
         if not ip:
             logger.info(str(timeout) + "s left")
@@ -470,6 +478,7 @@ def install_ubuntu(params):
     time.sleep(60)
 
     return 0
+
 
 def install_ubuntu_clean(params):
     """ clean testing environment """
@@ -505,8 +514,8 @@ def install_ubuntu_clean(params):
     envparser = env_parser.Envparser(envfile)
     ostree_search = params.get('guestos') + "_" + params.get('guestarch') + "_iso"
     ostree = envparser.get_value("guest", ostree_search)
-    cache_folder = envparser.get_value("variables", "domain_cache_folder") +  "/" +\
-                   ostree.split("/")[-1].split(".iso")[0]
+    cache_folder = envparser.get_value("variables", "domain_cache_folder") + "/" +\
+        ostree.split("/")[-1].split(".iso")[0]
     if os.path.exists(cache_folder):
         shutil.rmtree(cache_folder)
 

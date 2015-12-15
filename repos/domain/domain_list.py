@@ -16,14 +16,15 @@ RUNNING_DIR = '/var/run/libvirt/qemu'
 SAVE_DIR = '/var/lib/libvirt/qemu/save'
 SNAPSHOT_DIR = '/var/lib/libvirt/qemu/snapshot/'
 flag_list = {"default": 0,
-         "active": libvirt.VIR_CONNECT_LIST_DOMAINS_ACTIVE,
-         "persistent": libvirt.VIR_CONNECT_LIST_DOMAINS_PERSISTENT,
-         "running": libvirt.VIR_CONNECT_LIST_DOMAINS_RUNNING,
-         "paused": libvirt.VIR_CONNECT_LIST_DOMAINS_PAUSED,
-         "shutoff": libvirt.VIR_CONNECT_LIST_DOMAINS_SHUTOFF,
-         "managedsave": libvirt.VIR_CONNECT_LIST_DOMAINS_MANAGEDSAVE,
-         "autostart": libvirt.VIR_CONNECT_LIST_DOMAINS_AUTOSTART,
-         "snapshot": libvirt.VIR_CONNECT_LIST_DOMAINS_HAS_SNAPSHOT}
+             "active": libvirt.VIR_CONNECT_LIST_DOMAINS_ACTIVE,
+             "persistent": libvirt.VIR_CONNECT_LIST_DOMAINS_PERSISTENT,
+             "running": libvirt.VIR_CONNECT_LIST_DOMAINS_RUNNING,
+             "paused": libvirt.VIR_CONNECT_LIST_DOMAINS_PAUSED,
+             "shutoff": libvirt.VIR_CONNECT_LIST_DOMAINS_SHUTOFF,
+             "managedsave": libvirt.VIR_CONNECT_LIST_DOMAINS_MANAGEDSAVE,
+             "autostart": libvirt.VIR_CONNECT_LIST_DOMAINS_AUTOSTART,
+             "snapshot": libvirt.VIR_CONNECT_LIST_DOMAINS_HAS_SNAPSHOT}
+
 
 def get_dir_entires(domain_dir, end_string):
     """get the domains list from the specified directory
@@ -46,6 +47,7 @@ def get_dir_entires(domain_dir, end_string):
                 guest_list.append(guest)
 
     return guest_list
+
 
 def check_domain_list(name_list, flag):
     """check the domains list

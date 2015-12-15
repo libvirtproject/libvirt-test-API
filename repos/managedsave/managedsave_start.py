@@ -76,18 +76,15 @@ def managedsave_start(params):
             # this covers flags = None as well as flags = 'noping'
             domobj.create()
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("start failed")
         return 1
 
     while timeout:
         state = domobj.info()[0]
-        expect_states = [
-            libvirt.VIR_DOMAIN_RUNNING,
-            libvirt.VIR_DOMAIN_PAUSED,
-            libvirt.VIR_DOMAIN_NOSTATE,
-            libvirt.VIR_DOMAIN_BLOCKED]
+        expect_states = [libvirt.VIR_DOMAIN_RUNNING, libvirt.VIR_DOMAIN_PAUSED,
+                         libvirt.VIR_DOMAIN_NOSTATE, libvirt.VIR_DOMAIN_BLOCKED]
 
         if state in expect_states:
             break
@@ -115,8 +112,8 @@ def managedsave_start(params):
                 domobj.resume()
 
             except libvirtError, e:
-                logger.error("API error message: %s, error code is %s" \
-                     % (e.message, e.get_error_code()))
+                logger.error("API error message: %s, error code is %s"
+                             % (e.message, e.get_error_code()))
                 logger.error("resume failed")
                 return 1
             stateresume = domobj.info()[0]
@@ -150,6 +147,6 @@ def managedsave_start(params):
                     % domname)
         return 0
     else:
-        logger.error("Fail to start domain %s with managedsave image"
+        logger.error("Fail to start domain s% with managedsave image"
                      % domname)
         return 1

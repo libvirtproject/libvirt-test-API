@@ -6,8 +6,9 @@ import libvirt
 from libvirt import libvirtError
 from src import sharedmod
 
-required_params = ('poolname','volname',)
+required_params = ('poolname', 'volname',)
 optional_params = {}
+
 
 def pool_lookup_by_volume(params):
     """
@@ -39,7 +40,7 @@ def pool_lookup_by_volume(params):
             return 1
 
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1
 

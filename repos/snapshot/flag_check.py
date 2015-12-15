@@ -82,9 +82,7 @@ def flag_check(params):
         logger.error("flag %s still exist, FAILED." % FLAG_FILE)
         return 1
     elif out is not None and expected_result == "exist":
-        logger.error(
-            "no flag %s exists in the guest %s " %
-            (FLAG_FILE, guestname))
+        logger.error("no flag %s exists in the guest %s " % (FLAG_FILE, guestname))
         return 1
     elif out is not None and expected_result == 'noexist':
         logger.info("flag %s is not present, checking succeeded" % FLAG_FILE)

@@ -19,16 +19,17 @@ config_dir = '/etc/libvirt/qemu/'
 required_params = ('guestname',
                    'imageformat',
                    'hddriver',)
-optional_params = {'diskpath' : '/var/lib/libvirt/images/attacheddisk',
-                   'xml' : 'xmls/disk.xml',
-                  }
+optional_params = {'diskpath': '/var/lib/libvirt/images/attacheddisk',
+                   'xml': 'xmls/disk.xml',
+                   }
+
 
 def create_image(diskpath, seeksize, imageformat, logger):
     """Create a image file"""
     disk_create = "qemu-img create -f %s %s %sG" % \
-                    (imageformat, diskpath, seeksize)
-    logger.debug("the command line of creating disk images is '%s'" % \
-                   disk_create)
+        (imageformat, diskpath, seeksize)
+    logger.debug("the command line of creating disk images is '%s'" %
+                 disk_create)
 
     (status, message) = commands.getstatusoutput(disk_create)
     if status != 0:
@@ -36,6 +37,7 @@ def create_image(diskpath, seeksize, imageformat, logger):
         return 1
 
     return 0
+
 
 def check_disk(num1, num2):
     """Check detach disk result via simple disk number
@@ -48,6 +50,7 @@ def check_disk(num1, num2):
     else:
         return 2
 
+
 def check_persistent(guestname, target):
     """Check target disk in domain config xml
     """
@@ -59,6 +62,7 @@ def check_persistent(guestname, target):
         return True
     else:
         return False
+
 
 def detach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
                 logger):
@@ -97,7 +101,7 @@ def detach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
             return 1
 
         disk_num2 = utils.dev_num(guestname, "disk")
-        ret= check_disk(disk_num1, disk_num2)
+        ret = check_disk(disk_num1, disk_num2)
         config_check = check_persistent(guestname, target)
 
         if flags == 0 or flags == 1:
@@ -133,6 +137,7 @@ def detach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
     else:
         logger.error("only support domain running or shutoff")
         return 1
+
 
 def attach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
                 logger):
@@ -212,6 +217,7 @@ def attach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
     else:
         logger.error("please make sure domain is running or shutoff")
         return 1
+
 
 def disk_hotplug(params):
     """Loop attach/detach disk through xml on domain with all supported

@@ -34,7 +34,7 @@ def resume(params):
     logger.info('resume domain')
     try:
         domobj.resume()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("resume failed")

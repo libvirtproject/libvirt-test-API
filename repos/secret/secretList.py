@@ -8,6 +8,7 @@ from xml.dom import minidom
 required_params = ('flag',)
 optional_params = {}
 
+
 def check_secretList(flags, secretobjs, conn):
     """check the secret list result
     """
@@ -16,8 +17,8 @@ def check_secretList(flags, secretobjs, conn):
     elif flags == 'ephemeral':
         for i in secretobjs:
             ephemeral = minidom.parseString(i.XMLDesc(0)).\
-                        getElementsByTagName('secret')[0].\
-                        getAttribute('ephemeral')
+                getElementsByTagName('secret')[0].\
+                getAttribute('ephemeral')
             if ephemeral == 'no':
                 return 1
         return 0
@@ -25,24 +26,24 @@ def check_secretList(flags, secretobjs, conn):
     elif flags == 'non-ephemeral':
         for i in secretobjs:
             ephemeral = minidom.parseString(i.XMLDesc(0)).\
-                        getElementsByTagName('secret')[0].\
-                        getAttribute('ephemeral')
+                getElementsByTagName('secret')[0].\
+                getAttribute('ephemeral')
             if ephemeral == 'yes':
                 return 1
         return 0
     elif flags == 'private':
         for i in secretobjs:
             private = minidom.parseString(i.XMLDesc(0)).\
-                    getElementsByTagName('secret')[0].\
-                    getAttribute('private')
+                getElementsByTagName('secret')[0].\
+                getAttribute('private')
             if private == 'no':
                 return 1
         return 0
     elif flags == 'non-private':
         for i in secretobjs:
             private = minidom.parseString(i.XMLDesc(0)).\
-                        getElementsByTagName('secret')[0].\
-                        getAttribute('private')
+                getElementsByTagName('secret')[0].\
+                getAttribute('private')
             if private == 'yes':
                 return 1
         return 0
@@ -59,7 +60,7 @@ def secretList(params):
     conn = sharedmod.libvirtobj['conn']
 
     try:
-        logger.info("Total number of currently defined secrets: %d" % \
+        logger.info("Total number of currently defined secrets: %d" %
                     conn.numOfSecrets())
         if conn.numOfSecrets() == 0:
             logger.info("There isn't any secret existing now.")
@@ -71,17 +72,17 @@ def secretList(params):
             else:
                 logger.info("list %s secrets:" % flags)
                 if flags == 'ephemeral':
-                    secretobjs = conn.listAllSecrets(libvirt.\
-                                VIR_CONNECT_LIST_SECRETS_EPHEMERAL)
+                    secretobjs = conn.listAllSecrets(libvirt.
+                                                     VIR_CONNECT_LIST_SECRETS_EPHEMERAL)
                 elif flags == 'non-ephemeral':
-                    secretobjs = conn.listAllSecrets(libvirt.\
-                                VIR_CONNECT_LIST_SECRETS_NO_EPHEMERAL)
+                    secretobjs = conn.listAllSecrets(libvirt.
+                                                     VIR_CONNECT_LIST_SECRETS_NO_EPHEMERAL)
                 elif flags == 'private':
-                    secretobjs = conn.listAllSecrets(libvirt.\
-                                VIR_CONNECT_LIST_SECRETS_PRIVATE)
+                    secretobjs = conn.listAllSecrets(libvirt.
+                                                     VIR_CONNECT_LIST_SECRETS_PRIVATE)
                 elif flags == 'non-private':
-                    secretobjs = conn.listAllSecrets(libvirt.\
-                                VIR_CONNECT_LIST_SECRETS_NO_PRIVATE)
+                    secretobjs = conn.listAllSecrets(libvirt.
+                                                     VIR_CONNECT_LIST_SECRETS_NO_PRIVATE)
                 else:
                     logger.error("the flags is wrong, must be one of 'none', \
                                  'ephemeral', 'no-ephemeral', 'private', \
@@ -92,7 +93,7 @@ def secretList(params):
             logger.info("----------------------------------------------------")
             for i in secretobjs:
                 vol = minidom.parseString(i.XMLDesc(0)).\
-                      getElementsByTagName('volume')[0].childNodes[0].data
+                    getElementsByTagName('volume')[0].childNodes[0].data
                 logger.info("%s %s %s" % (i.UUIDString(), i.usageType(), vol))
             ret = check_secretList(flags, secretobjs, conn)
             if ret:
@@ -103,7 +104,7 @@ def secretList(params):
                 return 0
 
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1
 

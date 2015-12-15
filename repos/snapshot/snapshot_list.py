@@ -9,10 +9,11 @@ optional_params = {}
 
 SNAPSHOT_DIR = "ls /var/lib/libvirt/qemu/snapshot"
 SNAPSHOT_LIST = "virsh snapshot-list %s|sed -n '3,$'p|awk '{print $1}'"
-FLAGDICT = {0:"", 1:" --roots", 2:" --metadata", 4:" --leaves",\
-                8:" --no-leaves", 16:" --no-metadata", 32:" --inactive",\
-                64:" --active", 128:" --disk-only", 256:" --internal",\
-                512:" --external"}
+FLAGDICT = {0: "", 1: " --roots", 2: " --metadata", 4: " --leaves",
+            8: " --no-leaves", 16: " --no-metadata", 32: " --inactive",
+            64: " --active", 128: " --disk-only", 256: " --internal",
+            512: " --external"}
+
 
 def get_snapshot_list_virsh(*args):
     """ Get the snapshot name list through virsh command """
@@ -27,27 +28,29 @@ def get_snapshot_list_virsh(*args):
     logger.info("Execute virsh snapshot-list" + flagstr)
 
     snapshot_list_virsh = []
-    (status, output) = utils.exec_cmd(SNAPSHOT_LIST % guestname_flags,\
-                                       shell=True)
+    (status, output) = utils.exec_cmd(SNAPSHOT_LIST % guestname_flags,
+                                      shell=True)
     if status:
         logger.error("Executing " + SNAPSHOT_LIST + " failed")
         return 1
     else:
         snapshot_list_virsh = output[:-1]
-        logger.info("Get snapshot name list via VIRSH: %s" \
+        logger.info("Get snapshot name list via VIRSH: %s"
                     % snapshot_list_virsh)
+
 
 def compare_snapshot_list(*args):
     """ Compare two snapshot name list  whether have the same items """
 
     (snapshot_list1, snapshot_list2) = args
     if cmp(snapshot_list1, snapshot_list2) or \
-    cmp(snapshot_list1, snapshot_list2.reverse()):
+            cmp(snapshot_list1, snapshot_list2.reverse()):
         logger.info("The two snapshot lists have the same items")
         return True
     else:
         logger.error("The two snapshot lists don't have the same")
         return False
+
 
 def get_snapshot_list_dir(guestname):
     """ Get the snapshot list from snapshot dir """
@@ -63,9 +66,10 @@ def get_snapshot_list_dir(guestname):
     else:
         for i in range(len(output)):
             snapshot_list_dir.append(output[i][:-4])
-        logger.info("Get snapshot name list under dir: %s" \
+        logger.info("Get snapshot name list under dir: %s"
                     % snapshot_list_dir)
         return snapshot_list_dir
+
 
 def convert_flags(flags):
     """ Bitwise-OR of flags in conf and convert them to the readable flags """
@@ -73,7 +77,7 @@ def convert_flags(flags):
     flaglist = []
     flagstr = ""
     logger.info("The given flags are %s " % flags)
-    if not '|' in flags:
+    if '|' not in flags:
         flagn = int(flags)
         flaglist.append(flagn)
     else:
@@ -91,6 +95,7 @@ def convert_flags(flags):
 
     return (flaglist, flagn)
 
+
 def snapshot_list(params):
     """ List snapshots for a domain with filters"""
 
@@ -99,7 +104,7 @@ def snapshot_list(params):
     guestname = params['guestname']
     conn = sharedmod.libvirtobj['conn']
     domobj = conn.lookupByName(guestname)
-    flags = params ['flags']
+    flags = params['flags']
     (flaglist, flagn) = convert_flags(flags)
 
     try:
@@ -114,17 +119,17 @@ def snapshot_list(params):
         else:
             # Get the total number of domain's snapshot
             if domobj.snapshotNum(0) == len(snapshot_list_dir):
-                logger.info("The total number of domain's snapshots is %s" \
-                         % domobj.snapshotNum(0))
+                logger.info("The total number of domain's snapshots is %s"
+                            % domobj.snapshotNum(0))
 
             # Get the snapshot number with filters
             snapshotnum_filters = domobj.snapshotNum(flagn)
-            logger.info("The number of domain's snapshots with filters is %s" \
-                         % snapshotnum_filters)
+            logger.info("The number of domain's snapshots with filters is %s"
+                        % snapshotnum_filters)
 
             # Get the snapshot name list of domain's snapshot
             snapshot_namelist_api = domobj.snapshotListNames(flagn)
-            logger.info("Get snapshots name list via API: %s" % \
+            logger.info("Get snapshots name list via API: %s" %
                         snapshot_namelist_api)
 
             # Get all snapshot name from listAllSnapshots
@@ -133,12 +138,12 @@ def snapshot_list(params):
                 logger.info("The snapshot's name:" + snapshot_item.getName())
 
             # Check the two snapshot list is the same
-            snapshot_namelist_virsh = get_snapshot_list_virsh(guestname,\
+            snapshot_namelist_virsh = get_snapshot_list_virsh(guestname,
                                                               flaglist)
-            if compare_snapshot_list(snapshot_namelist_virsh,\
+            if compare_snapshot_list(snapshot_namelist_virsh,
                                      snapshot_namelist_api) and \
-                                     snapshotnum_filters == \
-                                     len(snapshot_namelist_api):
+                    snapshotnum_filters == \
+                    len(snapshot_namelist_api):
                 logger.info("Successfully get snapshot name list")
                 return 0
             else:

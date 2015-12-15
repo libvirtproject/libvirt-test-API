@@ -66,7 +66,7 @@ def guest_undefine(domobj, logger):
         logger.info("undefine guest")
         domobj.undefine()
         logger.info("undefine the domain is successful")
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to undefine domain")
@@ -82,7 +82,7 @@ def guest_define(domobj, domxml, logger):
         conn = domobj._conn
         conn.defineXML(domxml)
         logger.info("success to define new domain xml description")
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to define domain")
@@ -100,7 +100,7 @@ def guest_start(domobj, guestname, logger):
     try:
         logger.info("start guest")
         domobj.create()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to start domain")
@@ -165,6 +165,7 @@ def cpu_topology_chk(ip, username, password,
         logger.error("The data doesn't match!!!")
         return 1
 
+
 def cpu_topology(params):
     """ edit domain xml description according to the values
         and login to the guest to check the results
@@ -201,7 +202,7 @@ def cpu_topology(params):
         return 1
 
     if cpu_topology_chk(ip, username, password,
-                          sockets, cores, threads, logger):
+                        sockets, cores, threads, logger):
         return 1
 
     return 0

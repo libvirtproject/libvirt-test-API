@@ -223,7 +223,7 @@ def migrate(params):
         else:
             logger.info("use migrate() to migrate")
             srcdom.migrate(dstconn, migflags, None, None, 0)
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Migration Failed")

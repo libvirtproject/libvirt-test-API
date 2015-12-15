@@ -11,14 +11,15 @@ SPLIT_STR = " -"
 required_params = ('nativeformat', 'guestname')
 optional_params = {}
 
+
 def check_domxml_to_native(nativeconfig, guestname):
     """Check the result form API domainXMLFromNative,
        compare the result with the native config in
        /var/log/libvirt/qemu/$vm.log, and remove vnc
        port and netdev part before compare.
     """
-    (status, output) = utils.exec_cmd(GET_NATIVE_CONFIG % \
-                    (guestname, guestname), shell=True)
+    (status, output) = utils.exec_cmd(GET_NATIVE_CONFIG %
+                                      (guestname, guestname), shell=True)
     if status:
         logger.error("Fail to get native config of domain %s" % guestname)
         return 1
@@ -77,6 +78,7 @@ def check_domxml_to_native(nativeconfig, guestname):
 
     return 0
 
+
 def domxml_to_native(params):
     """Test API domainXMLFromNative to convert
        a native configuration to a domain XML
@@ -101,7 +103,7 @@ def domxml_to_native(params):
                         successfully!")
             return 0
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1
 

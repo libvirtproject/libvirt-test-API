@@ -86,7 +86,7 @@ def build_disk_pool(params):
             logger.info("building %s storage pool is UNSUCCESSFUL!!!" %
                         poolname)
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

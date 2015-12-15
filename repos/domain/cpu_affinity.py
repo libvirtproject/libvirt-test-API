@@ -57,7 +57,7 @@ def set_vcpus(domobj, domain_name, vcpu):
 
     try:
         domobj.destroy()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to destroy domain")
@@ -86,7 +86,7 @@ def set_vcpus(domobj, domain_name, vcpu):
     logger.info("undefine the original guest")
     try:
         domobj.undefine()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to undefine guest %s" % domain_name)
@@ -96,7 +96,7 @@ def set_vcpus(domobj, domain_name, vcpu):
     try:
         conn = domobj._conn
         conn.defineXML(newguestxml)
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to define guest %s" % domain_name)
@@ -105,7 +105,7 @@ def set_vcpus(domobj, domain_name, vcpu):
     try:
         logger.info('boot guest up ...')
         domobj.create()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to start domain %s" % domain_name)
@@ -147,14 +147,14 @@ def vcpu_affinity_check(domain_name, vcpu, expected_pinned_cpu, hypervisor):
             return 1
         if 'el6' or 'el7' in host_kernel_version:
             cmd_vcpu_task_id = "virsh qemu-monitor-command %s --hmp info cpus|grep '#%s'|cut -d '=' -f3"\
-                                % (domain_name,vcpu)
+                % (domain_name, vcpu)
             status, output = commands.getstatusoutput(cmd_vcpu_task_id)
             vcpu_task_id = output[:output.find("^")]
             logger.debug("vcpu id %s:" % vcpu_task_id)
-            cmd_get_task_list = "grep Cpus_allowed_list /proc/%s/task/%s/status" % (pid , vcpu_task_id)
+            cmd_get_task_list = "grep Cpus_allowed_list /proc/%s/task/%s/status" % (pid, vcpu_task_id)
             status, output = commands.getstatusoutput(cmd_get_task_list)
             logger.debug("the output of command 'grep Cpus_allowed_list \
-                          /proc/%s/task/%s/status' is %s" % (pid,vcpu_task_id,output))
+                          /proc/%s/task/%s/status' is %s" % (pid, vcpu_task_id, output))
             actual_pinned_cpu = int(output.split('\t')[1])
 
         elif 'el5' in host_kernel_version:
@@ -274,7 +274,7 @@ def cpu_affinity(params):
                 logger.debug("before pinning, the vcpu status is %s" % text)
 
                 domobj.pinVcpu(vcpu_pinned, cpu_affinity_test)
-            except libvirtError as e:
+            except libvirtError, e:
                 logger.error("API error message: %s, error code is %s"
                              % (e.message, e.get_error_code()))
                 logger.error("fail to vcpupin domain")

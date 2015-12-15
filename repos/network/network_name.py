@@ -26,6 +26,7 @@ def check_network_exists(conn, networkname, logger):
     else:
         return True
 
+
 def check_network_bridge_name(network_obj, network_bridge_name, logger):
     """ check the network bridge name """
     netxml = network_obj.XMLDesc(0)
@@ -41,24 +42,26 @@ def check_network_bridge_name(network_obj, network_bridge_name, logger):
         logger.error("the bridge name is not right")
         return False
 
+
 def check_network_uuid(networkname, UUIDString, logger):
     """ check the output of virsh net-name """
     cmd = VIRSH_NETNAME + " " + UUIDString
     (status, ret) = utils.exec_cmd(cmd, shell=True)
     if status:
-        logger.error("executing " + "\"" + VIRSH_NETNAME + ' %s' % UUIDString \
-                     + "\"" + " failed")
+        logger.error("executing " + "\"" + VIRSH_NETNAME + ' %s' % UUIDString +
+                     "\"" + " failed")
         logger.error(ret)
         return False
     else:
         networkname_virsh = str(ret[0])
-        logger.debug("networkname from " + VIRSH_NETNAME + " is %s" \
+        logger.debug("networkname from " + VIRSH_NETNAME + " is %s"
                      % networkname_virsh)
         logger.debug("networkname we expected is %s" % networkname)
         if networkname_virsh == networkname:
             return True
         else:
             return False
+
 
 def network_name(params):
     """ get the UUIDString of a network, then call
@@ -80,9 +83,9 @@ def network_name(params):
         UUIDString = netobj.UUIDString()
         bridge_name = netobj.bridgeName()
 
-        logger.info("the UUID string of network %s is %s" % \
+        logger.info("the UUID string of network %s is %s" %
                     (networkname, UUIDString))
-        logger.info("the bridge name of network %s is %s" % \
+        logger.info("the bridge name of network %s is %s" %
                     (networkname, bridge_name))
 
         if check_network_bridge_name(netobj, bridge_name, logger):
@@ -101,7 +104,7 @@ def network_name(params):
             return 0
         else:
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

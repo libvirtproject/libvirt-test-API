@@ -9,7 +9,8 @@ from src import sharedmod
 
 required_params = ('guestname', 'flags', 'snapshotname', )
 optional_params = {}
-FLAGDICT = {0:" --snapshotname", 1:" --running", 2:" --paused", 4:" --force"}
+FLAGDICT = {0: " --snapshotname", 1: " --running", 2: " --paused", 4: " --force"}
+
 
 def check_domain_state(*args):
     """ check if the domain state after revert """
@@ -23,8 +24,8 @@ def check_domain_state(*args):
         # The passed flags include "running"
         if (flagn == 1) or (flagn == 5):
             logger.info("After reverting, change state to running")
-            expect_states = [libvirt.VIR_DOMAIN_RUNNING,\
-                             libvirt.VIR_DOMAIN_RUNNING_FROM_SNAPSHOT,\
+            expect_states = [libvirt.VIR_DOMAIN_RUNNING,
+                             libvirt.VIR_DOMAIN_RUNNING_FROM_SNAPSHOT,
                              libvirt.VIR_DOMAIN_RUNNING_BOOTED]
             if state in expect_states:
                 logger.info("Successful revert.The domain state is running.")
@@ -34,8 +35,8 @@ def check_domain_state(*args):
                 return False
         # The passed flags include "paused"
         elif (flagn == 2) or (flagn == 6):
-            expect_states = [libvirt.VIR_DOMAIN_PAUSED,\
-                             libvirt.VIR_DOMAIN_PAUSED_FROM_SNAPSHOT,\
+            expect_states = [libvirt.VIR_DOMAIN_PAUSED,
+                             libvirt.VIR_DOMAIN_PAUSED_FROM_SNAPSHOT,
                              libvirt.VIR_DOMAIN_PAUSED_SNAPSHOT]
             if state in expect_states:
                 logger.info("Successful revert.The domain state is paused.")
@@ -47,13 +48,14 @@ def check_domain_state(*args):
         logger.error("Failed to revert to given snapshotname ")
         return False
 
+
 def convert_flags(flags):
     """ Bitwise-OR of flags in conf and convert them to the readable flags """
 
     flaglist = []
     flagstr = ""
     logger.info("The given flags are %s " % flags)
-    if not '|' in flags:
+    if '|' not in flags:
         flagn = int(flags)
         flaglist.append(flagn)
     else:
@@ -71,6 +73,7 @@ def convert_flags(flags):
 
     return (flaglist, flagn)
 
+
 def snapshot_revert(params):
     """ snapshot revert a snapshot for a given domain """
 
@@ -80,7 +83,7 @@ def snapshot_revert(params):
     conn = sharedmod.libvirtobj['conn']
     domobj = conn.lookupByName(guestname)
     snapshotname = params['snapshotname']
-    flags = params ['flags']
+    flags = params['flags']
     (flaglist, flagn) = convert_flags(flags)
 
     try:

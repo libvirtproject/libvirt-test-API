@@ -78,7 +78,7 @@ def delete_dir_volume(params):
         else:
             logger.error("%s storage volume is undeleted" % volname)
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

@@ -16,8 +16,8 @@ from utils import utils
 required_params = ('guestname', 'diskpath',)
 optional_params = {'memory': 1048576,
                    'vcpu': 1,
-                   'imageformat' : 'qcow2',
-                   'hddriver' : 'virtio',
+                   'imageformat': 'qcow2',
+                   'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
                    'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
@@ -86,7 +86,7 @@ def define(params):
         else:
             logger.error("fail to check define domain")
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

@@ -158,7 +158,7 @@ def hypervisor_connecting_test(uri, auth_unix_ro, auth_unix_rw, logger):
                     request_credentials, user_data]
             conn = libvirt.openAuth(uri, auth, 0)
         conn.close()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.info("set euid back to %d" % orginal_user)

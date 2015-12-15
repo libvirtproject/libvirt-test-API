@@ -81,8 +81,8 @@ def prepare_env(d_ownership, virt_use_nfs, guestname, root_squash,
         logger.error("wrong dynamic_ownership value")
         return 1
 
-    set_cmd = ("echo dynamic_ownership = %s >> %s" %
-               (option, QEMU_CONF))
+    set_cmd = "echo dynamic_ownership = %s >> %s" % \
+        (option, QEMU_CONF)
     ret, out = utils.exec_cmd(set_cmd, shell=True)
     if ret:
         logger.error("failed to set dynamic ownership")

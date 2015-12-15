@@ -65,14 +65,14 @@ def create(params):
     try:
         conn.networkCreateXML(xmlstr)
         net_num2 = conn.numOfNetworks()
-        if (not check_network_status(networkname, conn, logger) and
-                net_num2 > net_num1):
+        if not check_network_status(networkname, conn, logger) and \
+                net_num2 > net_num1:
             logger.info("current network active number: %s\n" % net_num2)
         else:
             logger.error("the %s network is inactive" % networkname)
             logger.error("fail to create network from :\n%s" % xmlstr)
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("create a network from xml: \n%s" % xmlstr)

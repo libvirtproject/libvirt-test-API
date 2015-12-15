@@ -51,10 +51,10 @@ def nwfilter_list(params):
 
         nwfilter_list_dir = get_nwfilterlist_dir()
         if nwfilter_num == len(nwfilter_list_api) and \
-        len(nwfilter_list_api) == len(nwfilter_list_dir) and \
-        cmp(nwfilter_namelist_api,nwfilter_list_dir) == 0 :
-            logger.info("The number of available network filters is %s" % \
-                    nwfilter_num)
+                len(nwfilter_list_api) == len(nwfilter_list_dir) and \
+                cmp(nwfilter_namelist_api, nwfilter_list_dir) == 0:
+            logger.info("The number of available network filters is %s" %
+                        nwfilter_num)
         else:
             logger.error("Failed to get the nwfilters list")
             return 1
@@ -72,7 +72,7 @@ def nwfilter_list(params):
                 logger.error("Failed to get nwfilter's uuid.")
                 return 1
 
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s" % e.message)
         return 1
 

@@ -122,7 +122,7 @@ def hypervisor_connecting_test(uri, auth_tcp, username,
 
         ret = 0
         conn.close()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         ret = 1
@@ -206,7 +206,7 @@ def tcp_setup_clean(params):
         logger.error("failed to restore %s" % LIBVIRTD_CONF)
 
     sysconfig_libvirtd_restore = "sed -i -n '/^[ #]/p' %s" % SYSCONFIG_LIBVIRTD
-    ret, output = utils.remote_exec_pexpect(
-        target_machine, username, password, sysconfig_libvirtd_restore)
+    ret, output = utils.remote_exec_pexpect(target_machine, username,
+                                            password, sysconfig_libvirtd_restore)
     if ret:
         logger.error("failed to restore %s" % SYSCONFIG_LIBVIRTD)

@@ -94,7 +94,7 @@ def check_guest_status(domobj):
     """Check guest current status"""
     state = domobj.info()[0]
     if state == libvirt.VIR_DOMAIN_SHUTOFF or \
-        state == libvirt.VIR_DOMAIN_SHUTDOWN:
+            state == libvirt.VIR_DOMAIN_SHUTDOWN:
         # add check function
         return False
     else:
@@ -131,7 +131,7 @@ def domain_blkio(params):
                     % (guestname, blkio_paras['weight']))
 
         status = check_blkio_paras(blkio_path, guestname, blkio_paras,
-                                    logger)
+                                   logger)
         if status != 0:
             return 1
 
@@ -142,7 +142,7 @@ def domain_blkio(params):
             return 1
 
         status = check_blkio_paras(blkio_path, guestname, blkio_paras,
-                                    logger)
+                                   logger)
         if status != 0:
             return 1
 
@@ -156,7 +156,7 @@ def domain_blkio(params):
             return 1
 
         status = check_blkio_paras(blkio_path, guestname, blkio_paras,
-                                    logger)
+                                   logger)
         if status != 0:
             return 1
 

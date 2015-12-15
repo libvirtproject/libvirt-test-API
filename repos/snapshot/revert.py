@@ -46,7 +46,7 @@ def revert(params):
         snap = domobj.snapshotLookupByName(snapshotname, 0)
         domobj.revertToSnapshot(snap, 0)
         logger.info("revert snapshot succeeded")
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

@@ -29,14 +29,7 @@ def check_pool_uuid(poolname, UUIDString, logger):
     """ check UUID String of a pool """
     status, ret = commands.getstatusoutput(VIRSH_POOLUUID + ' %s' % poolname)
     if status:
-        logger.error(
-            "executing " +
-            "\"" +
-            VIRSH_POOLUUID +
-            ' %s' %
-            poolname +
-            "\"" +
-            " failed")
+        logger.error("executing " + "\"" + VIRSH_POOLUUID + ' %s' % poolname + "\"" + " failed")
         logger.error(ret)
         return False
     else:
@@ -66,6 +59,7 @@ def checking_uuid(logger, poolname, pooluuid):
         return True
     else:
         return False
+
 
 def pool_uuid(params):
     """ 1. call appropriate API to generate the UUIDStirng
@@ -98,8 +92,8 @@ def pool_uuid(params):
         if not poolobj.isPersistent() == 1:
             logger.info("Can not check a transient pool by now.")
             return 0
-        # allowing '-' and ' ' anywhere between character pairs,just check
-        # one of them
+        #allowing '-' and ' ' anywhere between character pairs,just check
+        #one of them
         UUIDString1 = UUIDString.replace("-", " ")
         pool1 = conn.storagePoolLookupByUUIDString(UUIDString1)
         pool_name1 = pool1.name()
@@ -113,8 +107,7 @@ def pool_uuid(params):
         logger.debug("The given UUID is \"%s\", the pool is \"%s\" using \
 storagePoolLookupByUUID" % (UUIDString2, pool_name2))
 
-        if pool_name1 == pool_name2 and checking_uuid(
-                logger, pool_name1, UUIDString):
+        if pool_name1 == pool_name2 and checking_uuid(logger, pool_name1, UUIDString):
             logger.info("Successed to get pool name \"%s\" using \"%s\""
                         % (pool_name1, UUIDString))
 
@@ -124,7 +117,7 @@ storagePoolLookupByUUID" % (UUIDString2, pool_name2))
         else:
             logger.error(VIRSH_POOLUUID + " test failed.")
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

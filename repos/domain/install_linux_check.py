@@ -123,10 +123,10 @@ def install_linux_check(params):
                  the value set in domain config xml")
     mem_expect = int(utils.get_size_mem(domain_name))
     logger.info("current mem size in domain config xml - %s is %s" %
-                 (domain_name, mem_expect))
+                (domain_name, mem_expect))
     cmd = "dmidecode -t 17 | awk -F: '/Size/ {print $2}'"
     out = utils.remote_exec_pexpect(ipaddr, "root", "redhat", cmd)
-    mem_actual = int(out[1].split(" ")[0])*1024
+    mem_actual = int(out[1].split(" ")[0]) * 1024
     logger.info("The actual mem size in guest - %s is %s" %
                 (domain_name, mem_actual))
     if mem_expect == mem_actual:

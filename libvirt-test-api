@@ -67,6 +67,7 @@ def append_path():
 
 
 class Main(object):
+
     """ The class provides methods to run a new test and manage
         testing log and records
     """
@@ -145,12 +146,9 @@ class Main(object):
             logname = log.Log.get_log_name()
             testid = logname[-3:]
             log_xml_parser.add_test_xml(testrunid, testid)
-            if 'AUTODIR' in os.environ:
-                autotest_testdir = os.path.join(
-                    os.environ['AUTODIR'], 'tests/libvirt_test_API')
-                logfile = os.path.join(
-                    '%s/src/log/%s' %
-                    (autotest_testdir, testrunid), logname)
+            if os.environ.has_key('AUTODIR'):
+                autotest_testdir = os.path.join(os.environ['AUTODIR'], 'tests/libvirt_test_API')
+                logfile = os.path.join('%s/src/log/%s' % (autotest_testdir, testrunid), logname)
             else:
                 logfile = os.path.join('log/%s' % testrunid, logname)
             procs.append(generator.FuncGen(cases_func_ref_dict,
@@ -175,7 +173,7 @@ class Main(object):
         # which stored in the list of procs, if disable,
         # will call them one by one
         if options_list[0]['options'].has_key("multiprocess"):
-            if  options_list[0]['options']["multiprocess"] == "enable":
+            if options_list[0]['options']["multiprocess"] == "enable":
                 proc = process.Process(procs)
                 proc.fork()
                 passnum, failnum = proc.wait()
@@ -315,7 +313,7 @@ class Main(object):
         activities_list = []
         for testid in testid_list:
             activities = eval(CASEINFO.readlines()[testid - 1])
-            activities_list.append(activities)
+            activities_list.append(activites)
 
         self.run(activities_list)
 
@@ -329,7 +327,7 @@ if __name__ == "__main__":
         opts, args = getopt.getopt(sys.argv[1:], "hc:tl:dmr",
                                    ["help", "casefile=", "template", "logxml=",
                                     "delete-log=", "merge=", "rerun="])
-    except getopt.GetoptError as err:
+    except getopt.GetoptError, err:
         print str(err)
         usage()
         sys.exit(2)

@@ -36,7 +36,7 @@ def suspend(params):
     logger.info('suspend domain')
     try:
         domobj.suspend()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

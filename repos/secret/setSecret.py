@@ -9,6 +9,7 @@ from libvirt import libvirtError
 required_params = ('secretUUID', 'value',)
 optional_params = {}
 
+
 def check_setSecret(value, secretobj):
     """check whether the secret value is set correctly
     """
@@ -37,19 +38,19 @@ def setSecret(params):
         conn = sharedmod.libvirtobj['conn']
         secretobj = conn.secretLookupByUUIDString(secretUUID)
         private = minidom.parseString(secretobj.XMLDesc(0)).\
-                getElementsByTagName('secret')[0].getAttribute('private')
+            getElementsByTagName('secret')[0].getAttribute('private')
         secretobj.setValue(data, 0)
         """if private is no, the value of secret can be get; if the private is
            yes, can't get the value of the secret.
         """
         if private == 'no':
-            logger.info("the value of secret %s is %s" % (secretUUID, \
+            logger.info("the value of secret %s is %s" % (secretUUID,
                                                           secretobj.value(0)))
             ret = check_setSecret(value, secretobj)
             return ret
         else:
             logger.info("the value of secret %s is %s" % (secretUUID, data))
-            logger.info("can not check the value via libvirt since secret %s "\
+            logger.info("can not check the value via libvirt since secret %s "
                         "is private" % secretUUID)
             return 0
 

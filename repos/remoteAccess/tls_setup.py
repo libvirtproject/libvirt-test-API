@@ -55,9 +55,9 @@ def CA_setting_up(logger):
     # ca.info file
     cainfo = os.path.join(TEMP_TLS_FOLDER, 'ca.info')
     cainfo_fd = open(cainfo, 'w')
-    cainfo_str = "cn = Libvirt_test_API\n" + \
-                 "ca\n" + \
-                 "cert_signing_key\n"
+    cainfo_str = ("cn = Libvirt_test_API\n"
+                  "ca\n"
+                  "cert_signing_key\n")
 
     cainfo_fd.write(cainfo_str)
     cainfo_fd.close()
@@ -97,11 +97,11 @@ def tls_server_cert(target_machine, logger):
     # server.info
     serverinfo = os.path.join(TEMP_TLS_FOLDER, 'server.info')
     serverinfo_fd = open(serverinfo, 'w')
-    serverinfo_str = "organization = Libvirt_test_API\n" + \
-                     "cn = %s\n" % target_machine + \
-                     "tls_www_server\n" + \
-                     "encryption_key\n" + \
-                     "signing_key\n"
+    serverinfo_str = ("organization = Libvirt_test_API\n"
+                      "cn = %s\n"
+                      "tls_www_server\n"
+                      "encryption_key\n"
+                      "signing_key\n" % target_machine)
 
     serverinfo_fd.write(serverinfo_str)
     serverinfo_fd.close()
@@ -141,14 +141,14 @@ def tls_client_cert(local_machine, logger):
     # client.info
     clientinfo = os.path.join(TEMP_TLS_FOLDER, 'client.info')
     clientinfo_fd = open(clientinfo, 'w')
-    clientinfo_str = "country = xxx\n" + \
-                     "state = xxx\n" + \
-                     "locality = xxx\n" + \
-                     "organization = Libvirt_test_API\n" + \
-                     "cn = %s\n" % local_machine + \
-                     "tls_www_client\n" + \
-                     "encryption_key\n" + \
-                     "signing_key\n"
+    clientinfo_str = ("country = xxx\n"
+                      "state = xxx\n"
+                      "locality = xxx\n"
+                      "organization = Libvirt_test_API\n"
+                      "cn = %s\n"
+                      "tls_www_client\n"
+                      "encryption_key\n"
+                      "signing_key\n" % local_machine)
 
     clientinfo_fd.write(clientinfo_str)
     clientinfo_fd.close()
@@ -359,7 +359,7 @@ def hypervisor_connecting_test(uri, auth_tls, username,
                     request_credentials,
                     user_data]
             conn = libvirt.openAuth(uri, auth, 0)
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         ret = 1

@@ -11,23 +11,24 @@ from utils import utils
 
 required_params = ('guestname',)
 optional_params = {
-                   'memory': 1048576,
-                   'vcpu': 1,
-                   'imagepath': '/var/lib/libvirt/images/libvirt-ci.qcow2',
-                   'diskpath' : '/var/lib/libvirt/images/libvirt-test-api',
-                   'imageformat' : 'qcow2',
-                   'hddriver' : 'virtio',
+    'memory': 1048576,
+    'vcpu': 1,
+    'imagepath': '/var/lib/libvirt/images/libvirt-ci.qcow2',
+    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
+    'imageformat': 'qcow2',
+                   'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
-                   'uuid' : '05867c1a-afeb-300e-e55e-2673391ae080',
-                   'type' : 'define',
+                   'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
+                   'type': 'define',
                    'xml': 'xmls/kvm_linux_guest_install_import.xml',
                    'guestmachine': 'pc',
                    'networksource': 'default',
                    'bridgename': 'virbr0',
-                  }
+}
 
 HOME_PATH = os.getcwd()
+
 
 def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     """ After guest installation is over, undefine the guest with
@@ -44,7 +45,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
         conn = domobj._conn
         domobj = conn.defineXML(xmlstr)
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to define domain %s" % guestname)
         return 1
@@ -58,12 +59,13 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     try:
         domobj.create()
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
         return 1
 
     return 0
+
 
 def check_domain_state(conn, guestname, logger):
     """ if a guest with the same name exists, remove it """
@@ -88,12 +90,13 @@ def check_domain_state(conn, guestname, logger):
 
     return 0
 
+
 def install_linux_import(params):
     """ install a new virtual machine """
     logger = params['logger']
 
     guestname = params.get('guestname')
-    br = params.get('bridgename','virbr0')
+    br = params.get('bridgename', 'virbr0')
     xmlstr = params['xml']
 
     logger.info("the name of guest is %s" % guestname)
@@ -137,7 +140,7 @@ def install_linux_import(params):
         try:
             domobj = conn.defineXML(xmlstr)
         except libvirtError, e:
-            logger.error("API error message: %s, error code is %s" \
+            logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
@@ -150,7 +153,7 @@ def install_linux_import(params):
         try:
             domobj = conn.createXML(xmlstr, 0)
         except libvirtError, e:
-            logger.error("API error message: %s, error code is %s" \
+            logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
@@ -179,7 +182,7 @@ def install_linux_import(params):
         time.sleep(10)
         timeout -= 10
 
-        ip = utils.mac_to_ip(mac,180,br)
+        ip = utils.mac_to_ip(mac, 180, br)
 
         if not ip:
             logger.info(str(timeout) + "s left")

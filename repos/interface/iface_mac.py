@@ -24,12 +24,13 @@ def get_name_list(params):
         try:
             name_list = conn.listInterfaces()
         except libvirtError as e:
-            logger.error("API error message: %s, error code is %s" \
+            logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             return 1, name_list
 
     logger.info("the interface list is %s" % name_list)
     return 0, name_list
+
 
 def check_iface_mac(iface_name, iface_mac):
     """check the mac address from MACString
@@ -41,12 +42,13 @@ def check_iface_mac(iface_name, iface_mac):
         return False
     else:
         mac_string = mac_string[0]
-        logger.debug("mac from cmd of interface %s is %s" % \
-                    (iface_name, mac_string))
+        logger.debug("mac from cmd of interface %s is %s" %
+                     (iface_name, mac_string))
         if cmp(iface_mac, mac_string) == 0:
             return True
         else:
             return False
+
 
 def iface_mac(params):
     """ test API MACString(), if optional option 'ifacename' is given
@@ -67,7 +69,7 @@ def iface_mac(params):
         for iface_name in name_list:
             iface_obj = conn.interfaceLookupByName(iface_name)
             iface_mac = iface_obj.MACString()
-            logger.info("the mac of interface %s is %s" % \
+            logger.info("the mac of interface %s is %s" %
                         (iface_name, iface_mac))
             if check_iface_mac(iface_name, iface_mac):
                 logger.info("get the mac successfully")
@@ -75,7 +77,7 @@ def iface_mac(params):
                 logger.error("fail to get the mac")
                 return 1
     except libvirtError as e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1
 

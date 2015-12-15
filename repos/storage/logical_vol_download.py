@@ -12,8 +12,9 @@ from src import sharedmod
 from utils import utils
 
 required_params = ('poolname', 'volname', 'capacity', 'offset', 'length',)
-optional_params = {'xml' : 'xmls/logical_volume.xml',
-                  }
+optional_params = {'xml': 'xmls/logical_volume.xml',
+                   }
+
 
 def get_pool_path(poolobj):
     """ get pool xml description
@@ -29,20 +30,23 @@ def get_pool_path(poolobj):
 
     return path_value
 
+
 def write_file(path, capacity):
     """write test data to file
     """
     logger.info("write %sM data into file %s" % (capacity, path))
     f = open(path, 'w')
-    datastr = ''.join(string.lowercase + string.uppercase
-                      + string.digits + '.' + '\n')
+    datastr = ''.join(string.lowercase + string.uppercase +
+                      string.digits + '.' + '\n')
     repeat = capacity / 64
     data = ''.join(repeat * datastr)
     f.write(data)
     f.close()
 
+
 def handler(stream, data, file_):
     return file_.write(data)
+
 
 def logical_vol_download(params):
     """test volume download and check"""
@@ -108,6 +112,7 @@ def logical_vol_download(params):
         return 1
 
     return 0
+
 
 def logical_vol_download_clean(params):
     """clean testing environment"""

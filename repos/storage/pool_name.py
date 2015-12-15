@@ -21,14 +21,7 @@ def check_pool_uuid(poolname, UUIDString, logger):
     """ check the output of virsh pool-name """
     status, ret = commands.getstatusoutput(VIRSH_POOLNAME + ' %s' % UUIDString)
     if status:
-        logger.error(
-            "executing " +
-            "\"" +
-            VIRSH_POOLNAME +
-            ' %s' %
-            UUIDString +
-            "\"" +
-            " failed")
+        logger.error("executing " + "\"" + VIRSH_POOLNAME + ' %s' % UUIDString + "\"" + " failed")
         logger.error(ret)
         return False
     else:
@@ -73,7 +66,7 @@ def pool_name(params):
         else:
             logger.error(VIRSH_POOLNAME + " test failed.")
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

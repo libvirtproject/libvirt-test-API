@@ -79,6 +79,7 @@ def get_ip_prefix(network, iptype, logger):
         return False
     return output[0]
 
+
 def get_info_from_dnsmasq(status_file, logger):
     """
        generate info from bridge's status file
@@ -99,7 +100,7 @@ def compare_values(op1, op2, network, iptype, logger):
     temp = int(api['expirytime'])
     api['expirytime'] = temp
 
-    for j in range(0,len(dnsmasq)):
+    for j in range(0, len(dnsmasq)):
         if dnsmasq[j]['expiry-time'] == api['expirytime']:
             if dnsmasq[j]['mac-address'] == api['mac']:
                 if dnsmasq[j]['ip-address'] == api['ipaddr']:
@@ -112,15 +113,15 @@ def compare_values(op1, op2, network, iptype, logger):
                 break
             else:
                 if j == len(dnsmasq) - 1:
-                    logger.error("Last loop %d, FAIL: mac: %s" % (j,api['mac']))
+                    logger.error("Last loop %d, FAIL: mac: %s" % (j, api['mac']))
                     return False
 
         else:
             if j == len(dnsmasq) - 1:
-                logger.error("Last loop %d, FAIL: expirttime: %s" % (j,api['expirttime']))
+                logger.error("Last loop %d, FAIL: expirttime: %s" % (j, api['expirttime']))
                 return False
 
-    if not api['type'] == get_network_type(api['ipaddr'],logger):
+    if not api['type'] == get_network_type(api['ipaddr'], logger):
         logger.error("FAIL: type: %s" % api['type'])
         return False
     else:
@@ -141,6 +142,7 @@ def compare_values(op1, op2, network, iptype, logger):
 
     return True
 
+
 def check_values(op1, op2, networkname, logger):
     """
        check each line accorting to ip type, if ipv4 go to check_ipv4_values
@@ -150,16 +152,17 @@ def check_values(op1, op2, networkname, logger):
     api = op2
 
     for i in range(0, len(api)):
-        if check_ip(api[i]['ipaddr'],logger) == "ipv4":
+        if check_ip(api[i]['ipaddr'], logger) == "ipv4":
             if not compare_values(dnsmasq, api[i], networkname, "ipv4", logger):
                 return False
-        elif check_ip(api[i]['ipaddr'],logger) == "ipv6":
+        elif check_ip(api[i]['ipaddr'], logger) == "ipv6":
             if not compare_values(dnsmasq, api[i], networkname, "ipv6", logger):
                 return False
         else:
             logger.error("invalid list element for ipv4 and ipv6")
             return False
     return True
+
 
 def network_dhcp_leases(params):
     """
@@ -192,13 +195,13 @@ def network_dhcp_leases(params):
     netobj = conn.networkLookupByName(networkname)
 
     try:
-        dhcp_lease_api = netobj.DHCPLeases(mac_value,0)
+        dhcp_lease_api = netobj.DHCPLeases(mac_value, 0)
         logger.info("From API: %s" % (dhcp_lease_api))
 
         if not check_values(dhcp_lease_dns, dhcp_lease_api, networkname, logger):
             return 1
 
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

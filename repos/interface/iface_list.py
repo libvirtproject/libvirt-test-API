@@ -15,6 +15,7 @@ optional_params = {}
 NETWORK_CONFIG = "/etc/sysconfig/network-scripts/"
 IFCONFIG_DRIVER = "ifconfig %s | sed 's/[ \t].*//;/^$/d'| cut -d \":\" -f -1"
 
+
 def get_inteface_list_from_ifcfg(logger):
     """
        return host interface list from ifcfg-*
@@ -43,6 +44,7 @@ def get_inteface_list_from_ifcfg(logger):
         fp.close()
     return list(set(nic_names))
 
+
 def get_interface_list(option, logger):
     """
        return host interface list
@@ -55,6 +57,7 @@ def get_interface_list(option, logger):
         logger.error("\"" + IFCONFIG_DRIVER % option + "\"" + "error")
         logger.error(nic_names)
         return nic_names
+
 
 def iface_list_output_from_ifconfig(flags, logger):
     """
@@ -70,11 +73,12 @@ def iface_list_output_from_ifconfig(flags, logger):
     elif flags == 2:
         nic_names = get_interface_list('', logger)
 
-    if nic_names == None:
+    if nic_names is None:
         return False
     return nic_names
 
-def iface_list_output_from_api(flags,logger):
+
+def iface_list_output_from_api(flags, logger):
     """
        get interface list using listAllInterfaces()
     """
@@ -82,6 +86,7 @@ def iface_list_output_from_api(flags,logger):
     for interface in conn.listAllInterfaces(flags):
         nic_names_api.append(str(interface.name()))
     return nic_names_api
+
 
 def iface_list(params):
     """
@@ -101,7 +106,7 @@ def iface_list(params):
     try:
         iface_list = iface_list_output_from_api(flag, logger)
         iface_list_ifconfig = iface_list_output_from_ifconfig(flag, logger)
-        if iface_list_ifconfig == False:
+        if not iface_list_ifconfig:
             return 1
         ifcfg = get_inteface_list_from_ifcfg(logger)
         logger.info("interface list from API: %s" % iface_list)

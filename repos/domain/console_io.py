@@ -66,9 +66,7 @@ def console_io(params):
             stream.send(instr)
 
         if expect is not None or outfile is not None:
-            logger.info(
-                "Recieving data from console device. Timeout %d seconds." %
-                timeout)
+            logger.info("Recieving data from console device. Timeout %d seconds." % timeout)
 
             # register a new signal handler
             logger.info("Registering custom SIGALRM handler")

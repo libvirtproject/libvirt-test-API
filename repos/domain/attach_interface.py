@@ -51,11 +51,9 @@ def attach_interface(params):
         if check_attach_interface(iface_num1, iface_num2):
             logger.info("current interface number: %s" % iface_num2)
         else:
-            logger.error(
-                "fail to attach a interface to guest: %s" %
-                iface_num2)
+            logger.error("fail to attach a interface to guest: %s" % iface_num2)
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("attach a interface to guest %s" % guestname)

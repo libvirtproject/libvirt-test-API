@@ -39,7 +39,8 @@ optional_params = {'memory': 1048576,
                    'guestmachine': 'pc',
                    'driverpath': '/usr/share/virtio-win/virtio-win_amd64.vfd',
                    'graphic': 'vnc',
-                  }
+                   }
+
 
 def cleanup(mount):
     """Clean up a previously used mountpoint.
@@ -101,7 +102,7 @@ def prepare_floppy_image(guestname, guestos, guestarch,
             return 1
 
         if '2008' in guestos or '7' in guestos or 'vista' in guestos \
-            or 'win8' in guestos or "win2012" in guestos:
+                or 'win8' in guestos or "win2012" in guestos:
             dest_fname = "autounattend.xml"
             source = os.path.join(windows_unattended_path, "%s_%s.xml" %
                                   (guestos, guestarch))
@@ -127,7 +128,7 @@ def prepare_floppy_image(guestname, guestos, guestarch,
         logger.debug(unattended_contents)
 
         driverpath = guestos[0].upper() + guestos[1:]
-        unattended_contents = unattended_contents.replace('PATHOFDRIVER',driverpath)
+        unattended_contents = unattended_contents.replace('PATHOFDRIVER', driverpath)
         open(dest, 'w').write(unattended_contents)
 
     finally:
@@ -164,7 +165,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype):
     try:
         conn = domobj._conn
         domobj = conn.defineXML(xmlstr)
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to define domain %s" % guestname)
@@ -178,7 +179,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype):
 
     try:
         domobj.create()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
@@ -233,7 +234,7 @@ def install_windows_cdrom(params):
     logger.info("disk image is %s" % diskpath)
     seeksize = params.get('disksize', 20)
     imageformat = params.get('imageformat', 'raw')
-    if  os.path.exists(diskpath):
+    if os.path.exists(diskpath):
         os.remove(diskpath)
 
     logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
@@ -252,7 +253,7 @@ def install_windows_cdrom(params):
     # NICDRIVER
     nicdriver = params.get('nicdriver', 'virtio')
     if nicdriver == 'virtio' or nicdriver == 'e1000' or nicdriver == 'rtl8139':
-        xmlstr = xmlstr.replace("type='virtio'", "type='%s'" %nicdriver)
+        xmlstr = xmlstr.replace("type='virtio'", "type='%s'" % nicdriver)
     else:
         logger.error('the %s is unspported by KVM' % nicdriver)
         return 1
@@ -262,16 +263,16 @@ def install_windows_cdrom(params):
     hddriver = params.get('hddriver', 'virtio')
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
-        driverpath = params.get('driverpath','/usr/share/virtio-win/virtio-win_amd64.vfd')
+        driverpath = params.get('driverpath', '/usr/share/virtio-win/virtio-win_amd64.vfd')
         xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd',
-                                 driverpath)
+                                driverpath)
     elif hddriver == 'ide':
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
         xmlstr = xmlstr.replace('DEV', 'sda')
-        driverpath = params.get('driverpath','/usr/share/virtio-win/virtio-win_amd64.vfd')
+        driverpath = params.get('driverpath', '/usr/share/virtio-win/virtio-win_amd64.vfd')
         xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd',
-                                 driverpath)
+                                driverpath)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
@@ -280,12 +281,11 @@ def install_windows_cdrom(params):
     # Graphic type
     graphic = params.get('graphic', 'vnc')
     if graphic != 'vnc' and graphic != 'spice':
-        logger.error("the %s is unspported" %graphic)
+        logger.error("the %s is unspported" % graphic)
         return 1
     else:
         xmlstr = xmlstr.replace('vnc', graphic)
     logger.info("the graphic of guests is %s" % graphic)
-
 
     # Get iso file based on guest os and arch from global.cfg
     envparser = env_parser.Envparser(envfile)
@@ -316,7 +316,7 @@ def install_windows_cdrom(params):
         logger.info('define guest from xml description')
         try:
             domobj = conn.defineXML(xmlstr)
-        except libvirtError as e:
+        except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
@@ -326,7 +326,7 @@ def install_windows_cdrom(params):
 
         try:
             domobj.create()
-        except libvirtError as e:
+        except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to start domain %s" % guestname)
@@ -335,7 +335,7 @@ def install_windows_cdrom(params):
         logger.info('create guest from xml description')
         try:
             conn.createXML(xmlstr, 0)
-        except libvirtError as e:
+        except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
@@ -349,8 +349,7 @@ def install_windows_cdrom(params):
             if(state == libvirt.VIR_DOMAIN_SHUTOFF):
                 logger.info("guest installaton of define type is complete.")
                 logger.info("boot guest vm off harddisk")
-                ret = prepare_boot_guest(
-                    domobj, xmlstr, guestname, installtype)
+                ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype)
                 if ret:
                     logger.info("booting guest vm off harddisk failed")
                     return 1

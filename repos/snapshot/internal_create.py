@@ -28,13 +28,7 @@ def check_domain_image(domobj, guestname, logger):
     disk_path = utils.get_disk_path(dom_xml)
     status, ret = commands.getstatusoutput(QEMU_IMAGE_FORMAT % disk_path)
     if status:
-        logger.error(
-            "executing " +
-            "\"" +
-            QEMU_IMAGE_FORMAT %
-            guestname +
-            "\"" +
-            " failed")
+        logger.error("executing " + "\"" + QEMU_IMAGE_FORMAT % guestname + "\"" + " failed")
         logger.error(ret)
         return False
     else:
@@ -79,7 +73,7 @@ def internal_create(params):
         logger.info("create a snapshot for %s" % guestname)
         domobj.snapshotCreateXML(xmlstr, 0)
         logger.info("creating snapshot succeeded")
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

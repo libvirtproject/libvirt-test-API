@@ -21,27 +21,28 @@ optional_params = {}
 
 
 def eventToString(event):
-    eventStrings = ( "Defined",
-                     "Undefined",
-                     "Started",
-                     "Suspended",
-                     "Resumed",
-                     "Stopped",
-                     "Shutdown",
-                     "PMSuspended" );
-    return eventStrings[event];
+    eventStrings = ("Defined",
+                    "Undefined",
+                    "Started",
+                    "Suspended",
+                    "Resumed",
+                    "Stopped",
+                    "Shutdown",
+                    "PMSuspended")
+    return eventStrings[event]
+
 
 def detailToString(event, detail):
     eventStrings = (
-        ( "Added", "Updated" ),
-        ( "Removed", ),
-        ( "Booted", "Migrated", "Restored", "Snapshot", "Wakeup" ),
-        ( "Paused", "Migrated", "IOError", "Watchdog", "Restored", "Snapshot" ),
-        ( "Unpaused", "Migrated", "Snapshot" ),
-        ( "Shutdown", "Destroyed", "Crashed", "Migrated", "Saved", "Failed", "Snapshot"),
-        ( "Finished", ),
-        ( "Memory", "Disk" )
-        )
+        ("Added", "Updated"),
+        ("Removed", ),
+        ("Booted", "Migrated", "Restored", "Snapshot", "Wakeup"),
+        ("Paused", "Migrated", "IOError", "Watchdog", "Restored", "Snapshot"),
+        ("Unpaused", "Migrated", "Snapshot"),
+        ("Shutdown", "Destroyed", "Crashed", "Migrated", "Saved", "Failed", "Snapshot"),
+        ("Finished", ),
+        ("Memory", "Disk")
+    )
     return eventStrings[event][detail]
 
 
@@ -94,14 +95,9 @@ def lifecycle_callback(conn, domain, event, detail, opaque):
     """domain lifecycle callback function"""
     global STATE
     logger = opaque
-    logger.debug(
-        "lifecycle_callback EVENT: Domain %s(%s) %s %s" %
-        (domain.name(),
-         domain.ID(),
-         eventToString(event),
-         detailToString(
-            event,
-            detail)))
+    logger.debug("lifecycle_callback EVENT: Domain %s(%s) %s %s" % (domain.name(), domain.ID(),
+                                                                    eventToString(event),
+                                                                    detailToString(event, detail)))
     STATE = eventToString(event)
 
 
@@ -112,7 +108,7 @@ def shutdown_event(domobj, guestname, timeout, logger):
     logger.info("power off %s" % guestname)
     try:
         domobj.shutdown()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Error: fail to power off %s" % guestname)
@@ -122,7 +118,7 @@ def shutdown_event(domobj, guestname, timeout, logger):
         if STATE == "Stopped":
             logger.info("The event is Stopped, PASS")
             break
-        elif STATE != None:
+        elif STATE is not None:
             logger.debug("The event is %s", STATE)
         else:
             timeout -= 5
@@ -142,7 +138,7 @@ def bootup_event(domobj, guestname, timeout, logger):
     logger.info("boot up guest %s" % guestname)
     try:
         domobj.create()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Error: fail to bootup %s " % guestname)
@@ -152,7 +148,7 @@ def bootup_event(domobj, guestname, timeout, logger):
         if STATE == "Started":
             logger.info("The event is Started, PASS")
             break
-        elif STATE != None:
+        elif STATE is not None:
             logger.error("The event is %s", STATE)
         else:
             timeout -= 5
@@ -172,7 +168,7 @@ def suspend_event(domobj, guestname, timeout, logger):
     logger.info("suspend guest %s" % guestname)
     try:
         domobj.suspend()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Error: fail to suspend %s" % guestname)
@@ -182,7 +178,7 @@ def suspend_event(domobj, guestname, timeout, logger):
         if STATE == "Suspended":
             logger.info("The event is Suspended, PASS")
             break
-        elif STATE != None:
+        elif STATE is not None:
             logger.error("The event is %s", STATE)
         else:
             timeout -= 5
@@ -202,7 +198,7 @@ def resume_event(domobj, guestname, timeout, logger):
     logger.info("resume guest %s" % guestname)
     try:
         domobj.resume()
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Error: fail to resume %s" % guestname)
@@ -212,7 +208,7 @@ def resume_event(domobj, guestname, timeout, logger):
         if STATE == "Resumed":
             logger.info("The event is Resumed, PASS")
             break
-        elif STATE != None:
+        elif STATE is not None:
             logger.debug("The event is %s", STATE)
         else:
             timeout -= 5

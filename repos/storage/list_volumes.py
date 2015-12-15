@@ -34,7 +34,7 @@ def get_disk_partition_list(pool_obj):
         logger.debug("the partition inforamtion is %s " % partition_info)
 
         partition_list = partition_info[1:]
-        partition_list = [partition_list[i].split(' ')[-1] \
+        partition_list = [partition_list[i].split(' ')[-1]
                           for i in range(len(partition_list))]
 
         logger.info("the partition list is %s" % partition_list)
@@ -103,7 +103,7 @@ def check_list_volumes(pool_obj, vol_name_list):
     vol_poolobj_list.sort()
     vol_cmd_list.sort()
     if (cmp(vol_poolobj_list, vol_name_list) == 0) and \
-    (cmp(vol_name_list, vol_cmd_list) == 0):
+            (cmp(vol_name_list, vol_cmd_list) == 0):
         return True
     else:
         return False

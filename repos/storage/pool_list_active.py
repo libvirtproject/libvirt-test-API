@@ -9,7 +9,8 @@ from src import sharedmod
 
 required_params = ()
 optional_params = {
-                  }
+}
+
 
 def pool_list_active(params):
     """list active storage pool testing"""

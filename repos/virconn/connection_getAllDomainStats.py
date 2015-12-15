@@ -134,7 +134,7 @@ def check_vcpu(logger, dom_name, dom_active, dom_eles):
         if not compare_value(logger, vcpu_max,
                              dom_eles.get("vcpu.maximum")):
             return False
-    # for each vcpu.state field
+    #for each vcpu.state field
     check_each_vcpu(logger, dom_name, dom_active, dom_eles)
     return True
 
@@ -150,8 +150,8 @@ def check_each_vcpu(logger, dom_name, dom_active, dom_eles):
         vcpu_stat = 1
         xml = minidom.parse(aDOM_XML)
         dom = xml.getElementsByTagName('vcpus')[0]
-        dom_pid = str(xml.getElementsByTagName(
-            "domstatus")[0].getAttributeNode('pid').nodeValue)
+        dom_pid = str(xml.getElementsByTagName("domstatus")[0].
+                      getAttributeNode('pid').nodeValue)
         vcpu = dom.getElementsByTagName('vcpu')
         for vcpu_sub in vcpu:
             proc_path = "/proc/"
@@ -195,10 +195,10 @@ def check_balloon(logger, dom_name, dom_active, dom_eles):
     if dom_active:
         xml = minidom.parse(aDOM_XML)
         dom = xml.getElementsByTagName('domain')[0]
-        mem_max = int(dom.getElementsByTagName(
-            'memory')[0].childNodes[0].data)
-        mem_cur = int(dom.getElementsByTagName(
-            'currentMemory')[0].childNodes[0].data)
+        mem_max = int(dom.getElementsByTagName('memory')[0]
+                      .childNodes[0].data)
+        mem_cur = int(dom.getElementsByTagName('currentMemory')[0]
+                      .childNodes[0].data)
         logger.debug("Checking balloon.maximum: %d"
                      % dom_eles.get("balloon.maximum"))
         if not compare_value(logger, mem_max,
@@ -211,8 +211,8 @@ def check_balloon(logger, dom_name, dom_active, dom_eles):
             return False
     else:
         xml = minidom.parse(iDOM_XML)
-        mem_max = int(xml.getElementsByTagName(
-            'memory')[0].childNodes[0].data)
+        mem_max = int(xml.getElementsByTagName('memory')[0].
+                      childNodes[0].data)
         logger.debug("Checking balloon.maximum: %d"
                      % dom_eles.get("balloon.maximum"))
         if not compare_value(logger, mem_max,
@@ -238,8 +238,8 @@ def check_interface(logger, dom_name, dom_active, dom_eles):
         if not compare_value(logger, len(nic), dom_eles.get("net.count")):
             return False
         for iface in nic:
-            if_name = iface.getElementsByTagName(
-                "target")[0].getAttribute('dev')
+            if_name = iface.getElementsByTagName("target")[0].\
+                getAttribute('dev')
             if_name += ":"
             logger.debug("Checking %s" % if_name)
             content = open(netfile, 'r')
@@ -289,10 +289,10 @@ def check_block(logger, dom_name, dom_active, dom_eles, backing_f):
         disk = dev.getElementsByTagName('disk')
         disk_count = len(disk)
         for dk in disk:
-            disk_name = dk.getElementsByTagName(
-                'target')[0].getAttributeNode('dev').nodeValue
-            disk_sour = dk.getElementsByTagName(
-                'source')[0].getAttributeNode('file').nodeValue
+            disk_name = dk.getElementsByTagName('target')[0]\
+                .getAttributeNode('dev').nodeValue
+            disk_sour = dk.getElementsByTagName('source')[0]\
+                .getAttributeNode('file').nodeValue
             if backing_f:
                 disk_count += count_disk_chain(logger, disk_sour, dom_active)
         logger.debug("Checking disk.count: %d" % dom_eles.get("block.count"))
@@ -310,15 +310,15 @@ def check_block(logger, dom_name, dom_active, dom_eles, backing_f):
             return False
         for dk in disk:
             disk_pre = "block." + str(disk_index) + "."
-            disk_name = dk.getElementsByTagName(
-                'target')[0].getAttributeNode('dev').nodeValue
+            disk_name = dk.getElementsByTagName('target')[0]\
+                .getAttributeNode('dev').nodeValue
             logger.debug("Checking %sname: %s"
                          % (disk_pre, dom_eles.get(disk_pre + "name")))
             if not compare_value(logger, disk_name,
                                  dom_eles.get(disk_pre + "name")):
                 return False
-            disk_sour = dk.getElementsByTagName(
-                'source')[0].getAttributeNode('file').nodeValue
+            disk_sour = dk.getElementsByTagName('source')[0]\
+                .getAttributeNode('file').nodeValue
             logger.debug("Checking %spath: %s"
                          % (disk_pre, dom_eles.get(disk_pre + "path")))
             if not compare_value(logger, disk_sour,
@@ -341,10 +341,10 @@ def check_each_block(logger, dom_name, dom_eles, backing_f):
     disk = dev.getElementsByTagName('disk')
     for dk in disk:
         disk_pre = "block." + str(disk_index) + "."
-        disk_name = dk.getElementsByTagName(
-            'target')[0].getAttributeNode('dev').nodeValue
-        disk_sour = dk.getElementsByTagName(
-            'source')[0].getAttributeNode('file').nodeValue
+        disk_name = dk.getElementsByTagName('target')[0]\
+            .getAttributeNode('dev').nodeValue
+        disk_sour = dk.getElementsByTagName('source')[0]\
+            .getAttributeNode('file').nodeValue
         logger.debug("Checking %s %s" % (disk_name, disk_sour))
         if not compare_value(logger, disk_name,
                              dom_eles.get(disk_pre + "name")):
@@ -359,10 +359,10 @@ def check_each_block(logger, dom_name, dom_eles, backing_f):
             temp = dk.getElementsByTagName('backingStore')[0]
             if temp.hasChildNodes():
                 temp_name = disk_name
-                temp_backingIndex = int(temp.getAttributeNode(
-                    'index').nodeValue)
-                temp_path = temp.getElementsByTagName(
-                    'source')[0].getAttributeNode('file').nodeValue
+                temp_backingIndex = int(temp.getAttributeNode('index').
+                                        nodeValue)
+                temp_path = temp.getElementsByTagName('source')[0].\
+                    getAttributeNode('file').nodeValue
                 logger.debug("Checking %s %s %s"
                              % (temp_name, temp_backingIndex, temp_path))
                 disk_index += 1
@@ -504,7 +504,7 @@ def connection_getAllDomainStats(params):
             logger.info("The given domains: %s" % doms)
             domstats_from_api = conn.domainListGetStats(
                 [conn.lookupByName(name) for name in doms], domstats, flags)
-        # filter expected domains
+        #filter expected domains
         domains = filer_domains(logger, flags)
         if not filter_f:
             logger.info("Check the number of domain: Skip")

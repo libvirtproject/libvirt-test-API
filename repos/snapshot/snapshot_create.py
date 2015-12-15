@@ -8,14 +8,15 @@ from src import sharedmod
 from utils import utils
 
 required_params = ('guestname', 'flags', )
-optional_params = {'snapshotname' : '',
-                   'xml' : 'xmls/snapshot.xml',
-                  }
+optional_params = {'snapshotname': '',
+                   'xml': 'xmls/snapshot.xml',
+                   }
 
 QEMU_IMAGE_FORMAT = "qemu-img info %s |grep format |awk -F': ' '{print $2}'"
-FLAGDICT = {0:"no flag", 1:" --redefine", 2:" --current", 4:" --no-metadata",\
-                8:" --halt", 16:" --disk-only", 32:" --reuse-external",\
-                64:" --quiesce", 128:" --atomic", 256:" --live"}
+FLAGDICT = {0: "no flag", 1: " --redefine", 2: " --current", 4: " --no-metadata",
+            8: " --halt", 16: " --disk-only", 32: " --reuse-external",
+            64: " --quiesce", 128: " --atomic", 256: " --live"}
+
 
 def check_domain_image(*args):
     """ Check the format of disk image if is qcow2 """
@@ -23,11 +24,11 @@ def check_domain_image(*args):
     (domobj, guestname) = args
     dom_xml = domobj.XMLDesc(0)
     disk_path = utils.get_disk_path(dom_xml)
-    (status, output) = utils.exec_cmd(QEMU_IMAGE_FORMAT % disk_path,\
+    (status, output) = utils.exec_cmd(QEMU_IMAGE_FORMAT % disk_path,
                                       shell=True)
     if status:
-        logger.error("Executing "+ "\"" + QEMU_IMAGE_FORMAT % guestname \
-                     + "\"" + " failed")
+        logger.error("Executing " + "\"" + QEMU_IMAGE_FORMAT % guestname +
+                     "\"" + " failed")
         logger.error(output)
         return False
     else:
@@ -37,9 +38,10 @@ def check_domain_image(*args):
             return True
         else:
             logger.error("%s has a disk %s with type %s, \
-                          only qcow2 supports internal snapshot" % \
-                          (guestname, disk_path, img_format))
+                          only qcow2 supports internal snapshot" %
+                         (guestname, disk_path, img_format))
             return False
+
 
 def check_current_snapshot(domobj):
     """ Check the current snapshot info """
@@ -48,8 +50,8 @@ def check_current_snapshot(domobj):
         if domobj.hasCurrentSnapshot(0):
             current_snapshot = domobj.snapshotCurrent(0)
             if current_snapshot.isCurrent(0):
-                logger.info("The current snapshot name is %s " % \
-                            current_snapshot.getName() )
+                logger.info("The current snapshot name is %s " %
+                            current_snapshot.getName())
                 return True
             else:
                 logger.error("Failed to get current snapshot")
@@ -60,13 +62,14 @@ def check_current_snapshot(domobj):
 
     return 0
 
+
 def convert_flags(flags):
     """ Bitwise-OR of flags in conf and convert them to the readable flags """
 
     flaglist = []
     flagstr = ""
     logger.info("The given flags are %s " % flags)
-    if not '|' in flags:
+    if '|' not in flags:
         flagn = int(flags)
         flaglist.append(flagn)
     else:
@@ -84,6 +87,7 @@ def convert_flags(flags):
 
     return (flaglist, flagn)
 
+
 def create_redefine_xml(*args):
     """ Get the creationTime and state from current snapshot xml , and create
     a new xml for snapshot-create with redefine and current flags.
@@ -91,12 +95,12 @@ def create_redefine_xml(*args):
 
     (domobj, xmlstr) = args
     xmlcur = domobj.snapshotCurrent(0).getXMLDesc(0)
-    xmltime = xmlcur[xmlcur.find("<creationTime>"):xmlcur.find\
-                         ("</creationTime>")+ 15]
-    xmlstate = xmlcur[xmlcur.find("<state>"):xmlcur.find\
-                         ("</state>")+ 8]
+    xmltime = xmlcur[xmlcur.find("<creationTime>"):xmlcur.find
+                     ("</creationTime>") + 15]
+    xmlstate = xmlcur[xmlcur.find("<state>"):xmlcur.find
+                      ("</state>") + 8]
 
-    xmlstr = xmlstr[:17] + xmltime + "\n" +  xmlstate + xmlstr[17:]
+    xmlstr = xmlstr[:17] + xmltime + "\n" + xmlstate + xmlstr[17:]
     logger.info("Redefine current snapshot using xml: %s" % xmlstr)
     return xmlstr
 
@@ -121,9 +125,9 @@ def check_created_snapshot(*args):
     # The passed flags include "halt"
     elif flagbin[-4:-3] == "1":
         state = domobj.info()[0]
-        expect_states = [libvirt.VIR_DOMAIN_SHUTOFF,\
-                             libvirt.VIR_DOMAIN_SHUTOFF_FROM_SNAPSHOT,\
-                             libvirt.VIR_DOMAIN_SHUTOFF_DESTROYED]
+        expect_states = [libvirt.VIR_DOMAIN_SHUTOFF,
+                         libvirt.VIR_DOMAIN_SHUTOFF_FROM_SNAPSHOT,
+                         libvirt.VIR_DOMAIN_SHUTOFF_DESTROYED]
 
         if state in expect_states:
             logger.info("Successfully halt after snapshot is created")
@@ -150,7 +154,7 @@ def snapshot_create(params):
     global logger
     logger = params['logger']
     guestname = params['guestname']
-    flags = params ['flags']
+    flags = params['flags']
     xmlstr = params['xml']
     conn = sharedmod.libvirtobj['conn']
     domobj = conn.lookupByName(guestname)
@@ -186,7 +190,7 @@ def snapshot_create(params):
         time.sleep(5)
 
         if check_created_snapshot(domobj, flagn, snapshotname) and \
-        check_current_snapshot(domobj):
+                check_current_snapshot(domobj):
             logger.info("Successfully create snapshot")
             return 0
         else:

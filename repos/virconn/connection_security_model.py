@@ -49,6 +49,7 @@ def get_security_driver(logger):
         else:
             return ""
 
+
 def connection_security_model(params):
     """test API for getSecurityModel"""
 

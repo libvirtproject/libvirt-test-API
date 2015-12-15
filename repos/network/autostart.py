@@ -80,7 +80,7 @@ def autostart(params):
             logger.error("Error: fail to check autostart status of \
                           virtual network %s" % networkname)
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Error: fail to autostart virtual network %s " %

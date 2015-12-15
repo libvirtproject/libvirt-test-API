@@ -35,6 +35,7 @@ def check_domain_running(conn, guestname, logger):
     else:
         return 0
 
+
 def stdio_callback(watch, fd, events, opaque):
     stream = opaque[0]
     logger = opaque[1]
@@ -47,6 +48,7 @@ def stdio_callback(watch, fd, events, opaque):
         received_data = stream.recv(1024)
         logger.info("write %d bytes from stream to stdio: %s" %
                     (len(str(received_data)), received_data))
+
 
 def stream_callback(stream, events, opaque):
     global count
@@ -75,12 +77,14 @@ def stream_callback(stream, events, opaque):
             pass
         logger.info("some bytes in stream")
 
+
 def timeout_callback(timer, opaque):
     logger = opaque
     logger.debug("timer callback fire: %s" % timer)
     global count
     count = count + 1
     logger.info("timeout count is: %s" % count)
+
 
 def check_domain_kernel_line(guestname, username, password, logger):
     global change
@@ -133,6 +137,7 @@ def check_domain_kernel_line(guestname, username, password, logger):
         logger.info("No need to modify guest kernel line")
 
     return 0
+
 
 def console_callback(params):
     """ open console of a domain, add event and timeout handler.
@@ -192,10 +197,10 @@ def console_callback(params):
                 break
 
         logger.info("Now update stream event handler on both read/write")
-        stream.eventUpdateCallback(libvirt.VIR_STREAM_EVENT_WRITABLE|
+        stream.eventUpdateCallback(libvirt.VIR_STREAM_EVENT_WRITABLE |
                                    libvirt.VIR_STREAM_EVENT_READABLE)
         logger.info("Now update libvirt event handler on both read/write")
-        libvirt.virEventUpdateHandle(watch, libvirt.VIR_EVENT_HANDLE_WRITABLE|
+        libvirt.virEventUpdateHandle(watch, libvirt.VIR_EVENT_HANDLE_WRITABLE |
                                      libvirt.VIR_EVENT_HANDLE_READABLE)
         logger.info("Now update libvirt timeout value as: 15ms")
         libvirt.virEventUpdateTimeout(timer, 15)

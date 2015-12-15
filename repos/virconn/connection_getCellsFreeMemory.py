@@ -41,8 +41,7 @@ def connection_getCellsFreeMemory(params):
                 continue
 
             D = utils.get_standard_deviation(getnodemem, virtgetmem,
-                                             "/sys/devices/system/node/node%d/meminfo"
-                                             % n, [conn, n])
+                                             '/sys/devices/system/node/node%d/meminfo' % n, [conn, n])
             logger.info("Standard Deviation for node %d is %d" % (n, D))
 
             """ expectations 177 is a average collected in a x86_64 low load machine"""

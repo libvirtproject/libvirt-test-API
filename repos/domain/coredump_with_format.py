@@ -206,7 +206,7 @@ def coredump_with_format(params):
             logger.error("Domain %s is not running" % domain_name)
             return 1
         logger.info("The given path is %s" % topath)
-        if bypass_f:
+        if bypass_f is True:
             thread.start_new_thread(get_fileflags, (topath, logger,))
         logger.info("Call the coreDumpWithFormat API")
         if dom.coreDumpWithFormat(topath, dumpformat, flags) == 0:
@@ -214,7 +214,7 @@ def coredump_with_format(params):
             if not check_dump_file(topath, logger):
                 return 1
             if Udumpformat == "RAW":
-                if not check_dumpfile_type(topath,flags,logger):
+                if not check_dumpfile_type(topath, flags, logger):
                     return 1
             else:
                 if not check_crash_command(logger):
@@ -224,7 +224,7 @@ def coredump_with_format(params):
             vmstate = dom.state()
             if not check_domain_state(vmstate, flags, logger):
                 return 1
-            if bypass_f:
+            if bypass_f is True:
                 if not check_fileflag(fileflags, logger):
                     return 1
 

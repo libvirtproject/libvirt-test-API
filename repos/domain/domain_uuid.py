@@ -38,14 +38,7 @@ def check_domain_uuid(guestname, UUIDString, logger):
     """ check UUID String of guest """
     status, ret = commands.getstatusoutput(VIRSH_DOMUUID + ' %s' % guestname)
     if status:
-        logger.error(
-            "executing " +
-            "\"" +
-            VIRSH_DOMUUID +
-            ' %s' %
-            guestname +
-            "\"" +
-            " failed")
+        logger.error("executing " + "\"" + VIRSH_DOMUUID + ' %s' % guestname + "\"" + " failed")
         logger.error(ret)
         return False
     else:
@@ -85,7 +78,7 @@ def domain_uuid(params):
             logger.error(
                 "UUIDString from API is not the same as the one from virsh")
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

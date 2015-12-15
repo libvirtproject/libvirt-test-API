@@ -52,8 +52,7 @@ def add_del_iothread(params):
                     if find_iothreadid_fromxml(vm, 1, i):
                         vm.delIOThread(i, libvirt.VIR_DOMAIN_AFFECT_LIVE)
                         if find_iothreadid_fromxml(vm, 1, i):
-                            logger.info(
-                                "FAIL: still can find iothread id in XML")
+                            logger.info("FAIL: still can find iothread id in XML")
                             fail = 1
 
                         break

@@ -50,6 +50,7 @@ def request_credentials(credentials, user_data):
 
 
 class guest_install(Thread):
+
     """function callable by as a thread to create guest
     """
 
@@ -85,10 +86,8 @@ class guest_install(Thread):
         self.logger.info('create guest %s from xml description' % self.name)
         try:
             guestobj = self.conn.createXML(self.xmlstr, 0)
-            self.logger.info(
-                'guest %s API createXML returned successfuly' %
-                guestobj.name())
-        except libvirtError as e:
+            self.logger.info('guest %s API createXML returned successfuly' % guestobj.name())
+        except libvirtError, e:
             self.logger.error("API error message: %s, error code is %s"
                               % (e.message, e.get_error_code()))
             self.logger.error("fail to define domain %s" % self.name)

@@ -72,7 +72,7 @@ def destroy(params):
         else:
             logger.error("fail to check destroy interface")
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to destroy interface %s" % ifacename)

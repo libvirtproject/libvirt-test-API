@@ -15,6 +15,7 @@ optional_params = {}
 
 NODE_MEMINFO_PATH = "/sys/devices/system/node/node*/meminfo"
 
+
 def node_memory(params):
     """test get host node memory info
     """
@@ -38,7 +39,7 @@ def node_memory(params):
 
     try:
         logger.info("get host total free memory")
-        mem = conn.getFreeMemory()/1024
+        mem = conn.getFreeMemory() / 1024
         logger.info("host free memory total is: %s KiB" % mem)
         logger.info("free memory collected in %s is: %s KiB" %
                     (NODE_MEMINFO_PATH, free_total))
@@ -52,7 +53,7 @@ def node_memory(params):
 
         logger.info("get free memory of nodes")
         ret = conn.getCellsFreeMemory(0, node_num)
-        mem_list = [i/1024 for i in ret]
+        mem_list = [i / 1024 for i in ret]
         logger.info("node free memory list is: %s" % mem_list)
         logger.info("node free memory list collected in %s is: %s" %
                     (NODE_MEMINFO_PATH, node_mem))

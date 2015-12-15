@@ -148,16 +148,16 @@ def managedsave(params):
         else:
             domobj.managedSave(flagn)
 
-        # Check if domain has managedsave image
-        if (domobj.hasManagedSaveImage(0) and
-                domobj.info()[0] == libvirt.VIR_DOMAIN_SHUTOFF and
-                check_savefile_create(guestname)):
+        #Check if domain has managedsave image
+        if domobj.hasManagedSaveImage(0) and \
+                domobj.info()[0] == libvirt.VIR_DOMAIN_SHUTOFF and \
+                check_savefile_create(guestname):
             logger.info("Domain %s managedsave successfully " % guestname)
         else:
             logger.error("Fail to managedsave domain")
             return 1
 
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % e.message)
         logger.error("Fail to managedsave %s domain" % guestname)

@@ -99,12 +99,7 @@ def set_user_passwd(params):
         else:
             passwd = "123456"
 
-        if create_new_user(
-            ipaddr,
-            "usertestapi",
-            username,
-            userpasswd,
-                logger) != 0:
+        if create_new_user(ipaddr, "usertestapi", username, userpasswd, logger) != 0:
             return 1
 
         vm.setUserPassword("usertestapi", passwd, flags)

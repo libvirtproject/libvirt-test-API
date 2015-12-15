@@ -108,7 +108,7 @@ def set_guest_time(params):
 
         sec = long(utils.remote_exec(ipaddr, username, userpassword, GET_TIME))
 
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

@@ -12,12 +12,13 @@ from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 
-required_params = ('guestname','hddriver')
+required_params = ('guestname', 'hddriver')
 optional_params = {'imageformat': 'raw',
-                   'volumepath' : '/var/lib/libvirt/images',
-                   'volume' : 'attacheddisk',
-                   'xml' : 'xmls/disk.xml',
-                  }
+                   'volumepath': '/var/lib/libvirt/images',
+                   'volume': 'attacheddisk',
+                   'xml': 'xmls/disk.xml',
+                   }
+
 
 def check_detach_disk(num1, num2):
     """Check detach disk result via simple disk number
@@ -70,7 +71,7 @@ def detach_disk(params):
         else:
             logger.error("fail to detach a disk to guest: %s\n" % disk_num2)
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("detach %s disk from guest %s" % (imageformat, guestname))

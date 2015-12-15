@@ -72,7 +72,7 @@ def delete(params):
             return 1
         else:
             logger.info("delete snapshot %s succeeded" % snapshotname)
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

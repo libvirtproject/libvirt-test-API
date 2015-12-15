@@ -57,7 +57,7 @@ def update(params):
                        flag_val)
         updated_netxml = network.XMLDesc(0)
         logger.info("The updated network xml is %s" % updated_netxml)
-        # The check only works when flag isn't set as config
+        #The check only works when flag isn't set as config
         if flag_val != 2:
             if command_val == 0 or command_val == 2:
                 if xmlstr not in updated_netxml:
@@ -75,7 +75,7 @@ def update(params):
                     logger.error("Failed to update network")
                     return 1
 
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

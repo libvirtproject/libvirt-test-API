@@ -13,13 +13,7 @@ from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 
-required_params = (
-    'poolname',
-    'volname',
-    'volformat',
-    'capacity',
-    'algorithm',
-)
+required_params = ('poolname', 'volname', 'volformat', 'capacity', 'algorithm',)
 optional_params = {'xml': 'xmls/dir_volume.xml',
                    }
 
@@ -45,8 +39,8 @@ def write_file(path, capacity):
     logger.info("write %s data into file %s" % (capacity, path))
     out = utils.get_capacity_suffix_size(capacity)
     f = open(path, 'w')
-    datastr = ''.join(string.lowercase + string.uppercase
-                      + string.digits + '.' + '\n')
+    datastr = ''.join(string.lowercase + string.uppercase +
+                      string.digits + '.' + '\n')
     repeat = out['capacity_byte'] / 64
     data = ''.join(repeat * datastr)
     f.write(data)

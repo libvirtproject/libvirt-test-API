@@ -8,6 +8,7 @@ from xml.dom import minidom
 required_params = ('secretUUID',)
 optional_params = {}
 
+
 def check_undefineSecret(ephemeral, secretUUID):
     """Check undefine secret result, if ephemeral is no, the secret xml will
        not exist under /etc/libvirt/secrets/ after undefine action;
@@ -24,6 +25,7 @@ def check_undefineSecret(ephemeral, secretUUID):
 
     return 1
 
+
 def undefineSecret(params):
     """Undefine a secret"""
     global conn
@@ -33,9 +35,9 @@ def undefineSecret(params):
 
     secretobj = conn.secretLookupByUUIDString(secretUUID)
     ephemeral = minidom.parseString(secretobj.XMLDesc(0)).\
-                getElementsByTagName('secret')[0].getAttribute('ephemeral')
+        getElementsByTagName('secret')[0].getAttribute('ephemeral')
     diskpath = minidom.parseString(secretobj.XMLDesc(0)).\
-               getElementsByTagName('volume')[0].childNodes[0].data
+        getElementsByTagName('volume')[0].childNodes[0].data
     try:
         secretobj.undefine()
         if check_undefineSecret(ephemeral, secretUUID):
@@ -47,7 +49,7 @@ def undefineSecret(params):
             return 1
 
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1
 

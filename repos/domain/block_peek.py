@@ -11,15 +11,17 @@ from src import sharedmod
 required_params = ('guestname',)
 optional_params = {}
 
+
 def check_guest_status(domobj):
     """Check guest current status"""
     state = domobj.info()[0]
     if state == libvirt.VIR_DOMAIN_SHUTOFF or \
-        state == libvirt.VIR_DOMAIN_SHUTDOWN:
+            state == libvirt.VIR_DOMAIN_SHUTDOWN:
         # add check function
         return False
     else:
         return True
+
 
 def block_peek(params):
     """domain block peek test function

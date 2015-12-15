@@ -94,7 +94,7 @@ def create_fs_pool(params):
             logger.info("creating %s storage pool is \
                          UNSUCCESSFUL in libvirt!!!" % poolname)
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

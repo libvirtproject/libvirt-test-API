@@ -17,8 +17,8 @@ def check_guest_status(domobj):
     """Check guest current status"""
     state = domobj.info()[0]
     if state == libvirt.VIR_DOMAIN_SHUTOFF or \
-        state == libvirt.VIR_DOMAIN_SHUTDOWN:
-    # add check function
+            state == libvirt.VIR_DOMAIN_SHUTDOWN:
+        # add check function
         return False
     else:
         return True

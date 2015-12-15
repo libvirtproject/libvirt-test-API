@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import commands
 
+
 def append_path(path):
     """Append root path of package"""
     if path in sys.path:
@@ -48,11 +49,11 @@ if __name__ == "__main__":
     targetfile = 'case.conf'
 
     for option in options:
-        result = re.search('--(.*)=(.*)',option)
+        result = re.search('--(.*)=(.*)', option)
         if result:
             varname = result.group(1)
             varvalue = result.group(2)
-            print "%s : %s" % (varname,varvalue)
+            print "%s : %s" % (varname, varvalue)
             if varname == 'confile':
                 srcfile = varvalue
             elif varname == 'memory':
@@ -64,10 +65,10 @@ if __name__ == "__main__":
             sys.exit(1)
 
     # Generate case.conf by replace variables in template conf
-    shutil.copy('%s%s' % (srcdir, srcfile) , targetfile)
+    shutil.copy('%s%s' % (srcdir, srcfile), targetfile)
 
     for key in vardict.keys():
-        virtlab.case_spawn(targetfile , '#%s#' % key.upper(), vardict[key])
+        virtlab.case_spawn(targetfile, '#%s#' % key.upper(), vardict[key])
 
 #    (status, text) = commands.getstatusoutput('setenforce 0')
     retcode = subprocess.call(["python", "libvirt-test-api"])

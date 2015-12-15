@@ -16,11 +16,11 @@ from utils import utils
 required_params = ('guestname', 'username', 'password', 'diskpath', 'devtype',)
 optional_params = {'memory': 1048576,
                    'vcpu': 1,
-                   'imageformat' : 'raw',
-                   'hddriver' : 'virtio',
+                   'imageformat': 'raw',
+                   'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
-                   'uuid' : '05867c1a-afeb-300e-e55e-2673391ae080',
+                   'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
                    'virt_type': 'kvm',
                    'xml': 'xmls/kvm_guest_define_with_cdrom_and_floppy.xml',
                    'cdrom_xml': 'xmls/cdrom.xml',
@@ -29,7 +29,8 @@ optional_params = {'memory': 1048576,
                    'guestmachine': 'pc',
                    'isopath': '/tmp/cdrom.iso',
                    'floppypath': '/tmp/floppy.img',
-                  }
+                   }
+
 
 def create_image(devtype, img_name, logger):
     """Create an image file"""
@@ -41,7 +42,7 @@ def create_image(devtype, img_name, logger):
             return False
 
         cmd2 = "mkdir /tmp/%s && touch /tmp/%s/$(uuidgen|cut -d- -f1)" \
-                                                   % (out1, out1)
+            % (out1, out1)
         ret2, out2 = utils.exec_cmd(cmd2, shell=True)
         if ret2:
             logger.error("fail to create files for iso image: \n %s" % out1)
@@ -89,6 +90,7 @@ def create_image(devtype, img_name, logger):
 
     return True
 
+
 def check_device_in_guest(devtype, guestip, username, password, logger):
     """Check updated device in guest"""
     if devtype == 'cdrom':
@@ -123,6 +125,7 @@ def check_device_in_guest(devtype, guestip, username, password, logger):
 
     return True, output
 
+
 def check_updated_xml(domobj, devtype, srcfile, logger):
     """Check if the device is updated"""
     xmlobj = domobj.XMLDesc(0)
@@ -144,6 +147,7 @@ def check_updated_xml(domobj, devtype, srcfile, logger):
     else:
         logger.error("The %s in domain xml is not updated" % devtype)
         return 1
+
 
 def update_devflag(params):
     """Update virtual device to a domain from xml"""
@@ -265,7 +269,7 @@ def update_devflag(params):
 
     new_devxml = devxml.replace(change, srcpath)
 
-    flags = libvirt.VIR_DOMAIN_DEVICE_MODIFY_FORCE|libvirt.VIR_DOMAIN_DEVICE_MODIFY_LIVE
+    flags = libvirt.VIR_DOMAIN_DEVICE_MODIFY_FORCE | libvirt.VIR_DOMAIN_DEVICE_MODIFY_LIVE
     logger.info("eject %s disk in domain with flags: %s" % (devtype, flags))
     try:
         domobj.updateDeviceFlags(new_devxml, flags)
@@ -288,6 +292,7 @@ def update_devflag(params):
         logger.info("success to update '%s' device: %s\n" % (devtype, ret2[1]))
 
     return 0
+
 
 def update_devflag_clean(params):
     """Clean testing environment"""

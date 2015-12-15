@@ -21,13 +21,7 @@ def hostname(params):
     if status:
         logger.error("executing " + "\"" + VIRSH_HOSTNAME + "\"" + " failed")
         return 1
-    logger.info(
-        "the output of " +
-        "\"" +
-        VIRSH_HOSTNAME +
-        "\"" +
-        " is %s" %
-        virsh_ret)
+    logger.info("the output of " + "\"" + VIRSH_HOSTNAME + "\"" + " is %s" % virsh_ret)
 
     status, host_ret = commands.getstatusoutput("hostname")
     if status:

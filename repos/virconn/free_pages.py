@@ -4,7 +4,6 @@
 import os
 import resource
 
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod

@@ -63,14 +63,9 @@ def cpu_status(params):
             if not cpu_tuple[n]:
                 continue
 
-            D = utils.get_standard_deviation(
-                getcputime, virtgetcputime, [
-                    CGROUP_PERCPU %
-                    guest, n], [
-                    vm, n, 'cpu_time'])
-            logger.info(
-                "Standard Deviation for host cpu %d cputime is %d" %
-                (n, D))
+            D = utils.get_standard_deviation(getcputime, virtgetcputime,
+                                             [CGROUP_PERCPU % guest, n], [vm, n, 'cpu_time'])
+            logger.info("Standard Deviation for host cpu %d cputime is %d" % (n, D))
 
             """ expectations 403423 is a average collected in a x86_64 low load machine"""
             if D > 403423 * 5:
@@ -78,13 +73,9 @@ def cpu_status(params):
                 logger.info("FAIL: Standard Deviation is too big \
                              (biger than %d) for host cpu %d" % (403423 * 5, n))
 
-            D = utils.get_standard_deviation(
-                getvcputime, virtgetcputime, [
-                    vcpus, guest, n], [
-                    vm, n, 'vcpu_time'])
-            logger.info(
-                "Standard Deviation for host cpu %d vcputime is %d" %
-                (n, D))
+            D = utils.get_standard_deviation(getvcputime, virtgetcputime,
+                                             [vcpus, guest, n], [vm, n, 'vcpu_time'])
+            logger.info("Standard Deviation for host cpu %d vcputime is %d" % (n, D))
 
             """ expectations 4034 is a average collected in a x86_64 low load machine"""
             if D > 4034 * 5 * vcpus:
@@ -92,11 +83,8 @@ def cpu_status(params):
                 logger.info("FAIL: Standard Deviation is too big \
                              (biger than %d) for host cpu time %d" % (4034 * 5 * vcpus, n))
 
-        D = utils.get_standard_deviation(
-            getcputime, virtgettotalcputime, [
-                CGROUP_USAGE %
-                guest, 0], [
-                vm, 'cpu_time'])
+        D = utils.get_standard_deviation(getcputime, virtgettotalcputime,
+                                         [CGROUP_USAGE % guest, 0], [vm, 'cpu_time'])
         logger.info("Standard Deviation for host cpu total cputime is %d" % D)
 
         """ expectations 313451 is a average collected in a x86_64 low load machine"""
@@ -105,14 +93,9 @@ def cpu_status(params):
             logger.info("FAIL: Standard Deviation is too big \
                          (biger than %d) for host cpu time %d" % (313451 * 5 * len(cpu_tuple), n))
 
-        D = utils.get_standard_deviation(
-            getcputime, virtgettotalcputime2, [
-                CGROUP_STAT %
-                guest, 3], [
-                vm, 'system_time'])
-        logger.info(
-            "Standard Deviation for host cpu total system time is %d" %
-            D)
+        D = utils.get_standard_deviation(getcputime, virtgettotalcputime2,
+                                         [CGROUP_STAT % guest, 3], [vm, 'system_time'])
+        logger.info("Standard Deviation for host cpu total system time is %d" % D)
 
         """ expectations 10 is a average collected in a x86_64 low load machine"""
         if D > 10 * 5:
@@ -120,14 +103,9 @@ def cpu_status(params):
             logger.info("FAIL: Standard Deviation is too big \
                          (biger than %d) for host system cpu time %d" % (10 * 5, n))
 
-        D = utils.get_standard_deviation(
-            getcputime, virtgettotalcputime2, [
-                CGROUP_STAT %
-                guest, 1], [
-                vm, 'user_time'])
-        logger.info(
-            "Standard Deviation for host cpu total user time is %d" %
-            D)
+        D = utils.get_standard_deviation(getcputime, virtgettotalcputime2,
+                                         [CGROUP_STAT % guest, 1], [vm, 'user_time'])
+        logger.info("Standard Deviation for host cpu total user time is %d" % D)
 
         """ expectations 10 is a average collected in a x86_64 low load machine"""
         if D > 10 * 5:

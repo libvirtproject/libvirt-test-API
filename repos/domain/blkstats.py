@@ -17,8 +17,8 @@ def check_guest_status(domobj):
     """Check guest current status"""
     state = domobj.info()[0]
     if state == libvirt.VIR_DOMAIN_SHUTOFF or \
-        state == libvirt.VIR_DOMAIN_SHUTDOWN:
-    # add check function
+            state == libvirt.VIR_DOMAIN_SHUTDOWN:
+        # add check function
         return False
     else:
         return True
@@ -51,7 +51,7 @@ def blkstats(params):
         devs = cont.xpathEval("/domain/devices/disk/target/@dev")
         path = devs[0].content
         blkstats = domobj.blockStats(path)
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

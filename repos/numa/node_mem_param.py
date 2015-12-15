@@ -10,9 +10,10 @@ required_params = ()
 optional_params = {"shm_pages_to_scan": 100,
                    "shm_sleep_millisecs": 20,
                    "shm_merge_across_nodes": 1
-                  }
+                   }
 
 KSM_PATH = "/sys/kernel/mm/ksm/"
+
 
 def node_mem_param(params):
     """test set host node memory parameters
@@ -23,8 +24,8 @@ def node_mem_param(params):
     shm_merge_across_nodes = params.get('shm_merge_across_nodes')
 
     if not shm_pages_to_scan \
-        and not shm_sleep_millisecs \
-        and not shm_merge_across_nodes:
+            and not shm_sleep_millisecs \
+            and not shm_merge_across_nodes:
         logger.error("given param is none")
         return 1
 
@@ -71,7 +72,7 @@ def node_mem_param(params):
         if ksm_dict == param_dict:
             logger.info("tuning detail under %s is expected" % KSM_PATH)
         else:
-            logger.error("check with tuning detail under %s failed"  % KSM_PATH)
+            logger.error("check with tuning detail under %s failed" % KSM_PATH)
             return 1
 
     except libvirtError, e:

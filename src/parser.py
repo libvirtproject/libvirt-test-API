@@ -266,8 +266,7 @@ class CaseFileParser(object):
                                     "the value with a keywords which is", tripped_valuelist[1])
 
                             if re.findall(tripped_valuename, str(caselist)):
-                                f = lambda s: s.has_key(casename) is False
-                                temp_list = [filter(f, caselist)]
+                                temp_list = [case for case in caselist if case.has_key(casename)]
                         elif (tripped_valuelist[1] == "no" and
                               len(tripped_valuelist) == 3):
                             filterters = tripped_valuelist[2].split("|")

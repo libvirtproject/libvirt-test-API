@@ -20,20 +20,20 @@ ISO_DIR = "/var/lib/libvirt/images/"
 
 required_params = ('guestname', 'guestos', 'guestarch')
 optional_params = {
-                   'memory': 1048576,
-                   'vcpu': 1,
-                   'disksize' : 10,
-                   'imageformat' : 'qcow2',
+    'memory': 1048576,
+    'vcpu': 1,
+    'disksize': 10,
+    'imageformat': 'qcow2',
                    'qcow2version': 'v3',
-                   'hddriver' : 'virtio',
+                   'hddriver': 'virtio',
                    'nicdriver': 'virtio',
-                   'type' : 'define',
+                   'type': 'define',
                    'xml': 'xmls/kvm_linux_guest_install_iso.xml',
                    'guestmachine': 'pc',
-                   'graphic' : 'spice',
-                   'diskpath' : '/var/lib/libvirt/images',
-                   'disksymbol' : 'sdb',
-                  }
+                   'graphic': 'spice',
+                   'diskpath': '/var/lib/libvirt/images',
+                   'disksymbol': 'sdb',
+}
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
 VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
@@ -45,12 +45,14 @@ VMLINUZ = os.path.join(BOOT_DIR, 'vmlinuz')
 INITRD = os.path.join(BOOT_DIR, 'initrd.img')
 HOME_PATH = os.getcwd()
 
+
 def prepare_iso(isolink, cache_floder):
     """ Download iso file from isolink to cache_floder
         file into it for automatic guest installation
     """
     cmd = "wget " + isolink + " -P " + cache_floder
     utils.exec_cmd(cmd, shell=True)
+
 
 def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     """ After guest installation is over, undefine the guest with
@@ -67,7 +69,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
         conn = domobj._conn
         domobj = conn.defineXML(xmlstr)
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to define domain %s" % guestname)
         return 1
@@ -81,12 +83,13 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     try:
         domobj.create()
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s" \
+        logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
         return 1
 
     return 0
+
 
 def check_domain_state(conn, guestname, logger):
     """ if a guest with the same name exists, remove it """
@@ -110,6 +113,7 @@ def check_domain_state(conn, guestname, logger):
         domobj.undefine()
 
     return 0
+
 
 def install_linux_iso(params):
     """ install a new virtual machine """
@@ -148,9 +152,9 @@ def install_linux_iso(params):
             else:
                 qcow2_options = ""
         disk_create = "qemu-img create -f %s %s %s %sG" % \
-                        (imageformat, qcow2_options, diskpath, seeksize)
-        logger.debug("the command line of creating disk images is '%s'" % \
-                       disk_create)
+            (imageformat, qcow2_options, diskpath, seeksize)
+        logger.debug("the command line of creating disk images is '%s'" %
+                     disk_create)
 
         (status, message) = commands.getstatusoutput(disk_create)
         if status != 0:
@@ -169,24 +173,24 @@ def install_linux_iso(params):
     elif hddriver == "sata":
         xmlstr = xmlstr.replace("DEV", 'sda')
     elif hddriver == 'lun':
-        xmlstr = xmlstr.replace("'lun'","'virtio'")
-        xmlstr = xmlstr.replace('DEV','vda')
-        xmlstr = xmlstr.replace('"file"','"block"')
-        xmlstr = xmlstr.replace('"disk"','"lun"')
-        xmlstr = xmlstr.replace("file='%s'"% params.get('diskpath','/var/lib/libvirt/images'), \
+        xmlstr = xmlstr.replace("'lun'", "'virtio'")
+        xmlstr = xmlstr.replace('DEV', 'vda')
+        xmlstr = xmlstr.replace('"file"', '"block"')
+        xmlstr = xmlstr.replace('"disk"', '"lun"')
+        xmlstr = xmlstr.replace("file='%s'" % params.get('diskpath', '/var/lib/libvirt/images'),
                                 "dev='/dev/SDX'")
-        disksymbol = params.get('disksymbol','sdb')
-        xmlstr = xmlstr.replace('SDX',disksymbol)
+        disksymbol = params.get('disksymbol', 'sdb')
+        xmlstr = xmlstr.replace('SDX', disksymbol)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
     elif hddriver == 'scsilun':
-        xmlstr = xmlstr.replace("'scsilun'","'scsi'")
-        xmlstr = xmlstr.replace('DEV','sda')
-        xmlstr = xmlstr.replace('"file"','"block"')
-        xmlstr = xmlstr.replace('"disk"','"lun"')
-        xmlstr = xmlstr.replace("file='%s'"% params.get('diskpath','/var/lib/libvirt/images'), \
+        xmlstr = xmlstr.replace("'scsilun'", "'scsi'")
+        xmlstr = xmlstr.replace('DEV', 'sda')
+        xmlstr = xmlstr.replace('"file"', '"block"')
+        xmlstr = xmlstr.replace('"disk"', '"lun"')
+        xmlstr = xmlstr.replace("file='%s'" % params.get('diskpath', '/var/lib/libvirt/images'),
                                 "dev='/dev/SDX'")
-        disksymbol = params.get('disksymbol','sdb')
-        xmlstr = xmlstr.replace('SDX',disksymbol)
+        disksymbol = params.get('disksymbol', 'sdb')
+        xmlstr = xmlstr.replace('SDX', disksymbol)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
 
     # Checking the graphic type
@@ -266,7 +270,7 @@ def install_linux_iso(params):
         try:
             domobj = conn.defineXML(xmlstr)
         except libvirtError, e:
-            logger.error("API error message: %s, error code is %s" \
+            logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
@@ -276,7 +280,7 @@ def install_linux_iso(params):
         try:
             domobj.create()
         except libvirtError, e:
-            logger.error("API error message: %s, error code is %s" \
+            logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to start domain %s" % guestname)
             return 1
@@ -285,7 +289,7 @@ def install_linux_iso(params):
         try:
             domobj = conn.createXML(xmlstr, 0)
         except libvirtError, e:
-            logger.error("API error message: %s, error code is %s" \
+            logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
@@ -338,7 +342,7 @@ def install_linux_iso(params):
     if interval == 2400:
         if 'rhel3u9' in guestname:
             logger.info(
-            "guest installaton will be destoryed forcelly for rhel3u9 guest")
+                "guest installaton will be destoryed forcelly for rhel3u9 guest")
             domobj.destroy()
             logger.info("boot guest vm off harddisk")
             xmlstr_bak = xmlstr_bak.replace("KERNEL", "")
@@ -346,7 +350,7 @@ def install_linux_iso(params):
             xmlstr_bak = xmlstr_bak.replace("ks=KS", "")
             xmlstr_bak = xmlstr_bak.replace("dev=\"cdrom\"", "dev=\"hd\"")
             xmlstr = xmlstr_bak
-            ret =  prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger)
+            ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger)
             if ret:
                 logger.info("booting guest vm off harddisk failed")
                 return 1
@@ -382,6 +386,7 @@ def install_linux_iso(params):
     time.sleep(60)
 
     return 0
+
 
 def install_linux_iso_clean(params):
     """ clean testing environment """

@@ -40,8 +40,8 @@ def check_network_uuid(networkname, UUIDString, logger):
     status, ret = commands.getstatusoutput(VIRSH_NETUUID + ' %s'
                                            % networkname)
     if status:
-        logger.error("executing " + "\"" + VIRSH_NETUUID + ' %s' % networkname
-                     + "\"" + " failed")
+        logger.error("executing " + "\"" + VIRSH_NETUUID + ' %s' % networkname +
+                     "\"" + " failed")
         logger.error(ret)
         return False
     else:
@@ -66,6 +66,7 @@ def checking_uuid(logger, nwname, nwuuid):
         return True
     else:
         return False
+
 
 def network_uuid(params):
     """ 1.call appropriate API to generate the UUIDStirng
@@ -96,8 +97,8 @@ def network_uuid(params):
 
         logger.info("the UUID string of network \"%s\" is \"%s\""
                     % (networkname, UUIDString))
-        # allowing '-' and ' ' anywhere between character pairs, just
-        # check one of them.
+        #allowing '-' and ' ' anywhere between character pairs, just
+        #check one of them.
         UUIDString1 = UUIDString.replace("-", " ")
         network1 = conn.networkLookupByUUIDString(UUIDString1)
         nw_name1 = network1.name()
@@ -111,8 +112,7 @@ def network_uuid(params):
         logger.debug("The given UUID is \"%s\", the network is \"%s\" using \
 networkLookupByUUID" % (UUIDString2, nw_name2))
 
-        if nw_name1 == nw_name2 and checking_uuid(
-                logger, nw_name1, UUIDString):
+        if nw_name1 == nw_name2 and checking_uuid(logger, nw_name1, UUIDString):
             logger.info("Successed to get network name \"%s\" using \"%s\""
                         % (nw_name1, UUIDString))
 
@@ -122,7 +122,7 @@ networkLookupByUUID" % (UUIDString2, nw_name2))
         else:
             logger.error(VIRSH_NETUUID + " test failed.")
             return 1
-    except libvirtError as e:
+    except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

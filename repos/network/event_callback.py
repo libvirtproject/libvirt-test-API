@@ -8,19 +8,20 @@ from src import sharedmod
 
 
 required_params = ('action',)
-optional_params = {'networkname' : 'testnetcb',
-                   'bridgename' : 'testnetcbbr',
-                   'bridgeip' : '192.168.123.1',
-                   'bridgenetmask' : '255.255.255.0',
-                   'netstart' : '192.168.123.2',
-                   'netend' : '192.168.123.254',
-                   'netmode' : 'nat',
-                   'netip6addr' : '2001:db8:ca2:99::1',
-                   'netip6prefix' : '64',
-                   'netip6start' : '2001:db8:ca2:99::11',
-                   'netip6end' : '2001:db8:ca2:99::ff',
-                   'xml' : 'xmls/network.xml',
-                  }
+optional_params = {'networkname': 'testnetcb',
+                   'bridgename': 'testnetcbbr',
+                   'bridgeip': '192.168.123.1',
+                   'bridgenetmask': '255.255.255.0',
+                   'netstart': '192.168.123.2',
+                   'netend': '192.168.123.254',
+                   'netmode': 'nat',
+                   'netip6addr': '2001:db8:ca2:99::1',
+                   'netip6prefix': '64',
+                   'netip6start': '2001:db8:ca2:99::11',
+                   'netip6end': '2001:db8:ca2:99::ff',
+                   'xml': 'xmls/network.xml',
+                   }
+
 
 def net_define(conn, net_name, xmlstr):
     """ define a network

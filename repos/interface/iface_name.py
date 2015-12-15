@@ -58,12 +58,8 @@ def iface_name(params):
         status, interface_str = get_output(VIRSH_IFACE_NAME % mac, logger)
         if not status:
             interface_name = interface_str.rstrip()
-            logger.info(
-                "the interface name generate from " +
-                VIRSH_IFACE_NAME %
-                mac +
-                " is: '%s'" %
-                interface_name)
+            logger.info("the interface name generate from " +
+                        VIRSH_IFACE_NAME % mac + " is: '%s'" % interface_name)
         else:
             return 1
 
@@ -73,13 +69,11 @@ def iface_name(params):
 
         if not status:
             if interface_mac == mac:
-                logger.info(
-                    "the mac '%s' we tested is equal to it should be '%s'" %
-                    (mac, interface_mac))
+                logger.info("the mac '%s' we tested is equal to it should be '%s'" %
+                            (mac, interface_mac))
             else:
-                logger.error(
-                    "the mac '%s' we tested is not equal to it should be '%s'" %
-                    (mac, interface_mac))
+                logger.error("the mac '%s' we tested is not equal to it should be '%s'" %
+                             (mac, interface_mac))
                 return 1
 
     return 0
