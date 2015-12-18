@@ -32,8 +32,8 @@ class LibvirtException(Exception):
         return repr(self.errorstr)
 
     def response(self):
-        self.status = {'code': self.code, ('message': "%s:%s" %
-                                           (self.message, str(self)))}
+        self.status = {'code': self.code,
+                       'message': "%s:%s" % (self.message, str(self))}
         return self.status
 
 
