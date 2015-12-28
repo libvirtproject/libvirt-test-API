@@ -74,7 +74,7 @@ def detach_disk(params):
     except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
-        logger.error("detach %s disk from guest %s" % (imageformat, guestname))
+        logger.error("detach %s disk from guest %s" % (xmlstr, guestname))
         return 1
 
     return 0

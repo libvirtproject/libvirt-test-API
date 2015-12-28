@@ -321,14 +321,6 @@ class CaseFileParser(object):
             tripped_casename = ""
             if indent < 0:
                 break
-            elif indent > 0:
-                if indent == 4:
-                    if self.debug:
-                        self.debug_print("we begin to parse the option line")
-                    list = self.option_parse(fh, list, tripped_casename)
-                else:
-                    raise exception.CaseConfigfileError(
-                        "option indentation error!")
             elif indent == 0:
                 casestring = self.get_next_line(fh)
 
@@ -429,7 +421,13 @@ class CaseFileParser(object):
                     newdict = {}
                     newdict[tripped_casename] = {}
                     caselist.append(newdict)
-
+            elif indent > 0:
+                if indent == 4:
+                    if self.debug:
+                        self.debug_print("we begin to parse the option line")
+                    list = self.option_parse(fh, list, tripped_casename)
+                else:
+                    raise exception.CaseConfigfileError("option indentation error!")
         return list
 
 if __name__ == "__main__":

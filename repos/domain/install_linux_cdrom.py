@@ -2,7 +2,6 @@
 # Install a linux domain from CDROM
 # The iso file may be locked by other proces, and cause the failure of installation
 import os
-import sys
 import re
 import time
 import commands
@@ -11,6 +10,7 @@ import urllib
 
 import libvirt
 from libvirt import libvirtError
+from src.exception import TestError
 
 from src import sharedmod
 from src import env_parser
@@ -44,11 +44,144 @@ VM_UNDEFINE = "virsh undefine %s"
 HOME_PATH = os.getcwd()
 
 
-def prepare_cdrom(ostree, ks, guestname, cache_folder, logger):
+def mk_kickstart_iso(kscfg, guestos, logger):
+    def remove_all(path):
+        """rm -rf"""
+        if os.path.isdir(path) and not os.path.islink(path):
+            shutil.rmtree(path)
+        elif os.path.exists(path):
+            os.remove(path)
+
+    cwd = os.getcwd()
+    boot_iso = "boot.iso"
+    custom_iso = "custom.iso"
+    boot_iso_dir = "/mnt/boot_iso_dir"
+    custom_iso_dir = "/mnt/new"
+    kernel_args = os.getenv('kernel_args', '')
+
+    logger.debug("clean up in case of previous failure")
+    remove_all(boot_iso_dir)
+    remove_all(custom_iso_dir)
+
+    logger.debug("create work directories")
+    os.makedirs(boot_iso_dir)
+
+    logger.debug("mount " + boot_iso)
+    (ret, msg) = commands.getstatusoutput("mount -t iso9660 -o loop %s %s"
+                                          % (boot_iso, boot_iso_dir))
+    if ret != 0:
+        raise RuntimeError('Failed to start making custom iso: ' + msg)
+
+    logger.debug("copy original iso files to custom work directory")
+    shutil.copytree(boot_iso_dir, custom_iso_dir)
+
+    for root, dirs, files in os.walk(custom_iso):
+        for i in dirs:
+            os.chmod(os.path.join(root, i), 511)  # DEC 511 == OCT 777
+        for i in files:
+            os.chmod(os.path.join(root, i), 511)
+
+    (ret, msg) = commands.getstatusoutput("umount %s" % boot_iso_dir)
+    if ret != 0:
+        raise RuntimeError('Failed umounting boot iso: ' + msg)
+
+    vlmid = commands.getoutput("isoinfo -d -i %s |grep 'Volume id:'" % boot_iso)
+    logger.debug("vlmid :" + vlmid)
+
+    logger.debug("editing config files")
+    new_cfg_filename = 'tmp_cfg'
+    new_cfg = open('tmp_cfg', 'w')
+
+    if "ppc" in vlmid:
+        logger.debug("edit yaboot.conf and add kickstart entry")
+        old_cfg_filename = custom_iso_dir + "/etc/yaboot.conf"
+        old_cfg = open(old_cfg_filename, 'r')
+
+        timeout_found = append_found = False
+        # change timeout and  add kickstart entry
+        for line in old_cfg:
+            if not timeout_found and re.search('timeout', line):
+                timeout_found = True
+                line = 'timeout=5\n'
+            if not append_found and re.search('append', line):
+                append_found = True
+                line = ('append= "root=live:CDLABEL=%s ks=cdrom:/%s "\n'
+                        % (vlmid, kscfg))
+            new_cfg.write(line)
+
+        new_cfg.close()
+        old_cfg.close()
+
+        remove_all(old_cfg_filename)
+        shutil.move(new_cfg_filename, old_cfg_filename)
+        os.chdir(custom_iso_dir)
+        mkisofs_command = ('mkisofs -R -V "%s" -sysid PPC -chrp-boot '
+                           '-U -prep-boot ppc/chrp/yaboot -hfs-bless ppc/mac -no-desktop '
+                           '-allow-multidot -volset 4 -volset-size 1 -volset-seqno 1 '
+                           '-hfs-volid 4 -o %s/%s .' % (vlmid, cwd, custom_iso))
+    else:
+        logger.debug("copy kickstart to custom work directory")
+        old_kscfg, new_kscfg = open(kscfg, 'r'), open(custom_iso_dir + '/' + kscfg, 'w')
+        for line in old_kscfg:
+            if '%post' in line and kscfg.startswith('ks-rhel7'):
+                logger.debug("setting qemu-guest-agent autostart")
+                line = '%post \nsystemctl enable qemu-guest-agent.service\n'
+            new_kscfg.write(line)
+        old_kscfg.close()
+        new_kscfg.close()
+        remove_all(kscfg)
+
+        logger.debug("edit isolinux.cfg and add kickstart entry")
+        old_cfg_filename = custom_iso_dir + "/isolinux/isolinux.cfg"
+        old_cfg = open(old_cfg_filename, 'r')
+
+        default_found = timeout_found = False
+        for line in old_cfg:
+            if not default_found and re.search('default', line):
+                default_found = True
+                line = "default custom_ks\n"
+            if not timeout_found and re.search('timeout', line):
+                timeout_found = True
+                line = "timeout 5\n"
+            new_cfg.write(line)
+
+        #use different isolinux.cfg for rhel7 ,rhel6 and rhel5 guest
+        if 'rhel7' in guestos:
+            new_cfg.write('label custom_ks\n'
+                          'kernel vmlinuz %s\n'
+                          'append initrd=initrd.img ks=cdrom:sr0:/%s '
+                          'repo=cdrom:sr0 ramdisk_size=20000' % (kernel_args, kscfg))
+        else:
+            new_cfg.write('label custom_ks\n'
+                          'kernel vmlinuz %s\n'
+                          'append initrd=initrd.img ks=cdrom:/%s '
+                          'ramdisk_size=20000' % (kernel_args, kscfg))
+
+        new_cfg.close()
+        old_cfg.close()
+
+        remove_all(old_cfg_filename)
+        shutil.move(new_cfg_filename, old_cfg_filename)
+        os.chdir(custom_iso_dir)
+        mkisofs_command = ('mkisofs -R -b '
+                           'isolinux/isolinux.bin -no-emul-boot '
+                           '-boot-load-size 4 -boot-info-table -o %s/%s .'
+                           % (cwd, custom_iso))
+
+    (ret, msg) = commands.getstatusoutput(mkisofs_command)
+    if ret != 0:
+        raise RuntimeError("Failed to make custom_iso, error %d: %s!" % (ret, msg))
+
+    # clean up
+    remove_all(boot_iso_dir)
+    remove_all(custom_iso_dir)
+
+
+def prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger):
     """ to customize boot.iso file to add kickstart
         file into it for automatic guest installation
     """
-    ks_name = os.path.basename(ks)
+    ks_name = os.path.basename(kscfg)
 
     new_dir = os.path.join(cache_folder, guestname + "_folder")
     logger.info("creating a workshop folder for customizing custom.iso file")
@@ -66,23 +199,26 @@ def prepare_cdrom(ostree, ks, guestname, cache_folder, logger):
     boot_path = os.path.join(ostree, 'images/boot.iso')
     logger.info("the url of downloading boot.iso file is %s" % boot_path)
 
-    urllib.urlretrieve(boot_path, '%s/boot.iso' % new_dir)[0]
+    urllib.urlretrieve(boot_path, '%s/boot.iso' % new_dir)
     time.sleep(10)
 
-    urllib.urlretrieve(ks, '%s/%s' % (new_dir, ks_name))[0]
-    logger.info("the url of kickstart is %s" % ks)
+    urllib.urlretrieve(kscfg, '%s/%s' % (new_dir, ks_name))
+    logger.info("the url of kickstart is %s" % kscfg)
 
-    shutil.copy('utils/ksiso.sh', new_dir)
     src_path = os.getcwd()
 
     logger.debug("enter folder: %s" % new_dir)
     os.chdir(new_dir)
-    shell_cmd = 'sh ksiso.sh %s' % ks_name
 
-    logger.info("running command %s to making the custom.iso file" % shell_cmd)
-    (status, text) = commands.getstatusoutput(shell_cmd)
-
-    logger.debug(text)
+    logger.info("making the custom.iso file")
+    try:
+        mk_kickstart_iso(ks_name, guestos, logger)
+    except EnvironmentError as err:
+        logger.error("Error: [%d]: %s: %s!" % (err.errno, err.strerror, err.filename))
+        raise TestError()
+    except RuntimeError as err:
+        logger.error("Error: %s!" % (err.message))
+        raise TestError()
 
     logger.debug("go back to original directory: %s" % src_path)
     os.chdir(src_path)
@@ -156,7 +292,7 @@ def install_linux_cdrom(params):
     guestname = params.get('guestname')
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
-    br = params.get('bridgename', 'virbr0')
+    bridge = params.get('bridgename', 'virbr0')
     xmlstr = params['xml']
 
     logger.info("the name of guest is %s" % guestname)
@@ -174,10 +310,10 @@ def install_linux_cdrom(params):
         seeksize = params.get('disksize', 10)
         imageformat = params.get('imageformat', 'raw')
         logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
-        disk_create = "qemu-img create -f %s %s %sG" % \
-            (imageformat, diskpath, seeksize)
-        logger.debug("the command line of creating disk images is '%s'" %
-                     disk_create)
+        disk_create = ("qemu-img create -f %s %s %sG"
+                       % (imageformat, diskpath, seeksize))
+        logger.debug("the command line of creating disk images is '%s'"
+                     % disk_create)
         (status, message) = commands.getstatusoutput(disk_create)
         if status != 0:
             logger.debug(message)
@@ -231,12 +367,12 @@ def install_linux_cdrom(params):
 
     envparser = env_parser.Envparser(envfile)
     ostree = envparser.get_value("guest", os_arch)
-    ks = envparser.get_value("guest", os_arch + "_http_ks")
+    kscfg = envparser.get_value("guest", os_arch + "_http_ks")
 
     logger.debug('install source:\n    %s' % ostree)
-    logger.debug('kisckstart file:\n    %s' % ks)
+    logger.debug('kisckstart file:\n    %s' % kscfg)
 
-    if (ostree == 'http://'):
+    if ostree == 'http://':
         logger.error("no os tree defined in %s for %s" % (envfile, os_arch))
         return 1
 
@@ -244,10 +380,15 @@ def install_linux_cdrom(params):
     cache_folder = envparser.get_value("variables", "domain_cache_folder")
 
     logger.info("begin to customize the custom.iso file")
-    prepare_cdrom(ostree, ks, guestname, cache_folder, logger)
+    try:
+        prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger)
+    except TestError, err:
+        logger.error("Failed to prepare boot cdrom!")
+        return 1
 
-    bootcd = '%s/custom.iso' % \
-        (os.path.join(cache_folder, guestname + "_folder"))
+    bootcd = ('%s/custom.iso'
+              % (os.path.join(cache_folder, guestname + "_folder")))
+
     xmlstr = xmlstr.replace('CUSTOMISO', bootcd)
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
 
@@ -282,11 +423,11 @@ def install_linux_cdrom(params):
             return 1
 
     interval = 0
-    while(interval < 2400):
+    while interval < 2400:
         time.sleep(10)
         if installtype == 'define':
             state = domobj.info()[0]
-            if(state == libvirt.VIR_DOMAIN_SHUTOFF):
+            if state == libvirt.VIR_DOMAIN_SHUTOFF:
                 logger.info("guest installaton of define type is complete.")
                 logger.info("boot guest vm off harddisk")
                 ret = prepare_boot_guest(
@@ -344,13 +485,13 @@ def install_linux_cdrom(params):
         time.sleep(10)
         timeout -= 10
 
-        ip = utils.mac_to_ip(mac, 180, br)
+        ipaddr = utils.mac_to_ip(mac, 180, bridge)
 
-        if not ip:
+        if not ipaddr:
             logger.info(str(timeout) + "s left")
         else:
             logger.info("vm %s power on successfully" % guestname)
-            logger.info("the ip address of vm %s is %s" % (guestname, ip))
+            logger.info("the ip address of vm %s is %s" % (guestname, ipaddr))
             break
 
     if timeout == 0:

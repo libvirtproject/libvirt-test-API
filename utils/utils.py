@@ -19,6 +19,7 @@ import os
 import re
 import sys
 import time
+import math
 import random
 import commands
 import socket
@@ -47,19 +48,19 @@ def get_hypervisor():
         return 'no any hypervisor is running.'
 
 
-def get_uri(ip):
+def get_uri(ipaddr):
     """Get hypervisor uri"""
     hypervisor = get_hypervisor()
-    if ip == "127.0.0.1":
+    if ipaddr == "127.0.0.1":
         if hypervisor == "xen":
             uri = "xen:///"
         if hypervisor == "kvm":
             uri = "qemu:///system"
     else:
         if hypervisor == "xen":
-            uri = "xen+ssh://%s" % ip
+            uri = "xen+ssh://%s" % ipaddr
         if hypervisor == "kvm":
-            uri = "qemu+ssh://%s/system" % ip
+            uri = "qemu+ssh://%s/system" % ipaddr
     return uri
 
 
@@ -89,11 +90,12 @@ def get_conn(uri='', username='', password=''):
 
 
 def parse_uri(uri):
-    # This is a simple parser for uri
+    """ This is a simple parser for uri """
     return urlparse(uri)
 
 
 def get_host_arch():
+    """ get local host arch """
     ret = commands.getoutput('uname -a')
     arch = ret.split(" ")[-2]
     return arch
@@ -105,6 +107,7 @@ def get_local_hostname():
 
 
 def get_libvirt_version(ver=''):
+    """ get Libvirt version """
     ver = commands.getoutput("rpm -q libvirt|head -1")
     if ver.split('-')[0] == 'libvirt':
         return ver
@@ -114,6 +117,7 @@ def get_libvirt_version(ver=''):
 
 
 def get_hypervisor_version(ver=''):
+    """Get hypervisor version"""
     hypervisor = get_hypervisor()
 
     if 'kvm' in hypervisor:
@@ -137,13 +141,14 @@ def get_hypervisor_version(ver=''):
 
 
 def get_host_kernel_version():
+    """Get host's kernel version"""
     kernel_ver = commands.getoutput('uname -r')
     return kernel_ver
 
 
 def get_ip_address(ifname):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915,  # SIOCGIFADDR
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(sock.fileno(), 0x8915,  # SIOCGIFADDR
                                         struct.pack('256s', ifname[:15]))[20:24])
 
 
@@ -181,8 +186,8 @@ def get_host_memory():
     else:
         cmd = "cat /proc/meminfo | egrep 'MemTotal'"
         ret = commands.getoutput(cmd)
-        strMem = ret.split(":")[1]
-        mem_num = strMem.split("kB")[0]
+        str_mem = ret.split(":")[1]
+        mem_num = str_mem.split("kB")[0]
         mem_size = int(mem_num.strip())
         if mem_size:
             return mem_size
@@ -194,10 +199,10 @@ def get_vcpus_list():
     host_cpus = get_host_cpus()
     max_vcpus = host_cpus * 4
     vcpus_list = []
-    n = 0
-    while 2 ** n <= max_vcpus:
-        vcpus_list.append(2 ** n)
-        n += 1
+    num = 0
+    while 2**num <= max_vcpus:
+        vcpus_list.append(2**num)
+        num += 1
     return vcpus_list
 
 
@@ -300,13 +305,27 @@ def get_capacity_suffix_size(capacity):
 
 
 def dev_num(guestname, device):
-    """Get disk or interface number in the guest"""
-    cur = commands.getoutput("pwd")
-    cmd = "sh %s/utils/dev_num.sh %s %s" % (cur, guestname, device)
-    num = int(commands.getoutput(cmd))
+    """Get disk or interface number in the guest
+
+       Return None on FAILURE and the disk or interface number in the guest on SUCCESS
+    """
+
+    if not guestname or not device:
+        return None
+
+    (ret, guestdump) = commands.getstatusoutput('virsh dumpxml %s' % guestname)
+
+    if ret != 0:
+        print "failed to dump the xml description of the domain %s." % guestname
+        return None
+
+    device = "</%s>" % device
+    num = guestdump.count(device)
+
     if num:
         return num
     else:
+        print "no %s in the domain %s, can you image that?" % (device, guestname)
         return None
 
 
@@ -362,18 +381,18 @@ def print_title(info, delimiter, num):
     print delimiter * num
 
 
-def file_read(file):
-    if os.path.exists(file):
-        fh = open(file, 'r')
-        theData = fh.read()
-        fh.close()
-        return theData
+def file_read(filename):
+    if os.path.exists(filename):
+        fhandle = open(filename, 'r')
+        data = fhandle.read()
+        fhandle.close()
+        return data
     else:
-        print "The FILE %s doesn't exist." % file
+        print "The FILE %s doesn't exist." % filename
 
 
-def parse_xml(file, element):
-    xmldoc = minidom.parse(file)
+def parse_xml(filename, element):
+    xmldoc = minidom.parse(filename)
     elementlist = xmldoc.getElementsByTagName(element)
     return elementlist
 
@@ -385,10 +404,10 @@ def locate_utils():
     return result.group(0) + "/utils"
 
 
-def mac_to_ip(mac, timeout, br='virbr0'):
+def mac_to_ip(mac, timeout, bridge='virbr0'):
     """Map mac address to ip under a specified brige
 
-       Return None on FAILURE and the mac address on SUCCESS
+       Return None on FAILURE and the ip address on SUCCESS
     """
     if not mac:
         return None
@@ -396,16 +415,23 @@ def mac_to_ip(mac, timeout, br='virbr0'):
     if timeout < 10:
         timeout = 10
 
-    cmd = "sh " + locate_utils() + "/ipget.sh " + mac + " " + br
-
     while timeout > 0:
-        (ret, out) = commands.getstatusoutput(cmd)
-        if not out.lstrip() == "":
+        (ret, out) = commands.getstatusoutput("arp --device %s" % bridge)
+        if ret != 0:
+            print "Failed to run arp command."
+            return None
+
+        ipaddr = re.findall(r'\n(\d{1,3}(?:\.\d{1,3}){3}).*%s'
+                            % mac, out, re.IGNORECASE)
+
+        if len(ipaddr) > 0:
             break
+
+        time.sleep(10)
 
         timeout -= 10
 
-    return timeout and out or None
+    return timeout and ipaddr[0] or None
 
 
 def do_ping(ip, timeout):
@@ -444,13 +470,13 @@ def exec_cmd(command, sudo=False, cwd=None, infile=None, outfile=None, shell=Fal
         infile = subprocess.PIPE
     if outfile is None:
         outfile = subprocess.PIPE
-    p = subprocess.Popen(command, shell=shell, close_fds=True, cwd=cwd,
-                         stdin=infile, stdout=outfile, stderr=subprocess.PIPE)
-    (out, err) = p.communicate(data)
+    process = subprocess.Popen(command, shell=shell, close_fds=True, cwd=cwd,
+                               stdin=infile, stdout=outfile, stderr=subprocess.PIPE)
+    (out, err) = process.communicate(data)
     if out is None:
         # Prevent splitlines() from barfing later on
         out = ""
-    return (p.returncode, out.splitlines())
+    return (process.returncode, out.splitlines())
 
 
 def remote_exec_pexpect(hostname, username, password, cmd):
@@ -475,10 +501,10 @@ def remote_exec_pexpect(hostname, username, password, cmd):
     return 0
 
 
-def scp_file(hostname, username, password, target_path, file):
+def scp_file(hostname, username, password, target_path, filename):
     """ Scp file to remote host """
     user_hostname = "%s@%s:%s" % (username, hostname, target_path)
-    child = pexpect.spawn("/usr/bin/scp", [file, user_hostname])
+    child = pexpect.spawn("/usr/bin/scp", [filename, user_hostname])
     while True:
         index = child.expect(['yes\/no', 'password: ',
                               pexpect.EOF,
@@ -519,8 +545,8 @@ def remote_exec(hostname, username, password, cmd):
         try:
             os.execv("/usr/bin/ssh", ["/usr/bin/ssh", "-l",
                                       username, hostname, cmd])
-        except OSError, e:
-            print "OSError: " + str(e)
+        except OSError, err:
+            print "OSError: " + str(err)
             return -1
     else:
         signal.signal(signal.SIGCHLD, subproc)
@@ -530,16 +556,16 @@ def remote_exec(hostname, username, password, cmd):
             while i <= timeout:
 
                 time.sleep(1)
-                str = os.read(fd, 10240)
+                output = os.read(fd, 10240)
 
-                if re.search('(yes\/no)', str):
+                if re.search(r'(yes\/no)', output):
                     os.write(fd, "yes\r")
 
-                elif re.search('password:', str):
+                elif re.search('password:', output):
                     os.write(fd, password + "\r")
 
                 elif subproc_flag == 1:
-                    ret = string.strip(str)
+                    ret = string.strip(output)
                     break
                 elif i == timeout:
                     print "TIMEOUT!!!!"
@@ -549,8 +575,8 @@ def remote_exec(hostname, username, password, cmd):
 
             subproc_flag = 0
             return ret
-        except Exception as e:
-            print e
+        except Exception, err:
+            print err
             subproc_flag = 0
             return -1
 
@@ -739,8 +765,8 @@ def format_parammap(paramlist, map_test, length):
                     parammap += (map_test[i],)
 
         return parammap
-    except ValueError as e:
-        print "ValueError: " + str(e)
+    except ValueError, err:
+        print "ValueError: " + str(err)
         return False
 
 
@@ -775,24 +801,24 @@ def digest(path, offset, length):
     """read data from file with length bytes, begin at offset
        and return md5 hexdigest
     """
-    f = open(path, 'r')
-    f.seek(offset)
-    m = hashlib.md5()
+    fhandle = open(path, 'r')
+    fhandle.seek(offset)
+    hash_value = hashlib.md5()
     done = 0
 
     while True:
         want = 1024
         if length and length - done < want:
             want = length - done
-        outstr = f.read(want)
+        outstr = fhandle.read(want)
         got = len(outstr)
         if got == 0:
             break
         done += got
-        m.update(outstr)
+        hash_value.update(outstr)
 
-    f.close()
-    return m.hexdigest()
+    fhandle.close()
+    return hash_value.hexdigest()
 
 
 def run_wget_app(hostname, username, password, file_url, logger):
@@ -974,27 +1000,27 @@ def param_to_tuple_nolength(paramlist):
        ',', return tuple only have True or False value
     """
     d = []
-    a = paramlist.split(',')
-    for i in range(len(a)):
-        if a[i].find('^') >= 0:
+    param_arr = paramlist.split(',')
+    for i in range(len(param_arr)):
+        if param_arr[i].find('^') >= 0:
             continue
-        d += a[i].split('-')
+        d += param_arr[i].split('-')
     lengh = max(d)
 
     return param_to_tuple(paramlist, int(lengh) + 1)
 
 
-def parse_mountinfo(string):
+def parse_mountinfo(info):
     """a helper to parse mountinfo in /proc/self/mountinfo
        and return a list contains multiple dict
     """
 
     ret = []
-    mount_list = string.split("\n")
-    for n in mount_list:
+    mount_list = info.split("\n")
+    for num in mount_list:
         mount_dict = {}
-        if n.find("/") > 0:
-            tmp = n[:n.find("/")]
+        if num.find("/") > 0:
+            tmp = num[:num.find("/")]
             if len(tmp.split()) != 3:
                 continue
 
@@ -1004,7 +1030,7 @@ def parse_mountinfo(string):
             mount_dict['devmajor'] = tmp.split()[2].split(":")[0]
             mount_dict['devminor'] = tmp.split()[2].split(":")[1]
 
-            tmp = n[n.find("/") + 1:]
+            tmp = num[num.find("/") + 1:]
 
             mount_dict['mountdir'] = tmp.split()[0]
 

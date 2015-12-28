@@ -31,7 +31,8 @@ def get_snapshot_list_virsh(*args):
     (status, output) = utils.exec_cmd(SNAPSHOT_LIST % guestname_flags,
                                       shell=True)
     if status:
-        logger.error("Executing " + SNAPSHOT_LIST + " failed")
+        logger.error("Executing \"" + SNAPSHOT_LIST % guestname + "\" failed")
+        logger.error(ret)
         return 1
     else:
         snapshot_list_virsh = output[:-1]
