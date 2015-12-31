@@ -122,11 +122,18 @@ def mk_kickstart_iso(kscfg, guestos, logger):
     else:
         logger.debug("copy kickstart to custom work directory")
         old_kscfg, new_kscfg = open(kscfg, 'r'), open(custom_iso_dir + '/' + kscfg, 'w')
+        network_configed = False
         for line in old_kscfg:
+            if line.startswith('network'):
+                network_configed = True
             if '%post' in line and kscfg.startswith('ks-rhel7'):
                 logger.debug("setting qemu-guest-agent autostart")
                 line = '%post \nsystemctl enable qemu-guest-agent.service\n'
             new_kscfg.write(line)
+            # Always use traditional naming style and enable eth0
+        if not network_configed:
+            new_kscfg.write('network --bootproto=dhcp --device=eth0 --onboot=on\n')
+
         old_kscfg.close()
         new_kscfg.close()
         remove_all(kscfg)
@@ -147,15 +154,18 @@ def mk_kickstart_iso(kscfg, guestos, logger):
 
         #use different isolinux.cfg for rhel7 ,rhel6 and rhel5 guest
         if 'rhel7' in guestos:
+            # Disable new style of network interface naming on rhel7
+            kernel_args = kernel_args + ' net.ifnames=0'
+
             new_cfg.write('label custom_ks\n'
-                          'kernel vmlinuz %s\n'
+                          'kernel vmlinuz\n'
                           'append initrd=initrd.img ks=cdrom:sr0:/%s '
-                          'repo=cdrom:sr0 ramdisk_size=20000' % (kernel_args, kscfg))
+                          'repo=cdrom:sr0 ramdisk_size=20000 %s' % (kscfg, kernel_args))
         else:
             new_cfg.write('label custom_ks\n'
-                          'kernel vmlinuz %s\n'
+                          'kernel vmlinuz\n'
                           'append initrd=initrd.img ks=cdrom:/%s '
-                          'ramdisk_size=20000' % (kernel_args, kscfg))
+                          'ramdisk_size=20000 %s' % (kscfg, kernel_args))
 
         new_cfg.close()
         old_cfg.close()
