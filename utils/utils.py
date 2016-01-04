@@ -409,6 +409,19 @@ def mac_to_ip(mac, timeout, bridge='virbr0'):
 
        Return None on FAILURE and the ip address on SUCCESS
     """
+    ips = mac_to_ips(mac, timeout, bridge)
+
+    if ips is None or len(ips) == 0:
+        return None
+    else:
+        return ips[0]
+
+
+def mac_to_ips(mac, timeout, bridge='virbr0'):
+    """Get all ip addresses binded to a mac under a specified brige
+
+       Return None on FAILURE and the ip address on SUCCESS
+    """
     if not mac:
         return None
 
@@ -431,7 +444,7 @@ def mac_to_ip(mac, timeout, bridge='virbr0'):
 
         timeout -= 10
 
-    return timeout and ipaddr[0] or None
+    return timeout and ipaddr or None
 
 
 def do_ping(ip, timeout):
@@ -1046,3 +1059,36 @@ def parse_mountinfo(info):
             ret.append(mount_dict)
 
     return ret
+
+
+def check_mac_valid(mac):
+    """Check if a mac address is legal"""
+    if re.match(r'^[0-9A-F]{2}(:[0-9A-F]{2}){5}$', mac, re.IGNORECASE):
+        return True
+    return False
+
+
+def check_address_valid(addr):
+    """Check if a address struct is legal """
+    try:
+        socket.inet_pton(socket.AF_INET, addr['addr'])
+        if addr['prefix'] >= 0 and addr['prefix'] <= 32:
+            return True
+        return False
+    except socket.error:
+        try:
+            socket.inet_pton(socket.AF_INET6, addr['addr'])
+            if addr['prefix'] >= 0 and addr['prefix'] <= 128:
+                return True
+            return False
+        except socket.error:
+            return False
+
+
+def check_loop_valid(addr):
+    """Check if a loop interface's address is valid"""
+    if addr['prefix'] == 128 and addr['addr'] == '::1':
+        return True
+    if addr['prefix'] == 8 and re.match(r'^127(.\d{1,3}){3}$', addr['addr']):
+        return True
+    return False
