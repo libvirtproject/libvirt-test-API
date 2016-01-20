@@ -10,7 +10,26 @@ from libvirt import libvirtError
 from src import sharedmod
 
 required_params = ('guestname',)
-optional_params = {}
+optional_params = {'flags': 'none'}
+
+
+def parse_flags(logger, params):
+    flags = params.get('flags', 'none')
+    logger.info('undefine with flags :%s' % flags)
+    if flags == 'none':
+        return None
+    ret = 0
+    for flag in flags.split('|'):
+        if flag == 'managed_save':
+            ret = ret | libvirt.VIR_DOMAIN_UNDEFINE_MANAGED_SAVE
+        elif flag == 'snapshots_metadata':
+            ret = ret | libvirt.VIR_DOMAIN_UNDEFINE_SNAPSHOTS_METADATA
+        elif flag == 'nvram':
+            ret = ret | libvirt.VIR_DOMAIN_UNDEFINE_NVRAM
+        else:
+            logger.error('illegal flags')
+            return -1
+    return ret
 
 
 def check_undefine_domain(guestname):
@@ -29,11 +48,19 @@ def undefine(params):
     logger = params['logger']
     guestname = params['guestname']
     conn = sharedmod.libvirtobj['conn']
+    flags = parse_flags(logger, params)
+
+    if flags == -1:
+        return 1
 
     domobj = conn.lookupByName(guestname)
 
     try:
-        domobj.undefine()
+        if flags is None:
+            domobj.undefine()
+        else:
+            domobj.undefineFlags(flags)
+
         if check_undefine_domain(guestname):
             logger.info("undefine the domain is successful")
         else:

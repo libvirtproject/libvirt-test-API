@@ -12,7 +12,33 @@ from src import sharedmod
 from utils import utils
 
 required_params = ('guestname',)
-optional_params = {}
+optional_params = {'flags': 'none'}
+
+
+def parse_flags(logger, params):
+    flags = params.get('flags', 'none')
+    logger.info('shutdown with flags :%s' % flags)
+    if flags == 'none':
+        return None
+    ret = 0
+    for flag in flags.split('|'):
+        if flag == 'default':
+            ret = ret | libvirt.VIR_DOMAIN_SHUTDOWN_DEFAULT
+        elif flag == 'acpi':
+            ret = ret | libvirt.VIR_DOMAIN_SHUTDOWN_ACPI_POWER_BTN
+        elif flag == 'agent':
+            ret = ret | libvirt.VIR_DOMAIN_SHUTDOWN_GUEST_AGENT
+        #Flags below are not supported by kvm
+        elif flag == 'initctl':
+            ret = ret | libvirt.VIR_DOMAIN_SHUTDOWN_INITCTL
+        elif flag == 'signal':
+            ret = ret | libvirt.VIR_DOMAIN_SHUTDOWN_SIGNAL
+        elif flag == 'paravirt':
+            ret = ret | libvirt.VIR_DOMAIN_SHUTDOWN_PARAVIRT
+        else:
+            logger.error("flag is illegal.")
+            return -1
+    return ret
 
 
 def shutdown(params):
@@ -23,11 +49,15 @@ def shutdown(params):
 
         logger -- an object of utils/log.py
         guestname -- same as the domain name
+        flag -- flags pass to shutdown
 
         Return 0 on SUCCESS or 1 on FAILURE
     """
     domname = params['guestname']
     logger = params['logger']
+    flag = parse_flags(logger, params)
+    if flag == -1:
+        return 1
 
     conn = sharedmod.libvirtobj['conn']
     domobj = conn.lookupByName(domname)
@@ -41,7 +71,10 @@ def shutdown(params):
 
     # Shutdown domain
     try:
-        domobj.shutdown()
+        if flag is None:
+            domobj.shutdown()
+        else:
+            domobj.shutdownFlags(flag)
     except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
