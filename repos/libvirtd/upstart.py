@@ -33,7 +33,7 @@ def libvirtd_check(logger):
         logger.error("failed to get libvirtd status")
         return 1
     else:
-        logger.info(out[0])
+        logger.info(out)
 
     logger.info(VIRSH_LIST)
     ret, out = utils.exec_cmd(VIRSH_LIST, shell=True)
@@ -42,7 +42,7 @@ def libvirtd_check(logger):
         return 1
     else:
         for i in range(len(out)):
-            logger.info(out[i])
+            logger.info(out)
 
     return 0
 
@@ -67,46 +67,9 @@ def upstart(params):
         logger.error("failed to stop libvirtd service")
         return 1
     else:
-        logger.info(out[0])
+        logger.info(str(out))
 
-    logger.info("find libvirtd.upstart file in libvirt package:")
-    ret, conf = utils.exec_cmd(UPSTART_CONF, shell=True)
-    if ret != 0:
-        logger.error("can't find libvirtd.upstart as part of libvirt package")
-        return 1
-    elif conf[0]:
-        logger.info("succeed")
-        logger.info("copy %s to %s" % (conf[0], INIT_CONF))
-        copy(conf[0], INIT_CONF)
-
-    if os.path.exists(INITCTL_CMD):
-        logger.info(INITCTL_RELOAD_CMD)
-        ret, out = utils.exec_cmd(INITCTL_RELOAD_CMD, shell=True)
-        if ret != 0:
-            logger.error("failed to reload configuration")
-            return 1
-        else:
-            logger.info("succeed")
-
-        cmd = "initctl start libvirtd"
-        logger.info(cmd)
-        ret, out = utils.exec_cmd(cmd, shell=True)
-        if ret != 0:
-            logger.error("failed to start libvirtd by initctl")
-            return 1
-        else:
-            logger.info(out[0])
-
-        cmd = "initctl status libvirtd"
-        logger.info("get libvirtd status by initctl:")
-        ret, out = utils.exec_cmd(cmd, shell=True)
-        if ret != 0:
-            logger.info("failed to get libvirtd status by initctl")
-            return 1
-        else:
-            logger.info(out[0])
-
-    elif os.path.exists(SYSTEMCTL_CMD):
+    if os.path.exists(SYSTEMCTL_CMD):
         logger.info(SYSTEMCTL_RELOAD_CMD)
         ret, out = utils.exec_cmd(SYSTEMCTL_RELOAD_CMD, shell=True)
         if ret != 0:
@@ -122,7 +85,7 @@ def upstart(params):
             logger.error("failed to start libvirtd.service by systemctl")
             return 1
         else:
-            logger.info(out[0])
+            logger.info(out)
 
         cmd = "systemctl status libvirtd.service"
         logger.info("get libvirtd.service status by systemctl:")
@@ -131,7 +94,45 @@ def upstart(params):
             logger.info("failed to get libvirtd.service status by systemctl")
             return 1
         else:
-            logger.info(out[0])
+            logger.info(out)
+
+    elif os.path.exists(INITCTL_CMD):
+        logger.info("find libvirtd.upstart file in libvirt package:")
+        ret, conf = utils.exec_cmd(UPSTART_CONF, shell=True)
+        if ret != 0:
+            logger.error("can't find libvirtd.upstart as part of libvirt package")
+            return 1
+        elif conf[0]:
+            logger.info("succeed")
+            logger.info("copy %s to %s" % (conf[0], INIT_CONF))
+            copy(conf[0], INIT_CONF)
+
+        logger.info(INITCTL_RELOAD_CMD)
+        ret, out = utils.exec_cmd(INITCTL_RELOAD_CMD, shell=True)
+        if ret != 0:
+            logger.error("failed to reload configuration")
+            return 1
+        else:
+            logger.info("succeed")
+
+        cmd = "initctl start libvirtd"
+        logger.info(cmd)
+        ret, out = utils.exec_cmd(cmd, shell=True)
+        if ret != 0:
+            logger.error("failed to start libvirtd by initctl")
+            return 1
+        else:
+            logger.info(out)
+
+        cmd = "initctl status libvirtd"
+        logger.info("get libvirtd status by initctl:")
+        ret, out = utils.exec_cmd(cmd, shell=True)
+        if ret != 0:
+            logger.info("failed to get libvirtd status by initctl")
+            return 1
+        else:
+            logger.info(out)
+
     else:
         return 1
 
@@ -156,9 +157,11 @@ def upstart(params):
     logger.info("recheck libvirtd status:")
     ret = libvirtd_check(logger)
     if ret:
+        time.sleep(1)
         return 1
     else:
         logger.info("the libvirtd process successfully restarted after kill")
+        time.sleep(1)
 
     return 0
 
