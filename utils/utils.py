@@ -492,26 +492,35 @@ def exec_cmd(command, sudo=False, cwd=None, infile=None, outfile=None, shell=Fal
     return (process.returncode, out.splitlines())
 
 
-def remote_exec_pexpect(hostname, username, password, cmd):
+def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
     """ Remote exec function via pexpect """
     user_hostname = "%s@%s" % (username, hostname)
-    child = pexpect.spawn("/usr/bin/ssh", [user_hostname, cmd],
-                          timeout=60, maxread=2000, logfile=None)
     while True:
-        index = child.expect(['(yes\/no)', 'password:', pexpect.EOF,
-                              pexpect.TIMEOUT])
-        if index == 0:
-            child.sendline("yes")
-        elif index == 1:
-            child.sendline(password)
-        elif index == 2:
-            child.close()
-            return 0, string.strip(child.before)
-        elif index == 3:
-            child.close()
-            return 1, "Timeout!!!!"
-
-    return 0
+        child = pexpect.spawn("/usr/bin/ssh", [user_hostname, cmd],
+                              timeout=60, maxread=2000, logfile=None)
+        while True:
+            index = child.expect(['(yes\/no)', 'password:', pexpect.EOF,
+                                  'ssh: connect to host .+ Connection refused',
+                                  pexpect.TIMEOUT])
+            if index == 0:
+                child.sendline("yes")
+            elif index == 1:
+                child.sendline(password)
+            elif index == 2:
+                child.close()
+                return 0, string.strip(child.before)
+            elif index == 3:
+                if timeout <= 0:
+                    return 1, "Refused!!!!"
+                time.sleep(5)
+                timeout = timeout - 5
+                break
+            elif index == 4:
+                child.close()
+                if timeout <= 60:
+                    return 1, "Timeout!!!!"
+                timeout = timeout - 60
+                break
 
 
 def scp_file(hostname, username, password, target_path, filename):
