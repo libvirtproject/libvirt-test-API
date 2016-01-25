@@ -138,25 +138,25 @@ def install_linux_check(params):
         Test_Result = 1
         return Test_Result
 
-    # Check app works fine in guest, such as: wget
-    logger.info("check point5: check app works fine in guest, such as: wget")
-    logger.info("get system environment information")
-    envfile = os.path.join(HOME_PATH, 'global.cfg')
-    logger.info("the environment file is %s" % envfile)
-
-    envparser = env_parser.Envparser(envfile)
-    file_url = envparser.get_value("other", "wget_url")
-
-    if utils.run_wget_app(ipaddr, "root", "redhat", file_url, logger) == 0:
-        logger.info("run wget successfully in guest.")
-    else:
-        logger.error("Error: fail to run wget in guest")
-        Test_Result = 1
-        return Test_Result
+#    # Check app works fine in guest, such as: wget
+#    logger.info("check point5: check app works fine in guest, such as: wget")
+#    logger.info("get system environment information")
+#    envfile = os.path.join(HOME_PATH, 'global.cfg')
+#    logger.info("the environment file is %s" % envfile)
+#
+#    envparser = env_parser.Envparser(envfile)
+#    file_url = envparser.get_value("other", "wget_url")
+#
+#    if utils.run_wget_app(ipaddr, "root", "redhat", file_url, logger) == 0:
+#        logger.info("run wget successfully in guest.")
+#    else:
+#        logger.error("Error: fail to run wget in guest")
+#        Test_Result = 1
+#        return Test_Result
 
     # Check nic and blk driver in guest
     if 'kvm' in virt_type or 'xenfv' in virt_type:
-        logger.info("check point6: check nic and blk driver in guest is \
+        logger.info("check point5: check nic and blk driver in guest is \
                      expected as your config:")
         if utils.validate_remote_nic_type(ipaddr, "root", "redhat",
                                           nic_type, logger) == 0 and \
