@@ -11,7 +11,7 @@ from libvirt import libvirtError
 from src import sharedmod
 
 required_params = ('poolname', 'sourcehost', 'sourcepath',)
-optional_params = {'targetpath': '/mnt',
+optional_params = {'targetpath': '/tmp/netfs_test',
                    'xml': 'xmls/netfs_pool.xml',
                    }
 
