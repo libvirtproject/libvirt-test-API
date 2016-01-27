@@ -27,6 +27,8 @@ optional_params = {'memory': 1048576,
                    'xml': 'xmls/kvm_guest_define.xml',
                    'guestarch': 'x86_64',
                    'guestmachine': 'pc',
+                   'networksource': 'default',
+                   'bootdev': 'hd',
                    }
 
 
@@ -76,6 +78,19 @@ def define(params):
     virt_type = params.get('virt_type', 'kvm')
 
     logger.info("define domain on %s" % uri)
+
+    imageformat = params.get('imageformat', 'qcow2')
+    xmlstr = xmlstr.replace('IMAGEFORMAT', imageformat)
+
+    hddriver = params.get('hddriver', 'virtio')
+    if hddriver == 'virtio':
+        xmlstr = xmlstr.replace('DEV', 'vda')
+    elif hddriver == 'ide':
+        xmlstr = xmlstr.replace('DEV', 'hda')
+    elif hddriver == 'scsi':
+        xmlstr = xmlstr.replace('DEV', 'sda')
+
+    bootdev = params.get('bootdev', 'hd')
 
     # Define domain from xml
     try:
