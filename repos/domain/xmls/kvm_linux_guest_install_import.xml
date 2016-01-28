@@ -5,7 +5,7 @@
   <vcpu>VCPU</vcpu>
   <os>
     <type machine="GUESTMACHINE">hvm</type>
-    <boot dev="cdrom"/>
+    <boot dev="hd"/>
   </os>
   <features>
     <acpi/>
@@ -21,11 +21,6 @@
       <driver name="qemu" type='IMAGEFORMAT'/>
       <source file='DISKPATH'/>
       <target bus='HDDRIVER' dev='DEV'/>
-    </disk>
-    <disk device="cdrom" type="file">
-      <source file='CUSTOMISO'/>
-      <target bus="ide" dev="hdc"/>
-      <readonly/>
     </disk>
     <interface type="network">
       <source network="NETWORKSOURCE"/>
