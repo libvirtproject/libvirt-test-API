@@ -95,6 +95,8 @@ class Main(object):
 
         # generate testrunid from time point runing a testrun
         testrunid = time.strftime("%Y%m%d%H%M%S")
+        while os.path.exists('log/%s' % testrunid):
+                testrunid = str(int(testrunid) + 1)
         os.makedirs('log/%s' % testrunid)
 
         log_xml_parser = LogGenerator(self.logxml)
