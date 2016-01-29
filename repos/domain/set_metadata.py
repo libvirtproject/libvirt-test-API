@@ -65,7 +65,6 @@ def set_metadata(params):
                 '<TestElement2 TestAttribute2="TestValue2"/>'
                 '<TestElement3>Test Text</TestElement3></TestElement>')
 
-
     def check_metadata(flag):
         guestxml = domobj.XMLDesc(flag)
         logger.debug("domain %s xml is :\n%s" % (guestname, guestxml))
