@@ -456,8 +456,13 @@ def install_windows_cdrom_clean(params):
     if os.path.exists(iso_local_path_1):
         os.remove(iso_local_path_1)
 
+    cmd = "mv -f %s %s-win" % (diskpath, diskpath)
     if os.path.exists(diskpath):
-        os.remove(diskpath)
+        #os.remove(diskpath)
+        (status, output) = commands.getstatusoutput(cmd)
+        if status:
+            logger.error("failed to backup win guest")
+            logger.error("%s" % output)
 
     if os.path.exists(FLOOPY_IMG):
         os.remove(FLOOPY_IMG)
