@@ -22,7 +22,7 @@ def get_guest_ipaddr(*args):
     mac = utils.get_dom_mac_addr(guestname)
     logger.debug("guest mac address: %s" % mac)
 
-    ipaddr = utils.mac_to_ip(mac, 30)
+    ipaddr = utils.mac_to_ip(mac, 60)
     logger.debug("guest ip address: %s" % ipaddr)
 
     if utils.do_ping(ipaddr, 20) == 1:

@@ -13,7 +13,21 @@ from libvirt import libvirtError
 from src import sharedmod
 
 required_params = ('poolname',)
-optional_params = {}
+optional_params = {'flags': 'no_override'}
+
+
+def parse_flags(logger, params):
+    flags = params.get('flags', 'no_override')
+    logger.info('flags :%s' % flags)
+    if flags == 'none':
+        return 0
+    elif flags == 'no_override':
+        return libvirt.VIR_STORAGE_POOL_BUILD_NO_OVERWRITE
+    elif flags == 'override':
+        return libvirt.VIR_STORAGE_POOL_BUILD_OVERWRITE
+    else:
+        logger.error("flag is illegal.")
+        return -1
 
 
 def get_pool_devicename_type(poolobj):
@@ -56,7 +70,10 @@ def build_disk_pool(params):
     logger = params['logger']
     poolname = params['poolname']
     logger.info("the poolname is %s" % (poolname))
+    flag = parse_flags(logger, params)
     conn = sharedmod.libvirtobj['conn']
+    if flag == -1:
+        return 1
 
     pool_names = conn.listDefinedStoragePools()
     pool_names += conn.listStoragePools()
@@ -78,7 +95,7 @@ def build_disk_pool(params):
 
     try:
         logger.info("begin to build the storage pool")
-        poolobj.build(0)
+        poolobj.build(flag)
         time.sleep(5)
         if not check_pool_built(source_device, device_type):
             logger.info("building %s storage pool is SUCCESSFUL!!!" % poolname)
