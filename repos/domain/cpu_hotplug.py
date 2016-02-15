@@ -13,7 +13,7 @@ from src import sharedmod
 from utils import utils
 
 required_params = ('guestname', 'vcpu', 'username', 'password')
-optional_params = {}
+optional_params = {'features': 'hot_add|hot_remove'}
 
 
 def check_domain_running(conn, guestname):
@@ -174,7 +174,13 @@ def cpu_hotplug(params):
     vcpu = int(params['vcpu'])
     username = params['username']
     password = params['password']
+    features = params.get('features','hot_add|hot_remove').split("|")
 
+    if set(features) > set(['hot_add','hot_remove']):
+        logger.info("illegal features: " + str(features))
+        return 1
+
+    logger.info("features to test %s" % str(features))
     logger.info("the name of virtual machine is %s" % guestname)
     logger.info("the vcpu given is %s" % vcpu)
     if not vcpu > 1:
@@ -219,43 +225,45 @@ def cpu_hotplug(params):
         logger.error("libvirt call failed: " + str(e))
         return 1
 
-    logger.info("loop increasing domain %s vcpu count to max" % guestname)
-    for i in range(max):
-        i += 1
-        try:
-            domobj.setVcpus(i)
+    if 'hot_add' in features:
+        logger.info("loop increasing domain %s vcpu count to max" % guestname)
+        for i in range(max):
+            i += 1
+            try:
+                domobj.setVcpus(i)
+                logger.info("set vcpus to %s" % i)
+            except libvirtError, e:
+                logger.error("libvirt call failed: " + str(e))
+                return 1
+
+            time.sleep(5)
+
+            ret = check_current_vcpu(domobj, username, password)
+            if ret == i:
+                logger.info("current vcpu number is %s and equal to set" % ret)
+            else:
+                logger.error("set current vcpu failed")
+                return 1
+
+    if 'hot_remove' in features:
+        logger.info("loop decreasing domain %s vcpu count to min" % guestname)
+        for i in reversed(range(max)):
+            if i == 0:
+                break
             logger.info("set vcpus to %s" % i)
-        except libvirtError as e:
-            logger.error("libvirt call failed: " + str(e))
-            return 1
+            try:
+                max = domobj.setVcpus(i)
+            except libvirtError, e:
+                logger.error("libvirt call failed: " + str(e))
+                return 1
 
-        time.sleep(5)
+            time.sleep(5)
 
-        ret = check_current_vcpu(domobj, username, password)
-        if ret == i:
-            logger.info("current vcpu number is %s and equal to set" % ret)
-        else:
-            logger.error("set current vcpu failed")
-            return 1
-
-    logger.info("loop decreasing domain %s vcpu count to min" % guestname)
-    for i in reversed(range(max)):
-        if i == 0:
-            break
-        logger.info("set vcpus to %s" % i)
-        try:
-            max = domobj.setVcpus(i)
-        except libvirtError as e:
-            logger.error("libvirt call failed: " + str(e))
-            return 1
-
-        time.sleep(5)
-
-        ret = check_current_vcpu(domobj, username, password)
-        if ret == i:
-            logger.info("current vcpu number is %s and equal to set" % ret)
-        else:
-            logger.error("set current vcpu failed")
-            return 1
+            ret = check_current_vcpu(domobj, username, password)
+            if ret == i:
+                logger.info("current vcpu number is %s and equal to set" % ret)
+            else:
+                logger.error("set current vcpu failed")
+                return 1
 
     return 0
