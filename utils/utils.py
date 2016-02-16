@@ -618,9 +618,9 @@ def get_remote_vcpus(hostname, username, password):
     return cpunum
 
 
-def get_remote_memory(hostname, username, password):
+def get_remote_memory(hostname, username, password, mem_type="DirectMap"):
     """Get memory statics of specified host"""
-    cmd = "cat /proc/meminfo | grep DirectMap | awk '{print $2}'"
+    cmd = "cat /proc/meminfo | grep %s | awk '{print $2}'" % mem_type
     memsize = -1
     i = 0
     while i < 3:

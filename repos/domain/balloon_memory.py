@@ -18,12 +18,22 @@ required_params = ('guestname', 'memorypair',)
 optional_params = {}
 
 
+def get_reserved_mem_size(ip):
+    """ get reserved memory size in guest virtual machine"""
+
+    username = 'root'
+    password = 'redhat'
+    current_memory = utils.get_remote_memory(ip, username, password)
+    avaliable_memory = utils.get_remote_memory(ip, username, password, "MemTotal")
+    return current_memory - avaliable_memory
+
+
 def get_mem_size(ip):
     """ get current memory size in guest virtual machine"""
 
     username = 'root'
     password = 'redhat'
-    current_memory = utils.get_remote_memory(ip, username, password)
+    current_memory = utils.get_remote_memory(ip, username, password, "MemTotal")
     return current_memory
 
 
@@ -199,9 +209,10 @@ def balloon_memory(params):
     time.sleep(10)
     ip = utils.mac_to_ip(mac, 180)
     current_memory = get_mem_size(ip)
+    reserved_memory = get_reserved_mem_size(ip)
 
     logger.info("the current memory size is %s" % current_memory)
-
+    logger.info("reserved memory size is %s" % reserved_memory)
     logger.info("Now, set the memory size of guest to the minimum value")
 
     try:
@@ -224,7 +235,7 @@ def balloon_memory(params):
 
     logger.info("comparing the actual memory size with \
                  expected memory size after balloon operation")
-    result = compare_memory(minmem, current_memory)
+    result = compare_memory(minmem, current_memory + reserved_memory)
     if result:
         logger.info("the actual size of memory is \
                      not rounded to the value %s we expected" % minmem)
@@ -253,7 +264,7 @@ def balloon_memory(params):
     current_memory = get_mem_size(ip)
     logger.info("comparing the actual memory size with \
                  expected memory size after balloon operation")
-    result = compare_memory(maxmem, current_memory)
+    result = compare_memory(maxmem, current_memory + reserved_memory)
     if result:
         logger.info("the actual size of memory is \
                      not rounded to the value %s we expected" % maxmem)
