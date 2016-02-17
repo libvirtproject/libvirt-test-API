@@ -34,7 +34,7 @@
     </interface>
     <console/>
     <input bus="ps2" type="mouse"/>
-    <graphics keymap="en-us" port="-1" type="vnc"/>
+    <graphics keymap="en-us" port="-1" autoport="yes" type="vnc"/>
     <channel type='unix'>
       <source mode='bind' path='/var/lib/libvirt/qemu/channel/target/GUESTNAME.agent'/>
       <target type='virtio' name='org.qemu.guest_agent.0'/>
