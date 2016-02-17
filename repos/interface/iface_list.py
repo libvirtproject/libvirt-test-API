@@ -111,6 +111,23 @@ def iface_list_expect(flag, logger):
         return iface_list_ifconfig
 
 
+def check_number_of_interfaces(conn, num_expect, flag, logger):
+    """
+       test numOfInterfaces(), numOfDefinedInterfaces() api
+    """
+    if flag == 0:
+        num = conn.numOfInterfaces() + conn.numOfDefinedInterfaces()
+    elif flag == 1:
+        num = conn.numOfDefinedInterfaces()
+    elif flag == 2:
+        num = conn.numOfInterfaces()
+    if num != num_expect:
+        logger.error("Number don't match, expect %d, got %d" % (num_expect, num))
+        return False
+    logger.info("Number of interfaces matches")
+    return True
+
+
 def iface_list(params):
     """
        test listAllInterfaces() api
@@ -137,6 +154,9 @@ def iface_list(params):
             else:
                 logger.debug("%s :Fail" % interface)
                 return 1
+
+        if not check_number_of_interfaces(conn, len(iface_list), flag, logger):
+            return 1
 
     except libvirtError, e:
         logger.error("API error message: %s" % e.message)
