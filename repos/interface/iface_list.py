@@ -37,7 +37,7 @@ def get_inteface_list_from_ifcfg(logger):
                 device_str = eachLine.rstrip()
                 nic_string = device_str.split("=")[1]
                 if nic_string.startswith("\""):
-                    nic_names = nic_string[1:-1]
+                    nic_names.append(nic_string[1:-1])
                 else:
                     nic_names.append(nic_string)
                 break
@@ -66,11 +66,7 @@ def iface_list_output_from_ifconfig(flags, logger):
     nic_names = []
     if flags == 0:
         nic_names = get_interface_list('-a', logger)
-    elif flags == 1:
-        interface_all = get_interface_list('-a', logger)
-        interface_active = get_interface_list('', logger)
-        nic_names = list(set(interface_all) - set(interface_active))
-    elif flags == 2:
+    else:
         nic_names = get_interface_list('', logger)
 
     if nic_names is None:
@@ -86,6 +82,33 @@ def iface_list_output_from_api(flags, logger):
     for interface in conn.listAllInterfaces(flags):
         nic_names_api.append(str(interface.name()))
     return nic_names_api
+
+
+def iface_list_expect(flag, logger):
+    """
+       gen iface list according to flag
+    """
+    iface_list_ifconfig = iface_list_output_from_ifconfig(flag, logger)
+    if not iface_list_ifconfig:
+        return 1
+
+    ifcfg = get_inteface_list_from_ifcfg(logger)
+    logger.info("interface list from ifconfig: %s" % iface_list_ifconfig)
+    logger.info("interface list from ifcfg: %s" % ifcfg)
+    if flag == 0:
+        return list(set(iface_list_ifconfig + ifcfg))
+    if flag == 1:
+        for interface in iface_list_ifconfig:
+            if interface in ifcfg:
+                ifcfg.remove(interface)
+                logger.debug("%s is active" % interface)
+        return ifcfg
+    if flag == 2:
+        for interface in iface_list_ifconfig:
+            if interface not in ifcfg:
+                iface_list_ifconfig.remove(interface)
+                logger.debug("%s has not regular ifcfg file" % interface)
+        return iface_list_ifconfig
 
 
 def iface_list(params):
@@ -105,20 +128,11 @@ def iface_list(params):
         flag = 2
     try:
         iface_list = iface_list_output_from_api(flag, logger)
-        iface_list_ifconfig = iface_list_output_from_ifconfig(flag, logger)
-        if not iface_list_ifconfig:
-            return 1
-        ifcfg = get_inteface_list_from_ifcfg(logger)
         logger.info("interface list from API: %s" % iface_list)
-        logger.debug("interface list from ifcfg: %s" % ifcfg)
-        for interface in iface_list_ifconfig:
-            if interface not in ifcfg:
-                iface_list_ifconfig.remove(interface)
-                logger.debug("%s has not regular ifcfg file" % interface)
-
-        logger.info("interface list from ifconfig cmd: %s" % iface_list_ifconfig)
+        iface_expect = iface_list_expect(flag, logger)
+        logger.info("interfaces expected to show up: %s" % iface_expect)
         for interface in iface_list:
-            if interface in iface_list_ifconfig:
+            if interface in iface_expect:
                 logger.debug("%s :Pass" % interface)
             else:
                 logger.debug("%s :Fail" % interface)
