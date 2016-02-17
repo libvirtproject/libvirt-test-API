@@ -620,13 +620,17 @@ def get_remote_vcpus(hostname, username, password):
 
 def get_remote_memory(hostname, username, password):
     """Get memory statics of specified host"""
-    cmd = "free -m | grep -i mem | awk '{print $2}'"
+    cmd = "cat /proc/meminfo | grep DirectMap | awk '{print $2}'"
     memsize = -1
     i = 0
     while i < 3:
         i += 1
         ret, out = remote_exec_pexpect(hostname, username, password, cmd)
-        memsize = int(out) * 1024
+        memory = out.split('\r\n')
+        j = 0
+        for j in range(len(memory)):
+            memsize += int(memory[j])
+
         if memsize == -1:
             continue
         else:
