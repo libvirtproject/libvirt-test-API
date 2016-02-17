@@ -174,9 +174,9 @@ def cpu_hotplug(params):
     vcpu = int(params['vcpu'])
     username = params['username']
     password = params['password']
-    features = params.get('features','hot_add|hot_remove').split("|")
+    features = params.get('features', 'hot_add|hot_remove').split("|")
 
-    if set(features) > set(['hot_add','hot_remove']):
+    if set(features) > set(['hot_add', 'hot_remove']):
         logger.info("illegal features: " + str(features))
         return 1
 

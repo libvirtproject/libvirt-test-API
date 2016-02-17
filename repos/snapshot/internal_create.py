@@ -11,35 +11,12 @@ from libvirt import libvirtError
 
 from src import sharedmod
 from utils import utils
+from repos.snapshot.common import check_domain_image
 
 required_params = ('guestname',)
 optional_params = {'snapshotname': '',
                    'xml': 'xmls/snapshot.xml',
                    }
-
-QEMU_IMAGE_FORMAT = "qemu-img info %s |grep format |awk -F': ' '{print $2}'"
-
-
-def check_domain_image(domobj, guestname, logger):
-    """ensure that the state of guest is poweroff
-       and its disk image is the type of qcow2
-    """
-    dom_xml = domobj.XMLDesc(0)
-    disk_path = utils.get_disk_path(dom_xml)
-    status, ret = commands.getstatusoutput(QEMU_IMAGE_FORMAT % disk_path)
-    if status:
-        logger.error("executing " + "\"" + QEMU_IMAGE_FORMAT % guestname + "\"" + " failed")
-        logger.error(ret)
-        return False
-    else:
-        format = ret
-        if format == "qcow2":
-            return True
-        else:
-            logger.error("%s has a disk %s with type %s, \
-                          only qcow2 supports internal snapshot" %
-                         (guestname, disk_path, format))
-            return False
 
 
 def internal_create(params):
@@ -63,7 +40,7 @@ def internal_create(params):
     domobj = conn.lookupByName(guestname)
 
     logger.info("checking the format of its disk")
-    if not check_domain_image(domobj, guestname, logger):
+    if not check_domain_image(domobj, guestname, "qcow2", logger):
         logger.error("checking failed")
         return 1
 

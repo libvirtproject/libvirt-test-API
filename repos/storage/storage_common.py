@@ -9,6 +9,7 @@ from libvirt import libvirtError
 
 from src import sharedmod
 
+
 def display_pool_info(conn, logger):
     """Display current storage pool information"""
     logger.debug("current define storage pool: %s" % conn.listDefinedStoragePools())
@@ -33,6 +34,7 @@ def check_pool(conn, poolname, logger):
             return False
 
     return True
+
 
 def check_pool_define(poolname, logger):
     """Check define storage pool result, if define storage is successful,

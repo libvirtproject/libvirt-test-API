@@ -4,6 +4,8 @@ from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 
+from repos.snapshot.common import convert_flags
+
 required_params = ('guestname', 'flags', )
 optional_params = {}
 
@@ -72,31 +74,6 @@ def get_snapshot_list_dir(guestname):
         return snapshot_list_dir
 
 
-def convert_flags(flags):
-    """ Bitwise-OR of flags in conf and convert them to the readable flags """
-
-    flaglist = []
-    flagstr = ""
-    logger.info("The given flags are %s " % flags)
-    if '|' not in flags:
-        flagn = int(flags)
-        flaglist.append(flagn)
-    else:
-        # bitwise-OR of flags of create-snapshot
-        flaglist = flags.split('|')
-        flagn = 0
-        for flag in flaglist:
-            flagn |= int(flag)
-
-    # Convert the flags in conf file to readable flag
-    for flag_key in flaglist:
-        if FLAGDICT.has_key(int(flag_key)):
-            flagstr += FLAGDICT.get(int(flag_key))
-    logger.info("List snapshot with flags:" + flagstr)
-
-    return (flaglist, flagn)
-
-
 def snapshot_list(params):
     """ List snapshots for a domain with filters"""
 
@@ -106,7 +83,7 @@ def snapshot_list(params):
     conn = sharedmod.libvirtobj['conn']
     domobj = conn.lookupByName(guestname)
     flags = params['flags']
-    (flaglist, flagn) = convert_flags(flags)
+    (flaglist, flagn) = convert_flags(flags, FLAGDICT, logger)
 
     try:
         logger.info("Flag list %s " % flaglist)

@@ -25,7 +25,7 @@ LIBVIRT_NODE_DEVICE_CAPS = [
 ]
 
 BAD_CAPS = [
-    None,  #During testing, 'None' here meaning no parameter
+    None,  # During testing, 'None' here meaning no parameter
     123,
     [],
 ]
@@ -103,7 +103,7 @@ def device_num(params):
 
     try:
         num_total = conn.numOfDevices(None)
-        logger.info("Number of node devices: %d" % num_total);
+        logger.info("Number of node devices: %d" % num_total)
         if not check_num_total(conn, num_total, logger):
             return 1
         if not check_num_virsh(num_total, logger):
@@ -111,7 +111,7 @@ def device_num(params):
 
         for cap in LIBVIRT_NODE_DEVICE_CAPS:
             num = conn.numOfDevices(cap)
-            logger.info("Number of node devices with cap %s: %d" % (cap ,num));
+            logger.info("Number of node devices with cap %s: %d" % (cap, num))
             if not check_num_cap(conn, num, cap, logger):
                 return 1
             if not check_num_virsh(num, logger, cap):

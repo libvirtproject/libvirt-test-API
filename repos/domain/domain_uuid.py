@@ -48,8 +48,7 @@ def check_domain_uuid_with_virsh(guestname, UUIDString, logger):
 
 
 def check_lookupByUUIDString(conn, domain, UUIDString, logger):
-    if (domain.XMLDesc() !=
-        conn.lookupByUUIDString(UUIDString).XMLDesc()):
+    if domain.XMLDesc() != conn.lookupByUUIDString(UUIDString).XMLDesc():
         logger.error("lookupByUUIDString Failed")
         return False
     logger.info("lookupByUUIDString success")
@@ -57,8 +56,7 @@ def check_lookupByUUIDString(conn, domain, UUIDString, logger):
 
 
 def check_lookupByUUID(conn, domain, UUID, logger):
-    if (domain.XMLDesc() !=
-        conn.lookupByUUID(UUID).XMLDesc()):
+    if domain.XMLDesc() != conn.lookupByUUID(UUID).XMLDesc():
         logger.error("lookupByUUID Failed")
         return False
     logger.info("lookupByUUID success")

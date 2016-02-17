@@ -4,6 +4,7 @@ from libvirt import libvirtError
 
 from src import sharedmod
 from utils import utils
+from repos.snapshot.common import convert_flags
 
 required_params = ('guestname', 'flags', 'snapshotname',)
 optional_params = {}
@@ -66,31 +67,6 @@ def check_snapshot_dir(*args):
                 return False
 
 
-def convert_flags(flags):
-    """ Bitwise-OR of flags in conf and convert them to the readable flags """
-
-    flaglist = []
-    flagstr = ""
-    logger.info("The given flags are %s " % flags)
-    if '|' not in flags:
-        flagn = int(flags)
-        flaglist.append(flagn)
-    else:
-        # bitwise-OR of flags of create-snapshot
-        flaglist = flags.split('|')
-        flagn = 0
-        for flag in flaglist:
-            flagn |= int(flag)
-
-    # Convert the flags in conf file to readable flag
-    for flag_key in flaglist:
-        if FLAGDICT.has_key(int(flag_key)):
-            flagstr += FLAGDICT.get(int(flag_key))
-    logger.info("Delete snapshot with flags:" + flagstr)
-
-    return (flaglist, flagn)
-
-
 def snapshot_delete(params):
     """ Delete a specified snapshot for a given guest """
 
@@ -100,7 +76,7 @@ def snapshot_delete(params):
     conn = sharedmod.libvirtobj['conn']
     snapshotname = params['snapshotname']
     flags = params['flags']
-    (flaglist, flagn) = convert_flags(flags)
+    (flaglist, flagn) = convert_flags(flags, FLAGDICT, logger)
 
     try:
 

@@ -6,41 +6,17 @@ import libvirt
 from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
+from repos.snapshot.common import check_domain_image
+from repos.snapshot.common import convert_flags
 
 required_params = ('guestname', 'flags', )
 optional_params = {'snapshotname': '',
                    'xml': 'xmls/snapshot.xml',
                    }
 
-QEMU_IMAGE_FORMAT = "qemu-img info %s |grep format |awk -F': ' '{print $2}'"
 FLAGDICT = {0: "no flag", 1: " --redefine", 2: " --current", 4: " --no-metadata",
             8: " --halt", 16: " --disk-only", 32: " --reuse-external",
             64: " --quiesce", 128: " --atomic", 256: " --live"}
-
-
-def check_domain_image(*args):
-    """ Check the format of disk image if is qcow2 """
-
-    (domobj, guestname) = args
-    dom_xml = domobj.XMLDesc(0)
-    disk_path = utils.get_disk_path(dom_xml)
-    (status, output) = utils.exec_cmd(QEMU_IMAGE_FORMAT % disk_path,
-                                      shell=True)
-    if status:
-        logger.error("Executing " + "\"" + QEMU_IMAGE_FORMAT % guestname +
-                     "\"" + " failed")
-        logger.error(output)
-        return False
-    else:
-        img_format = output[0]
-        if img_format == "qcow2":
-            logger.info("The format of domain image is qcow2")
-            return True
-        else:
-            logger.error("%s has a disk %s with type %s, \
-                          only qcow2 supports internal snapshot" %
-                         (guestname, disk_path, img_format))
-            return False
 
 
 def check_current_snapshot(domobj):
@@ -63,37 +39,11 @@ def check_current_snapshot(domobj):
     return 0
 
 
-def convert_flags(flags):
-    """ Bitwise-OR of flags in conf and convert them to the readable flags """
-
-    flaglist = []
-    flagstr = ""
-    logger.info("The given flags are %s " % flags)
-    if '|' not in flags:
-        flagn = int(flags)
-        flaglist.append(flagn)
-    else:
-        # bitwise-OR of flags of create-snapshot
-        flaglist = flags.split('|')
-        flagn = 0
-        for flag in flaglist:
-            flagn |= int(flag)
-
-    # Convert the flags in conf file to readable flag
-    for flag_key in flaglist:
-        if FLAGDICT.has_key(int(flag_key)):
-            flagstr += FLAGDICT.get(int(flag_key))
-    logger.info("Create snapshot with flags:" + flagstr)
-
-    return (flaglist, flagn)
-
-
-def create_redefine_xml(*args):
+def create_redefine_xml(domobj, xmlstr):
     """ Get the creationTime and state from current snapshot xml , and create
     a new xml for snapshot-create with redefine and current flags.
     """
 
-    (domobj, xmlstr) = args
     xmlcur = domobj.snapshotCurrent(0).getXMLDesc(0)
     xmltime = xmlcur[xmlcur.find("<creationTime>"):xmlcur.find
                      ("</creationTime>") + 15]
@@ -105,13 +55,12 @@ def create_redefine_xml(*args):
     return xmlstr
 
 
-def check_created_snapshot(*args):
+def check_created_snapshot(domobj, flagn, snapshotname):
     """ Check domain and snapshot info after creating snapshot is complete
     ,so RHEL6.4 only support shutdown internel snapshot, and live external
     snapshot (with option "--disk-only"), not fully support no-metadata
     """
 
-    (domobj, flagn, snapshotname) = args
     flagbin = bin(flagn)
     # The passed flags include "redefine"
     if flagbin[-1:] == "1":
@@ -158,7 +107,7 @@ def snapshot_create(params):
     xmlstr = params['xml']
     conn = sharedmod.libvirtobj['conn']
     domobj = conn.lookupByName(guestname)
-    (flaglist, flagn) = convert_flags(flags)
+    (flaglist, flagn) = convert_flags(flags, FLAGDICT, logger)
     snapshotname = ""
 
     #if snapshotname isn't given in test suit, use current time as snapshotname
@@ -169,7 +118,7 @@ def snapshot_create(params):
         snapshotname = params.get('snapshotname')
 
     #Checking the format of its disk
-    if not check_domain_image(domobj, guestname):
+    if not check_domain_image(domobj, guestname, "qcow2", logger):
         logger.error("Checking failed")
         return 1
 
