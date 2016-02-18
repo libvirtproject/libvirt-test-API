@@ -30,6 +30,19 @@ def compare_memory(expect_memory, actual_memory):
         return 1
 
 
+def get_reserved_memory(guestname, username, password):
+    """get domain reserved memory
+    """
+    logger.debug("get the mac address of vm %s" % guestname)
+    mac = utils.get_dom_mac_addr(guestname)
+    logger.debug("the mac address of vm %s is %s" % (guestname, mac))
+    ip = utils.mac_to_ip(mac, 180)
+    current = utils.get_remote_memory(ip, username, password)
+    avaliable = utils.get_remote_memory(ip, username, password, "MemTotal")
+
+    return current - avaliable
+
+
 def get_current_memory(guestname, username, password):
     """get domain current memory inside domain
     """
@@ -37,7 +50,7 @@ def get_current_memory(guestname, username, password):
     mac = utils.get_dom_mac_addr(guestname)
     logger.debug("the mac address of vm %s is %s" % (guestname, mac))
     ip = utils.mac_to_ip(mac, 180)
-    current = utils.get_remote_memory(ip, username, password)
+    current = utils.get_remote_memory(ip, username, password, "MemTotal")
 
     return current
 
@@ -60,6 +73,11 @@ def set_memory_live(params):
 
     try:
         domobj = conn.lookupByName(guestname)
+        max_mem = domobj.maxMemory()
+        domobj.setMemoryFlags(max_mem, libvirt.VIR_DOMAIN_AFFECT_LIVE)
+        logger.info("set domain memory to max mem %s with flag: %s" %
+                    (str(max_mem), libvirt.VIR_DOMAIN_AFFECT_LIVE))
+        reserved = get_reserved_memory(guestname, username, password)
         logger.info("set domain memory as %s with flag: %s" %
                     (memory, libvirt.VIR_DOMAIN_AFFECT_LIVE))
         domobj.setMemoryFlags(memory, libvirt.VIR_DOMAIN_AFFECT_LIVE)
@@ -76,7 +94,7 @@ def set_memory_live(params):
 
         logger.info("check domain memory inside domain")
         ret = get_current_memory(guestname, username, password)
-        if not compare_memory(memory, ret):
+        if not compare_memory(memory, ret + reserved):
             logger.info("set domain memory succeed")
         else:
             logger.error("set domain memory failed")
