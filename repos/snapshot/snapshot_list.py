@@ -34,7 +34,7 @@ def get_snapshot_list_virsh(*args):
                                       shell=True)
     if status:
         logger.error("Executing \"" + SNAPSHOT_LIST % guestname + "\" failed")
-        logger.error(ret)
+        logger.error(status)
         return 1
     else:
         snapshot_list_virsh = output[:-1]
@@ -72,6 +72,24 @@ def get_snapshot_list_dir(guestname):
         logger.info("Get snapshot name list under dir: %s"
                     % snapshot_list_dir)
         return snapshot_list_dir
+
+
+def check_get_domain(dom, snapshot, logger):
+    if snapshot.getDomain().XMLDesc() == dom.XMLDesc():
+        return True
+    logger.error("snapshot getDomain return wrong domain")
+    logger.error("Expect: " + dom.XMLDesc())
+    logger.error("Got: " + snapshot.getDomain().XMLDesc())
+    return False
+
+
+def check_get_connect(conn, snapshot, logger):
+    if snapshot.getConnect().getURI() == conn.getURI():
+        return True
+    logger.error("snapshot getConnect return wrong connection")
+    logger.error("Expect: " + conn.getURI())
+    logger.error("Got: " + snapshot.getConnect().getURI())
+    return False
 
 
 def snapshot_list(params):
@@ -114,6 +132,10 @@ def snapshot_list(params):
             snapshot_list = domobj.listAllSnapshots(flagn)
             for snapshot_item in snapshot_list:
                 logger.info("The snapshot's name:" + snapshot_item.getName())
+                if not check_get_domain(domobj, snapshot_item, logger):
+                    return 1
+                if not check_get_connect(conn, snapshot_item, logger):
+                    return 1
 
             # Check the two snapshot list is the same
             snapshot_namelist_virsh = get_snapshot_list_virsh(guestname,
