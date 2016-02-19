@@ -54,7 +54,7 @@ def set_memory_period(params):
 
         """ test with running vm """
         if vm.isActive() == 1:
-            logger.info("guest is running test with running guest")
+            logger.info("guest is running, test with running guest")
             period = int(get_period_fromxml(vm, 1))
             if period == 0:
                 vm.setMemoryStatsPeriod(1, libvirt.VIR_DOMAIN_AFFECT_LIVE)
@@ -77,6 +77,7 @@ def set_memory_period(params):
                     fail = 1
 
         """ test with vm config """
+        logger.info("guest is not running, test with config")
         period = int(get_period_fromxml(vm, 0))
         vm.setMemoryStatsPeriod(period + 1, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
         if int(get_period_fromxml(vm, 0)) != period + 1:
