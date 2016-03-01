@@ -68,22 +68,32 @@ def block_resize(params):
         domobj.create()
         time.sleep(90)
 
+    old_info = domobj.blockInfo(diskpath, 0)
+
     try:
-        logger.info("resize domain disk to %s" % disksize)
+        tmp_disksize = disksize * (1 + 1023 * (1 - flag))
+        logger.info("resize domain disk to %s" % tmp_disksize)
         domobj.blockResize(diskpath, disksize, flag)
 
         # Currently, the units of disksize which get from blockInfo is byte.
         block_info = domobj.blockInfo(diskpath, 0)
 
-        if block_info[0] == disksize * (1 + 1023 * (1 - flag)):
+        if block_info[0] == tmp_disksize:
             logger.info("domain disk resize success")
         else:
             logger.error("error: domain disk change into %s" % block_info[0])
             return 1
 
     except libvirtError, e:
-        logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
-        return 1
+        if "this feature or command is not currently supported" in e.message:
+            if old_info[0] > tmp_disksize:
+                logger.info("Shrink test : disk size is %s, resize to %s."
+                            % (old_info[0], tmp_disksize))
+                logger.info("Expect result : %s" % e.message)
+                return 0
+        else:
+            logger.error("API error message: %s, error code is %s"
+                         % (e.message, e.get_error_code()))
+            return 1
 
     return 0

@@ -5,6 +5,8 @@ import time
 import libxml2
 import libvirt
 from libvirt import libvirtError
+from utils import utils
+import binascii
 
 from src import sharedmod
 
@@ -47,19 +49,26 @@ def block_peek(params):
         cont = doc.xpathNewContext()
         vdevs = cont.xpathEval("/domain/devices/disk/target/@dev")
         vdev = vdevs[0].content
+        diskpaths = cont.xpathEval("/domain/devices/disk/source/@file")
+        diskpath = diskpaths[0].content
 
-        logger.info("start to test block_peek.")
-        logger.info("get the MBR's last byte of domain %s %s is:"
+        logger.info("get the MBR's first byte of domain %s %s."
                     % (guestname, vdev))
+        first_byte = domobj.blockPeek(vdev, 0, 1, flag)
 
-        last_byte = domobj.blockPeek(vdev, 511, 1, flag)
-        logger.info(last_byte)
+        cmd = "hexdump %s -n 1 -s 0 -e \'1/1 \"%s \"\'" % (diskpath, "%02x")
+        status, ret = utils.exec_cmd(cmd, shell=True)
+        if status:
+            return 1
 
-        # compare with '\xaa'
-        if last_byte == '\xaa':
-            logger.info("Pass: the last byte is \\xaa")
+        logger.info("cmd: %s" % cmd)
+        logger.info("result: %s" % ret[0].strip())
+        if ret[0].strip() == binascii.b2a_hex(first_byte):
+            logger.info("Pass: hexdump: %s, api: %s"
+                        % (ret[0].strip(), binascii.b2a_hex(first_byte)))
         else:
-            logger.error("Failed: the last byte is not \\xaa")
+            logger.error("Failed: hexdump: %s, api: %s"
+                         % (ret[0].strip(), binascii.b2a_hex(first_byte)))
             logger.error("please make sure the guest is bootable")
             return 1
 
