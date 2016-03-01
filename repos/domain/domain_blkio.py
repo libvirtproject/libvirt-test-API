@@ -39,6 +39,13 @@ def get_device(domobj, logger):
     image_file = devs[0].content
 
     status, output = get_output(GET_PARTITION % image_file, logger)
+
+    if output.startswith('/dev/mapper'):
+        # BUG: Call 'lvs' in python will cause unexpected file descriptor leak
+        # so we have to ignore stderr.
+        output = commands.getoutput('lvs "%s" -o devices 2>/dev/null | tail -1 | cut -d "(" -f 1'
+                                    % output).strip()
+
     if not status:
         return output[:-1]
     else:
