@@ -54,6 +54,14 @@ def get_device(domobj, logger):
         return ""
 
 
+def set_device_scheduler(dev, target_scheduler, logger):
+    if not dev.startswith('/dev'):
+        logger.error('Invalid device path: ' + str(dev))
+    dev = dev[5:]
+    with open('/sys/block/%s/queue/scheduler' % dev, 'w') as scheduler_file:
+        scheduler_file.write(target_scheduler)
+
+
 def check_blkio_paras(domain_blkio_path, domainname, blkio_paras, logger):
     """check blkio parameters according to cgroup filesystem
     """
@@ -155,6 +163,8 @@ def domain_blkio(params):
 
         device = get_device(domobj, logger)
         device_weight = "%s,%s" % (device, expected_weight)
+        logger.info("set scheduler to cfq first..")
+        set_device_scheduler(device, 'cfq', logger)
         logger.info("start to set param device_weight to %s"
                     % device_weight)
         blkio_paras = {'device_weight': device_weight}
