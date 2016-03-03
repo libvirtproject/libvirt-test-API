@@ -2,6 +2,7 @@
 # To test domain blkio parameters
 
 import os
+import re
 import time
 import libxml2
 import libvirt
@@ -10,13 +11,30 @@ from libvirt import libvirtError
 
 from src import sharedmod
 
-CGROUP_PATH = "/cgroup"
-BLKIO_PATH1 = "%s/blkio/libvirt/qemu/%s"
-BLKIO_PATH2 = "/sys/fs%s/blkio/machine.slice/machine-qemu\\\\x2d%s.scope"
+BLKIO_PATH1 = "/cgroup/blkio/libvirt/qemu/%s"
+BLKIO_PATH2 = "/sys/fs/cgroup/blkio/machine.slice/machine-qemu\\x2d%s.scope"
+BLKIO_PATH_BASE = "/sys/fs/cgroup/blkio/machine.slice"
+BLKIO_PATH_RE = "machine-qemu.*?%s.scope"
 GET_PARTITION = "df -P %s | tail -1 | awk {'print $1'}"
 
 required_params = ('guestname', 'weight',)
 optional_params = {}
+
+
+def get_blkio_path(guestname, logger):
+    logger.info("Check" + BLKIO_PATH1 %  guestname)
+    if os.path.exists(BLKIO_PATH1 % guestname):
+        return BLKIO_PATH1 % guestname
+    elif os.path.exists(BLKIO_PATH2 % guestname):
+        return BLKIO_PATH2 % guestname
+    else:
+        logger.warn("CGroup path is not in expected format")
+        for path in os.listdir(BLKIO_PATH_BASE):
+            logger.info("Check" + path)
+            if re.match(BLKIO_PATH_RE % guestname, path):
+                return BLKIO_PATH_BASE + "/" + path
+            if re.match(BLKIO_PATH_RE % guestname.replace('_', ''), path):
+                return BLKIO_PATH_BASE + "/" + path
 
 
 def get_output(command, logger):
@@ -62,9 +80,10 @@ def set_device_scheduler(dev, target_scheduler, logger):
         scheduler_file.write(target_scheduler)
 
 
-def check_blkio_paras(domain_blkio_path, domainname, blkio_paras, logger):
+def check_blkio_paras(domain_blkio_path, blkio_paras, logger):
     """check blkio parameters according to cgroup filesystem
     """
+    domain_blkio_path = domain_blkio_path.replace('\\', '\\\\')
     logger.info("checking blkio parameters from cgroup")
     if 'weight' in blkio_paras:
         expected_weight = blkio_paras['weight']
@@ -134,10 +153,7 @@ def domain_blkio(params):
         domobj.create()
         time.sleep(90)
 
-    if os.path.exists(CGROUP_PATH):
-        blkio_path = BLKIO_PATH1 % (CGROUP_PATH, guestname)
-    else:
-        blkio_path = BLKIO_PATH2 % (CGROUP_PATH, guestname)
+    blkio_path = get_blkio_path(guestname, logger)
 
     try:
         blkio_paras = domobj.blkioParameters(flag)
@@ -145,7 +161,7 @@ def domain_blkio(params):
         logger.info("the blkio weight of %s is: %d"
                     % (guestname, blkio_paras['weight']))
 
-        status = check_blkio_paras(blkio_path, guestname, blkio_paras,
+        status = check_blkio_paras(blkio_path, blkio_paras,
                                    logger)
         if status != 0:
             return 1
@@ -156,7 +172,7 @@ def domain_blkio(params):
         if status != 0:
             return 1
 
-        status = check_blkio_paras(blkio_path, guestname, blkio_paras,
+        status = check_blkio_paras(blkio_path, blkio_paras,
                                    logger)
         if status != 0:
             return 1
@@ -172,7 +188,7 @@ def domain_blkio(params):
         if status != 0:
             return 1
 
-        status = check_blkio_paras(blkio_path, guestname, blkio_paras,
+        status = check_blkio_paras(blkio_path, blkio_paras,
                                    logger)
         if status != 0:
             return 1
