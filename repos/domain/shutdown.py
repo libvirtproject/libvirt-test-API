@@ -69,6 +69,8 @@ def shutdown(params):
     ip = utils.mac_to_ip(mac, 180)
     logger.info("the ip address of guest is %s" % ip)
 
+    time.sleep(10)
+
     # Shutdown domain
     try:
         if flag is None:

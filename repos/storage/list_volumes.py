@@ -1,5 +1,6 @@
 #!/usr/bin/evn python
 
+import os
 import libvirt
 from libvirt import libvirtError
 from xml.dom import minidom
@@ -71,19 +72,15 @@ def check_list_volumes(pool_obj, vol_name_list):
     logger.info("the pool type is %s" % pooltype)
 
     if pooltype in ['dir', 'netfs', 'logical', 'fs']:
-        get_vol_cmd = "ls -A " + poolpath
-        (status, vol_cmd_list) = utils.exec_cmd(get_vol_cmd, shell=True)
-        if status:
-            logger.error("Executing " + get_vol_cmd + " failed")
-            logger.error(get_vol_cmd)
-            return False
-    elif pooltype == 'logical':
-        get_vol_cmd = "lvdisplay | grep 'LV Name' | awk -F ' ' '{ print $3 }'"
-        (status, vol_cmd_list) = utils.exec_cmd(get_vol_cmd, shell=True)
-        if status:
-            logger.error("Executing " + get_vol_cmd + " failed")
-            logger.error(get_vol_cmd)
-            return False
+        if not os.path.exists(poolpath):
+            vol_cmd_list = []
+        else:
+            get_vol_cmd = "ls -A " + poolpath
+            (status, vol_cmd_list) = utils.exec_cmd(get_vol_cmd, shell=True)
+            if status:
+                logger.error("Executing " + get_vol_cmd + " failed")
+                logger.error(get_vol_cmd)
+                return False
     elif pooltype == 'disk':
         (status, vol_cmd_list) = get_disk_partition_list(pool_obj)
         if status is False:
