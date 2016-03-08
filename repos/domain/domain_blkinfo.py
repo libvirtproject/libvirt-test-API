@@ -2,13 +2,18 @@
 # To test domain's blockkinfo API
 
 import commands
+import re
 
 import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
 
-GET_CAPACITY = "du -b %s | awk '{print $1}'"
+QEMU_IMAGE_FORMAT = "qemu-img info %s |grep format |awk -F': ' '{print $2}'"
+QEMU_IMAGE_CLUSTER_SIZE = "qemu-img info %s |grep cluster_size |awk -F': ' '{print $2}'"
+QEMU_IMAGE_CHECK = "qemu-img check %s"
+QEMU_IMAGE_CHECK_RE = r"(\d+)/(\d+) = \d+.\d+% allocated, (\d+.\d+)% fragmented,"
+GET_CAPACITY = "qemu-img info %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'"
 GET_PHYSICAL_K = " du -B K %s | awk '{print $1}'"
 
 required_params = ('guestname', 'blockdev',)
@@ -61,7 +66,7 @@ def check_block_data(blockdev, blkdata, logger):
             logger.info("the capacity of '%s' is %s, checking succeeded"
                         % (blockdev, apparent_size))
         else:
-            logger.error("apparent-size from 'du' is %s" % apparent_size)
+            logger.error("apparent-size from 'qemu-img info' is %s" % apparent_size)
             logger.error("but from 'domain blockinfo' is %d, checking failed"
                          % blkdata[0])
             return 1
@@ -69,13 +74,34 @@ def check_block_data(blockdev, blkdata, logger):
         return 1
 
     status, block_size_k = get_output(GET_PHYSICAL_K % blockdev, logger)
-    if not status:
+    format_status, img_format = get_output(QEMU_IMAGE_FORMAT % blockdev, logger)
+
+    if not status and not format_status:
         block_size_b = int(block_size_k[:-1]) * 1024
         # Temporarily, we only test the default case, assuming
         # Allocation value is equal to Physical value
-        if block_size_b == blkdata[1] and block_size_b == blkdata[2]:
-            logger.info("the block size of '%s' is %s"
-                        % (blockdev, block_size_b))
+        logger.info("the block size of '%s' is %s"
+                    % (blockdev, block_size_b))
+        if img_format.strip() == 'qcow2' and block_size_b == blkdata[2]:
+            logger.info("Physical value's checking succeeded")
+            status, cluster_size = get_output(QEMU_IMAGE_CLUSTER_SIZE % blockdev, logger)
+            status, alloc_info = get_output(QEMU_IMAGE_CHECK % blockdev, logger)
+            (allocated, total, fragment_rate) = re.findall(QEMU_IMAGE_CHECK_RE, alloc_info)[0]
+            fragment_rate = float(fragment_rate)/100
+            alloc_size = int(allocated) * int(cluster_size)
+            total_size = int(total) * int(cluster_size)
+            logger.info("Allocation size is %d." % alloc_size)
+            logger.info("Got size %d." % blkdata[1])
+            if abs(blkdata[1] / total_size - alloc_size / total_size) < fragment_rate:
+                logger.info("Allocation check for qcow2 sucessed.")
+            else:
+                logger.error("Allocation check for qcow2 sucessed.")
+                logger.error("Expect a number near %d, got: %d"
+                             % (alloc_size, blkdata[1]))
+                return 1
+
+
+        elif block_size_b == blkdata[1] and block_size_b == blkdata[2]:
             logger.info("Allocation and Physical value's checking succeeded")
         else:
             logger.error("the block size from 'du' is %d" % block_size_b)
