@@ -19,8 +19,11 @@
 
 import os
 import copy
+import shutil
+import datetime
 from xml.dom import minidom
 from xml.dom.minidom import Document
+from xml.parsers.expat import ExpatError
 
 import exception
 
@@ -42,9 +45,20 @@ class LogGenerator(object):
                          "http://www.w3.org/1999/xlink"></log>')
         XMLFILE.close()
 
+    def repair_logxml(self):
+        """ backup currupted log file and generate a new one """
+        shutil.move(self.logxml, self.logxml + '.' +
+                    str(datetime.datetime.now().strftime("%y%m%d%H%M%S")))
+        self.generate_logxml()
+
     def add_testrun_xml(self, testrunid):
         """ add testrun info into log xml file"""
-        xmldoc = minidom.parse(self.logxml)
+        try:
+            xmldoc = minidom.parse(self.logxml)
+        except ExpatError, e:
+            # Currupted log xml file, gen a new one.
+            self.repair_logxml()
+            xmldoc = minidom.parse(self.logxml)
         testrun = self.doc.createElement('testrun')
         testrun.setAttribute("name", testrunid)
         xmldoc.childNodes[1].appendChild(testrun)
