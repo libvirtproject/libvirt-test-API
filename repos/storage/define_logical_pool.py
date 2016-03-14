@@ -11,7 +11,8 @@ from libvirt import libvirtError
 from src import sharedmod
 from repos.storage import storage_common
 
-required_params = ('poolname', 'sourcename', 'sourcepath',)
+required_params = ('poolname', 'sourcename', 'sourcepath',
+                   'portal', 'wwn')
 optional_params = {'sourceformat': 'lvm2',
                    'xml': 'xmls/logical_pool.xml',
                    }
@@ -36,6 +37,14 @@ def define_logical_pool(params):
     storage_common.display_pool_info(conn, logger)
 
     try:
+        # Prepare the disk
+        portal = params.get("portal", "127.0.0.1")
+        wwn = params.get("wwn")
+        src_path = params.get("sourcepath", "/dev/sdb1")
+        if not os.path.exists(src_path):
+            if not storage_common.prepare_iscsi_disk(portal, wwn, logger):
+                logger.error("Failed to prepare iscsi disk")
+                return 1
         logger.info("define %s storage pool" % poolname)
         conn.storagePoolDefineXML(xmlstr, 0)
         pool_num2 = conn.numOfDefinedStoragePools()

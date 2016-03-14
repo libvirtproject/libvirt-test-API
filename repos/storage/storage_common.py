@@ -6,7 +6,7 @@ import sys
 
 import libvirt
 from libvirt import libvirtError
-
+from utils import utils
 from src import sharedmod
 
 
@@ -47,3 +47,21 @@ def check_pool_define(poolname, logger):
         return True
     else:
         return False
+
+
+def prepare_iscsi_disk(portal, wwn, logger):
+    """
+    Discover and login the iscsi disk, and make fs on it.
+    """
+    dic_cmd = ("iscsiadm --mode discoverydb --type sendtargets"
+               " --portal %s --discover" % portal)
+    ret, output = utils.exec_cmd(dic_cmd, shell=True)
+    logger.debug("discovery output: %s" % output)
+    log_cmd = ("iscsiadm --mode node --targetname %s --portal %s"
+               " --login" % (portal, wwn))
+    ret, output = utils.exec_cmd(log_cmd, shell=True)
+    logger.debug("login output: %s" % output)
+    if ret:
+        return False
+    else:
+        return True
