@@ -9,10 +9,25 @@ from src import sharedmod
 from utils import utils
 from xml.dom import minidom
 import os
+import re
 
 required_params = ('guestname', 'vcpuquota', 'vcpuperiod', 'emulatorperiod',
                    'emulatorquota', 'cpushares', 'flag',)
 optional_params = {}
+
+CGROUP_PATH = '/sys/fs/cgroup/cpu,cpuacct/machine.slice/'
+CGROUP_RE = 'machine-qemu.*?%s.scope'
+
+
+def get_cgroup_path(guestname, logger):
+    for path in os.listdir(CGROUP_PATH):
+        logger.debug("Check" + path)
+        logger.debug("Check" + CGROUP_RE % guestname)
+        if re.match(CGROUP_RE % guestname, path):
+            return CGROUP_PATH + path + "/"
+        if re.match(CGROUP_RE % guestname.replace('_', ''), path):
+            return CGROUP_PATH + path + "/"
+    return False
 
 
 def check_sched_params_flag(guestname, domobj, sched_params_after, domstate,
@@ -36,8 +51,9 @@ def check_sched_params_flag(guestname, domobj, sched_params_after, domstate,
 
             cgroup_path = "cat /cgroup/cpu/libvirt/qemu/%s/" % guestname
         else:
-            cgroup_path = "cat /sys/fs/cgroup/cpu\,cpuacct/machine.slice/" \
-                          "machine-qemu\\\\x2d%s.scope/" % guestname
+            cgroup_path = get_cgroup_path(guestname, logger)
+            if cgroup_path:
+                cgroup_path = "cat " + cgroup_path.replace("\\", "\\\\")
 
         sched_dicts = {'vcpu_quota': 'vcpu0/cpu.cfs_quota_us',
                        'vcpu_period': 'vcpu0/cpu.cfs_period_us',
