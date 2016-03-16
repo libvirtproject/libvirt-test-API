@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import os
+import re
 import libvirt
 from libvirt import libvirtError
 from utils import utils
@@ -7,10 +9,24 @@ required_params = ('guestname',)
 optional_params = {'conn': 'qemu:///system'}
 
 ONLINE_CPU = '/sys/devices/system/cpu/online'
-CGROUP_PERCPU = '/sys/fs/cgroup/cpuacct/machine.slice/machine-qemu\\x2d%s.scope/cpuacct.usage_percpu'
-CGROUP_PERVCPU = '/sys/fs/cgroup/cpuacct/machine.slice/machine-qemu\\x2d%s.scope/vcpu%d/cpuacct.usage_percpu'
-CGROUP_USAGE = '/sys/fs/cgroup/cpuacct/machine.slice/machine-qemu\\x2d%s.scope/cpuacct.usage'
-CGROUP_STAT = '/sys/fs/cgroup/cpuacct/machine.slice/machine-qemu\\x2d%s.scope/cpuacct.stat'
+
+CGROUP_PERCPU = 'cpuacct.usage_percpu'
+CGROUP_PERVCPU = 'vcpu%d/cpuacct.usage_percpu'
+CGROUP_USAGE = 'cpuacct.usage'
+CGROUP_STAT = 'cpuacct.stat'
+CGROUP_PATH = '/sys/fs/cgroup/cpuacct/machine.slice/'
+CGROUP_RE = 'machine-qemu.*?%s.scope'
+
+
+def get_cpu_path(guestname, logger):
+    for path in os.listdir(CGROUP_PATH):
+        logger.info("Check" + path)
+        logger.info("Check" + CGROUP_RE % guestname)
+        if re.match(CGROUP_RE % guestname, path):
+            return CGROUP_PATH + path + "/"
+        if re.match(CGROUP_RE % guestname.replace('_', ''), path):
+            return CGROUP_PATH + path + "/"
+    return False
 
 
 def getcputime(a):
@@ -24,7 +40,7 @@ def virtgetcputime(a):
 def getvcputime(a):
     ret = 0
     for i in range(int(a[0])):
-        ret += int(open(CGROUP_PERVCPU % (a[1], i)).read().split()[a[2]])
+        ret += int(open(a[1] + CGROUP_PERVCPU % i).read().split()[a[2]])
 
     return ret
 
@@ -42,11 +58,17 @@ def cpu_status(params):
        test API for getCPUStats in class virDomain
     """
     logger = params['logger']
+    guest = params['guestname']
+
     fail = 0
 
     cpu = utils.file_read(ONLINE_CPU)
     logger.info("host online cpulist is %s" % cpu)
 
+    cpu_path = get_cpu_path(guest, logger)
+    if not cpu_path:
+        logger.error("Can't find cgroup path.")
+        return 1
     cpu_tuple = utils.param_to_tuple_nolength(cpu)
     if not cpu_tuple:
         logger.info("error in function param_to_tuple_nolength")
@@ -56,7 +78,6 @@ def cpu_status(params):
         conn = libvirt.open(params['conn'])
 
         logger.info("get connection to libvirtd")
-        guest = params['guestname']
         vm = conn.lookupByName(guest)
         vcpus = vm.info()[3]
         for n in range(len(cpu_tuple)):
@@ -64,7 +85,7 @@ def cpu_status(params):
                 continue
 
             D = utils.get_standard_deviation(getcputime, virtgetcputime,
-                                             [CGROUP_PERCPU % guest, n], [vm, n, 'cpu_time'])
+                                             [cpu_path + CGROUP_PERCPU, n], [vm, n, 'cpu_time'])
             logger.info("Standard Deviation for host cpu %d cputime is %d" % (n, D))
 
             """ expectations 403423 is a average collected in a x86_64 low load machine"""
@@ -74,7 +95,7 @@ def cpu_status(params):
                              (biger than %d) for host cpu %d" % (403423 * 5, n))
 
             D = utils.get_standard_deviation(getvcputime, virtgetcputime,
-                                             [vcpus, guest, n], [vm, n, 'vcpu_time'])
+                                             [vcpus, cpu_path, n], [vm, n, 'vcpu_time'])
             logger.info("Standard Deviation for host cpu %d vcputime is %d" % (n, D))
 
             """ expectations 4034 is a average collected in a x86_64 low load machine"""
@@ -84,7 +105,7 @@ def cpu_status(params):
                              (biger than %d) for host cpu time %d" % (4034 * 5 * vcpus, n))
 
         D = utils.get_standard_deviation(getcputime, virtgettotalcputime,
-                                         [CGROUP_USAGE % guest, 0], [vm, 'cpu_time'])
+                                         [cpu_path + CGROUP_USAGE, 0], [vm, 'cpu_time'])
         logger.info("Standard Deviation for host cpu total cputime is %d" % D)
 
         """ expectations 313451 is a average collected in a x86_64 low load machine"""
@@ -94,7 +115,7 @@ def cpu_status(params):
                          (biger than %d) for host cpu time %d" % (313451 * 5 * len(cpu_tuple), n))
 
         D = utils.get_standard_deviation(getcputime, virtgettotalcputime2,
-                                         [CGROUP_STAT % guest, 3], [vm, 'system_time'])
+                                         [cpu_path + CGROUP_STAT, 3], [vm, 'system_time'])
         logger.info("Standard Deviation for host cpu total system time is %d" % D)
 
         """ expectations 10 is a average collected in a x86_64 low load machine"""
@@ -104,7 +125,7 @@ def cpu_status(params):
                          (biger than %d) for host system cpu time %d" % (10 * 5, n))
 
         D = utils.get_standard_deviation(getcputime, virtgettotalcputime2,
-                                         [CGROUP_STAT % guest, 1], [vm, 'user_time'])
+                                         [cpu_path + CGROUP_STAT, 1], [vm, 'user_time'])
         logger.info("Standard Deviation for host cpu total user time is %d" % D)
 
         """ expectations 10 is a average collected in a x86_64 low load machine"""
