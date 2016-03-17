@@ -58,7 +58,7 @@ def prepare_iscsi_disk(portal, wwn, logger):
     ret, output = utils.exec_cmd(dic_cmd, shell=True)
     logger.debug("discovery output: %s" % output)
     log_cmd = ("iscsiadm --mode node --targetname %s --portal %s"
-               " --login" % (portal, wwn))
+               " --login" % (wwn, portal))
     ret, output = utils.exec_cmd(log_cmd, shell=True)
     logger.debug("login output: %s" % output)
     if ret:
