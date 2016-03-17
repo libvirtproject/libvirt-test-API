@@ -77,6 +77,7 @@ def set_memory_live(params):
         domobj.setMemoryFlags(max_mem, libvirt.VIR_DOMAIN_AFFECT_LIVE)
         logger.info("set domain memory to max mem %s with flag: %s" %
                     (str(max_mem), libvirt.VIR_DOMAIN_AFFECT_LIVE))
+        time.sleep(3)
         reserved = get_reserved_memory(guestname, username, password)
         logger.info("set domain memory as %s with flag: %s" %
                     (memory, libvirt.VIR_DOMAIN_AFFECT_LIVE))
