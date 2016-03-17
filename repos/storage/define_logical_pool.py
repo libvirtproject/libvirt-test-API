@@ -45,6 +45,9 @@ def define_logical_pool(params):
             if not storage_common.prepare_iscsi_disk(portal, wwn, logger):
                 logger.error("Failed to prepare iscsi disk")
                 return 1
+            if not storage_common.prepare_partition(src_path[:-1], src_path[-1], logger):
+                logger.error("Failed to prepare partition")
+                return 1
         logger.info("define %s storage pool" % poolname)
         conn.storagePoolDefineXML(xmlstr, 0)
         pool_num2 = conn.numOfDefinedStoragePools()
