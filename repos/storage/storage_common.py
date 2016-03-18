@@ -68,7 +68,8 @@ def prepare_iscsi_disk(portal, wwn, logger):
 
 
 def prepare_partition(dev, num, logger):
-    fdisk_cmd = ("echo -e 'o\\nn\\np\\n%d\\n\\n\\nw\\n'|fdisk %s" % (int(num), dev))
+    fdisk_cmd = ("sync && echo -e 'o\\nn\\np\\n%d\\n\\n\\nw\\n'"
+                 "|fdisk %s" % (int(num), dev))
     ret, output = utils.exec_cmd(fdisk_cmd, shell=True)
     logger.debug("fdisk output: %s" % output)
     if ret:

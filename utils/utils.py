@@ -1105,3 +1105,20 @@ def check_loop_valid(addr):
     if addr['prefix'] == 8 and re.match(r'^127(.\d{1,3}){3}$', addr['addr']):
         return True
     return False
+
+
+def wait_for(func, timeout, first=0.0, step=1.0):
+    """
+    Wait until func() evaluates to True.
+    If func() evaluates to True before timeout expires, return the
+    value of func(). Otherwise return None.
+    """
+    start_time = time.time()
+    end_time = time.time() + float(timeout)
+    time.sleep(first)
+    while time.time() < end_time:
+        output = func()
+        if output:
+            return output
+        time.sleep(step)
+    return None

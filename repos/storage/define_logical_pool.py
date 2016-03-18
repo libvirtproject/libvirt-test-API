@@ -10,6 +10,7 @@ from libvirt import libvirtError
 
 from src import sharedmod
 from repos.storage import storage_common
+from utils import utils
 
 required_params = ('poolname', 'sourcename', 'sourcepath',
                    'portal', 'wwn')
@@ -44,6 +45,9 @@ def define_logical_pool(params):
         if not os.path.exists(src_path):
             if not storage_common.prepare_iscsi_disk(portal, wwn, logger):
                 logger.error("Failed to prepare iscsi disk")
+                return 1
+            if not utils.wait_for(lambda: os.path.exists(src_path[:-1]), 5):
+                logger.error("Target device didn't show up")
                 return 1
             if not storage_common.prepare_partition(src_path[:-1], src_path[-1], logger):
                 logger.error("Failed to prepare partition")
