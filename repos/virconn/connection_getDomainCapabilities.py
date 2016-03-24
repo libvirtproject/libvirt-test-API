@@ -25,8 +25,8 @@ KVM_CHECK_EXTENSION = 44547
 KVM_CAP_IOMMU = 18
 maxcpu = 0
 
-drive = False
-drive_forma = False
+drive = True
+drive_forma = True
 drive_readonly = False
 blk_sg_io = False
 usb_storage = False
@@ -128,10 +128,6 @@ def get_os_flags(logger):
     xml = minidom.parse(QEMU_CAPS)
     qemu = xml.getElementsByTagName('qemuCaps')[0]
     for item in qemu.getElementsByTagName('flag'):
-        if item.getAttribute('name') == "drive":
-            drive = True
-        if item.getAttribute('name') == "drive-format":
-            drive_forma = True
         if item.getAttribute('name') == "drive-readonly":
             drive_readonly = True
     logger.debug("drive = %s" % drive)
