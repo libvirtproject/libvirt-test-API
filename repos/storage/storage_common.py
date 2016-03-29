@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import time
 
 import libvirt
 from libvirt import libvirtError
@@ -67,12 +68,21 @@ def prepare_iscsi_disk(portal, wwn, logger):
         return True
 
 
-def prepare_partition(dev, num, logger):
+def prepare_partition(path, logger):
+    timeout = 5
+    dev, num = path[:-1], path[-1]
     fdisk_cmd = ("sync && echo -e 'o\\nn\\np\\n%d\\n\\n\\nw\\n'"
                  "|fdisk %s" % (int(num), dev))
     ret, output = utils.exec_cmd(fdisk_cmd, shell=True)
     logger.debug("fdisk output: %s" % output)
-    if ret:
-        return False
-    else:
-        return True
+
+    while timeout > 0:
+        if os.path.exists(path):
+            utils.exec_cmd("dd if=/dev/zero of=%s bs=512 count=1000; sync"
+                           % path, shell=True)
+            return True
+        utils.exec_cmd("partprobe %s" % dev, shell=True)
+        time.sleep(1)
+        timeout = timeout - 1
+
+    return False

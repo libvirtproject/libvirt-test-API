@@ -49,9 +49,9 @@ def define_logical_pool(params):
             if not utils.wait_for(lambda: os.path.exists(src_path[:-1]), 5):
                 logger.error("Target device didn't show up")
                 return 1
-            if not storage_common.prepare_partition(src_path[:-1], src_path[-1], logger):
-                logger.error("Failed to prepare partition")
-                return 1
+        if not storage_common.prepare_partition(src_path, logger):
+            logger.error("Failed to prepare partition")
+            return 1
         logger.info("define %s storage pool" % poolname)
         conn.storagePoolDefineXML(xmlstr, 0)
         pool_num2 = conn.numOfDefinedStoragePools()
