@@ -44,7 +44,7 @@ def node_memory(params):
         logger.info("free memory collected in %s is: %s KiB" %
                     (NODE_MEMINFO_PATH, free_total))
 
-        if math.fabs(mem - free_total) > 1024:
+        if math.fabs(mem - free_total) > 2048:
             logger.error("free memory mismatch with info collected in %s" %
                          NODE_MEMINFO_PATH)
             return 1
@@ -59,7 +59,7 @@ def node_memory(params):
                     (NODE_MEMINFO_PATH, node_mem))
 
         for i in range(node_num):
-            if math.fabs(mem_list[i] - node_mem[i]) > 1024:
+            if math.fabs(mem_list[i] - node_mem[i]) > 2048:
                 path = NODE_MEMINFO_PATH.replace('*', '%s') % i
                 logger.error("node %s free memory mismatch with collected in %s"
                              % (i, path))
@@ -89,12 +89,12 @@ def node_memory(params):
 
         for i in range(node_num):
             path = NODE_MEMINFO_PATH.replace('*', '%s') % i
-            if math.fabs(node_tmp[i]['total'] - node_dict[i]['total']) > 1024:
+            if math.fabs(node_tmp[i]['total'] - node_dict[i]['total']) > 2048:
                 logger.error("node %s total memory is mismatch with %s" %
                              (i, path))
                 return 1
 
-            if math.fabs(node_tmp[i]['free'] - node_dict[i]['free']) > 1024:
+            if math.fabs(node_tmp[i]['free'] - node_dict[i]['free']) > 2048:
                 logger.error("node %s free memory is mismatch with %s" %
                              (i, path))
                 return 1
