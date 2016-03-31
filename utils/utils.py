@@ -470,7 +470,8 @@ def do_ping(ip, timeout):
     return (timeout and 1) or 0
 
 
-def exec_cmd(command, sudo=False, cwd=None, infile=None, outfile=None, shell=False, data=None):
+def exec_cmd(command, sudo=False, cwd=None, infile=None, outfile=None,
+             errfile=None, shell=False, data=None):
     """
     Executes an external command, optionally via sudo.
     """
@@ -483,8 +484,10 @@ def exec_cmd(command, sudo=False, cwd=None, infile=None, outfile=None, shell=Fal
         infile = subprocess.PIPE
     if outfile is None:
         outfile = subprocess.PIPE
+    if errfile is None:
+        errfile = subprocess.STDOUT
     process = subprocess.Popen(command, shell=shell, close_fds=True, cwd=cwd,
-                               stdin=infile, stdout=outfile, stderr=subprocess.PIPE)
+                               stdin=infile, stdout=outfile, stderr=errfile)
     (out, err) = process.communicate(data)
     if out is None:
         # Prevent splitlines() from barfing later on
