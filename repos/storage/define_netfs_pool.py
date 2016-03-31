@@ -4,6 +4,7 @@
 import os
 import re
 import sys
+import commands
 
 import libvirt
 from libvirt import libvirtError
@@ -15,6 +16,15 @@ required_params = ('poolname', 'sourcehost', 'sourcepath',)
 optional_params = {'targetpath': '/tmp/netfs_test',
                    'xml': 'xmls/netfs_pool.xml',
                    }
+
+
+def set_virt_use_nfs(logger):
+    cmd = 'setsebool virt_use_nfs on'
+    (ret, msg) = commands.getstatusoutput(cmd)
+    if ret != 0:
+        logger.error("cmd failed: %s" % cmd)
+
+    return 0
 
 
 def define_netfs_pool(params):
@@ -30,6 +40,8 @@ def define_netfs_pool(params):
         return 1
 
     logger.debug("storage pool xml:\n%s" % xmlstr)
+
+    set_virt_use_nfs(logger)
 
     pool_num1 = conn.numOfDefinedStoragePools()
     logger.info("original storage pool define number: %s" % pool_num1)

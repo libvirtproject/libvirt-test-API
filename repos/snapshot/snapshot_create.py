@@ -5,7 +5,6 @@ import libvirt
 
 from libvirt import libvirtError
 from src import sharedmod
-from utils import utils
 from repos.snapshot.common import check_domain_image
 from repos.snapshot.common import convert_flags
 
@@ -16,6 +15,7 @@ optional_params = {
                    'memorytype': 'no',
                    'disktype': 'no',
                    'snapshotmem': '',
+                   'snapshotdisk': '/tmp/test_api_snapshot.disk',
                   }
 
 
@@ -130,9 +130,10 @@ def snapshot_create(params):
     if params.has_key('snapshotmem'):
         snapshotmem = params.get('snapshotmem')
         xmlstr = xmlstr.replace('SNAPSHOTMEM', snapshotmem)
-    else:
-        xmlstr = xmlstr.replace('<memory snapshot=\'MEMORYTYPE\' file=\'SNAPSHOTMEM\'/>',
-                                '<memory snapshot=\'MEMORYTYPE\'/>')
+
+    if params.has_key('snapshotdisk'):
+        snapshotdisk = params.get('snapshotdisk')
+        xmlstr = xmlstr.replace('SNAPSHOTDISK', snapshotdisk)
 
     if params.has_key('memorytype'):
         memorytype = params.get('memorytype')

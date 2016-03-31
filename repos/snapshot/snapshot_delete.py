@@ -8,7 +8,7 @@ from utils import utils
 from repos.snapshot.common import convert_flags
 
 required_params = ('guestname', 'flags', 'snapshotname',)
-optional_params = {}
+optional_params = {'snapshotpath': '', }
 
 SNAPSHOT_DIR = "ls /var/lib/libvirt/qemu/snapshot"
 FLAGDICT = {0: "no flag", 1: " --children", 2: " --metadata-only",
@@ -116,19 +116,17 @@ def snapshot_delete(params):
 
 def snapshot_delete_clean(params):
     logger = params['logger']
-    guestname = params['guestname']
     snapshotname = params['snapshotname']
-    flags = params['flags']
+    snapshotpath = params['snapshotpath']
 
     if os.path.exists('/tmp/test_api_snapshot.mem'):
         os.remove('/tmp/test_api_snapshot.mem')
 
-    snapshot_file = "/mnt/libvirt-test-api." + snapshotname
-    logger.debug("%s" % snapshot_file)
-    if os.path.exists(snapshot_file):
-        os.remove(snapshot_file)
+    disk_file = snapshotpath + 'test_api_snapshot.disk'
+    if os.path.exists(disk_file):
+        os.remove(disk_file)
 
-    snapshot_file = "/var/lib/libvirt/images/libvirt-test-api." + snapshotname
-    logger.debug("%s" % snapshot_file)
+    snapshot_file = snapshotpath + 'libvirt-test-api.' + snapshotname
     if os.path.exists(snapshot_file):
+        logger.debug("%s" % snapshot_file)
         os.remove(snapshot_file)
