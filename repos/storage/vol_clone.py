@@ -2,11 +2,9 @@
 # volume clone testing
 
 import os
+
 from xml.dom import minidom
-
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 
 required_params = ('poolname', 'volname', 'clonevolname',)

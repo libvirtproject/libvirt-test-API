@@ -5,7 +5,6 @@ import os
 import string
 from xml.dom import minidom
 
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod

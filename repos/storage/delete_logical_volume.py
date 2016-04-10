@@ -2,13 +2,9 @@
 # Delete a logical type storage volume
 
 import os
-import re
-import sys
 import commands
 
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 
 required_params = ('poolname', 'volname',)

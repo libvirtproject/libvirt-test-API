@@ -5,8 +5,6 @@
 # case alone.
 
 import os
-import re
-import sys
 import time
 
 from utils import utils

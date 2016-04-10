@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 # To test "virsh net-name" command
 
-import libvirt
 from libvirt import libvirtError
 from xml.dom import minidom
-
 from src import sharedmod
-
 from utils import utils
 
 required_params = ('networkname',)

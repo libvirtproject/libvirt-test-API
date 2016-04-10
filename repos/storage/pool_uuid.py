@@ -4,18 +4,11 @@
 #    storagePoolLookupByUUID
 #    storagePoolLookupByUUIDString
 
-import os
-import sys
-import re
-import time
 import commands
-
 import binascii
-import libvirt
 
 from xml.dom import minidom
 from libvirt import libvirtError
-
 from src import sharedmod
 
 required_params = ('poolname',)

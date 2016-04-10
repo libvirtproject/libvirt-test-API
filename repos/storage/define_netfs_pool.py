@@ -1,14 +1,9 @@
 #!/usr/bin/env python
 # To test netfs type storage pool defining
 
-import os
-import re
-import sys
 import commands
 
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 from repos.storage import storage_common
 

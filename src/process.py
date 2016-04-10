@@ -19,8 +19,6 @@
 
 import os
 import sys
-import time
-import errno
 
 
 class Process:

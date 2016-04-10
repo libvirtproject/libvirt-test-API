@@ -1,7 +1,6 @@
 #!/usr/bin/evn python
 
 import os
-import libvirt
 from libvirt import libvirtError
 from xml.dom import minidom
 

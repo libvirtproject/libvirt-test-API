@@ -21,7 +21,6 @@
 import time
 import fcntl
 import sys
-import os
 import traceback
 
 from utils import log

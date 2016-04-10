@@ -3,13 +3,9 @@
 # zero and algorithm patterns supported by 'scrub' command which
 # are nnsa|dod|bsi|gutmann|schneier|pfitzner7|pfitzner33|random
 
-import os
 import string
 from xml.dom import minidom
-
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 from utils import utils
 

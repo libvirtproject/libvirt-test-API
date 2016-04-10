@@ -1,13 +1,7 @@
 #!/usr/bin/env python
 # Define a storage pool of 'iscsi' type
 
-import os
-import re
-import sys
-
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 from repos.storage import storage_common
 

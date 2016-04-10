@@ -2,7 +2,7 @@
 #test storagePoolLookupByVolume() API for libvirt
 
 import os
-import libvirt
+
 from libvirt import libvirtError
 from src import sharedmod
 

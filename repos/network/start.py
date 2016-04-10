@@ -2,14 +2,9 @@
 # Start a network
 
 import time
-import os
-import re
-import sys
 import commands
 
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 
 required_params = ('networkname',)

@@ -2,12 +2,8 @@
 # Define a storage pool of 'logical' type
 
 import os
-import re
-import sys
 
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 from repos.storage import storage_common
 from utils import utils

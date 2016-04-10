@@ -7,11 +7,8 @@
 # Version: 0.1.0
 
 import os
-import sys
 import re
-import shutil
 import commands
-from optparse import OptionParser
 
 import utils
 

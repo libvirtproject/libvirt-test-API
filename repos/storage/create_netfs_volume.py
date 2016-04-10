@@ -1,15 +1,10 @@
 #!/usr/bin/env python
 # Creat volume for storage pool of 'netfs' type
 
-import os
-import re
-import sys
 import commands
+
 from xml.dom import minidom
-
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 
 required_params = ('poolname', 'volname', 'volformat', 'capacity',)

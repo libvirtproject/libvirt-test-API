@@ -18,7 +18,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import commands
-import libvirt
 import sharedmod
 from utils import utils
 

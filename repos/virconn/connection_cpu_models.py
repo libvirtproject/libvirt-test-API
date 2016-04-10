@@ -2,12 +2,10 @@
 # test getCPUModelNames() API for libvirt0
 
 import os
-import libvirt
 
 from xml.dom import minidom
 from libvirt import libvirtError
 from src import sharedmod
-from utils import utils
 
 required_params = ('arch',)
 optional_params = {}

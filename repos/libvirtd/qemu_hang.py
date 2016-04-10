@@ -3,12 +3,6 @@
 # test stop a qemu process and check whether libvird get hang.
 # For doing this test, a running domain is required.
 
-import os
-import re
-import sys
-
-import libvirt
-from libvirt import libvirtError
 
 from src import sharedmod
 from utils import utils

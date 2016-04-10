@@ -1,14 +1,9 @@
 #!/usr/bin/env python
 # Create volume for storage pool of partition type
 
-import os
-import re
-import sys
 import commands
 
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 
 required_params = ('poolname', 'volname', 'volformat', 'capacity',)

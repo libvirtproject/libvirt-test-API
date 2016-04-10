@@ -1,14 +1,9 @@
 #!/usr/bin/env python
 
 import os
-import re
-import sys
 import time
 
-import libvirt
-from libvirt import libvirtError
 from utils import utils
-from src import sharedmod
 
 
 def display_pool_info(conn, logger):

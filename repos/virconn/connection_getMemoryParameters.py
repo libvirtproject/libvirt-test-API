@@ -2,7 +2,6 @@
 
 import libvirt
 from libvirt import libvirtError
-from utils import utils
 
 required_params = ()
 optional_params = {'conn': ''}

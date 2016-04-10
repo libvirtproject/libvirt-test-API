@@ -1,14 +1,8 @@
 #!/usr/bin/env python
 
-import os
-import sys
-import re
-import time
 import commands
 
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 
 required_params = ('poolname',)

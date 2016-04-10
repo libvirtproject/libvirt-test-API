@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 # Create a storage pool of 'fs' type.
 
-import os
 import re
-import sys
 
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 from utils import xml_parser
 

@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import os
-import re
-import sys
 import time
 import commands
 from xml.dom import minidom

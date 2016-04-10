@@ -2,14 +2,9 @@
 # Build a storage pool of 'dir' type
 
 import os
-import re
-import sys
-import commands
+
 from xml.dom import minidom
-
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 
 required_params = ('poolname',)

@@ -1,14 +1,9 @@
 #!/usr/bin/evn python
 # undefine a network
 
-import time
 import os
-import re
-import sys
 
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 
 required_params = ('networkname',)

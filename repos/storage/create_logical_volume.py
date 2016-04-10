@@ -2,16 +2,10 @@
 # Create a logical type storage volume
 
 import os
-import re
-import sys
 import commands
 from xml.dom import minidom
-
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
-from utils import utils
 
 required_params = ('poolname', 'volname', 'capacity',)
 optional_params = {'xml': 'xmls/logical_volume.xml',

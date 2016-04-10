@@ -1,7 +1,6 @@
 #!/usr/bin/evn python
 # Update a network
 
-import libvirt
 from libvirt import libvirtError
 from src import sharedmod
 

@@ -4,16 +4,11 @@
 #      networkLookupByUUIDString
 #      networkLookupByUUID
 
-import os
-import sys
-import re
 import commands
 import binascii
-import libvirt
 
 from libvirt import libvirtError
 from xml.dom import minidom
-
 from src import sharedmod
 
 required_params = ('networkname',)

@@ -7,7 +7,6 @@ from libvirt import libvirtError
 from xml.dom import minidom
 
 from src import sharedmod
-from utils import utils
 
 required_params = ()
 optional_params = {'conn': ''}

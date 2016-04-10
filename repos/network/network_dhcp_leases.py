@@ -2,10 +2,8 @@
 # test DHCPLeases() API for libvirt
 
 import os
-import time
 import json
 
-import libvirt
 from libvirt import libvirtError
 from utils import utils
 from src import sharedmod

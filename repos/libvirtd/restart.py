@@ -6,13 +6,6 @@
 # NOTES: Libvirtd will be restarted during test, better run this
 # case alone.
 
-import os
-import re
-import sys
-
-import libvirt
-from libvirt import libvirtError
-
 from src import sharedmod
 from utils import utils
 

@@ -34,5 +34,8 @@
       <source mode='bind' path='/var/lib/libvirt/qemu/channel/target/GUESTNAME.agent'/>
       <target type='virtio' name='org.qemu.guest_agent.0'/>
     </channel>
+    <video>
+      <model type='cirrus' vram='16384' heads='1'/>
+    </video>
   </devices>
 </domain>

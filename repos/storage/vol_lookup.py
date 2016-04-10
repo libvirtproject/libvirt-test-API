@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # storage pool volume lookup testing
 
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 
 required_params = ('poolname', 'volname',)

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # To test "virsh net-list" command
 
-import libvirt
 from libvirt import libvirtError
-
 from src import sharedmod
 from utils import utils
 
