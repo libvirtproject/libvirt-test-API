@@ -1125,3 +1125,45 @@ def wait_for(func, timeout, first=0.0, step=1.0):
             return output
         time.sleep(step)
     return None
+
+
+def parse_flags(params, default=0):
+    """
+    Read and generate bitwise-or of given flags.
+    return -1 on illegal flag.
+    """
+    logger = params['logger']
+    flags = params.get('flags', None)
+    if flags is None:
+        return default
+
+    flag_bit = 0
+
+    for flag in flags.split("|"):
+        if flag == 'None':
+            # Single None for API with two versoin (with/without flag parameter)
+            if len(flags.split("|")) == 1:
+                return None
+            else:
+                logger.error("Flag: 'None' must not be used with other flags!")
+                return -1
+
+        elif flag == '0':
+            # '0' for API with not used flag
+            flag = 0
+
+        else:
+            try:
+                flag = getattr(libvirt, flag)
+            except AttributeError:
+                logger.error("Flag:'%s' is illegal or not supported"
+                             "by this version of libvirt" % flag)
+                return -1
+
+        try:
+            flag_bit = flag_bit | flag
+        except TypeError:
+            logger.error("Flag: '%s' is not a number" % flag)
+            return -1
+
+    return flag_bit
