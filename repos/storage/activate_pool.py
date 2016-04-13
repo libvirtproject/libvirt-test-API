@@ -6,9 +6,10 @@ import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
+from utils import utils
 
 required_params = ('poolname',)
-optional_params = {}
+optional_params = {'flags': ''}
 
 
 def activate_pool(params):
@@ -17,6 +18,9 @@ def activate_pool(params):
     """
     logger = params['logger']
     poolname = params['poolname']
+    flag = utils.parse_flags(params)
+    if flag == -1:
+        return 1
 
     conn = sharedmod.libvirtobj['conn']
     try:
@@ -33,7 +37,7 @@ def activate_pool(params):
             logger.error("%s is active already" % poolname)
             return 1
 
-        poolobj.create(0)
+        poolobj.create(flag)
         time.sleep(5)
         if poolobj.isActive():
             logger.info("activating %s storage pool is SUCCESSFUL!!!" %
