@@ -58,9 +58,8 @@ class CaseFileParser(object):
             raise exception.FileDoesNotExist(
                 "Config file: %s not found" % casefile)
         self.casefile = casefile
-        fh = open(casefile, "r")
-        self.list = self.parse(fh, self.list)
-        fh.close()
+        with open(casefile, "r") as fh:
+            self.list = self.parse(fh, self.list)
         return self.list
 
     def get_list(self):
@@ -72,47 +71,38 @@ class CaseFileParser(object):
         """ Get the next non-empty, non-comment line in file.
             If no line is available, return None.
         """
-        comflag = 0
+        comment_flag = 0
         while True:
             line = fh.readline()
-            if line == "" and comflag == 1:
-                raise exception.CaseConfigfileError(
-                    "comments delimiter error!")
-            elif line == "" and comflag == 0:
+            if line == '':
+                if comment_flag == 1:
+                    raise exception.CaseConfigfileError(
+                        "File ended before a comment block is closed!")
                 return None
 
             stripped_line = line.strip()
-            if len(stripped_line) > 0 and stripped_line.startswith('/*'):
-                if comflag == 0:
-                    comflag += 1
+            if len(stripped_line) == 0:
+                continue
+            elif stripped_line.startswith('/*'):
+                if comment_flag == 0:
+                    comment_flag = 1
                     continue
-                else:
+                raise exception.CaseConfigfileError("comments delimiter mismatch!")
+            elif stripped_line.endswith('*/'):
+                if comment_flag == 1:
+                    comment_flag = 0
+                    continue
+                raise exception.CaseConfigfileError("comments delimiter mismatch!")
+            else:
+                if stripped_line.startswith('*/'):
                     raise exception.CaseConfigfileError(
-                        "comments delimiter mismatch!")
-            if len(stripped_line) > 0 and not stripped_line.endswith('*/'):
-                if comflag == 1:
-                    if stripped_line.startswith('*/'):
-                        exception.CaseConfigfileError(
-                            "comments delimiter mismatch!")
-                    else:
-                        continue
-                elif stripped_line.startswith('*/'):
+                        "For proper indent, '*/' must be at the end of a line!")
+                if stripped_line.endswith('/*'):
                     raise exception.CaseConfigfileError(
-                        "comments delimiter error!")
-                else:
-                    pass
-            elif len(stripped_line) > 0 and stripped_line.endswith('*/'):
-                if comflag == 1:
-                    comflag -= 1
-                    line = fh.readline()
-                    stripped_line = line.strip()
-                else:
-                    raise exception.CaseConfigfileError(
-                        "comments delimiter mismatch!")
+                        "For proper indent, '/*' must be at the beginning of a line!")
+                if re.match(r'(#|//).*', stripped_line) or comment_flag:
+                    continue
 
-            if len(stripped_line) > 0 \
-                    and not stripped_line.startswith('#') \
-                    and not stripped_line.startswith('//'):
                 return line
 
     def get_next_line_indent(self, fh):
@@ -141,26 +131,25 @@ class CaseFileParser(object):
 
     def debug_print(self, str1, str2=""):
         """Nicely print two strings and an arrow.  For internal use."""
-        if str2:
-            str = "%-50s ---> %s" % (str1, str2)
-        else:
-            str = str1
-        print str
+        if self.debug:
+            if str2:
+                str = "%-50s ---> %s" % (str1, str2)
+            else:
+                str = str1
+            print str
 
     def variables_lookup(self, values):
         res = []
         for val in values:
-            if val[0] == '$':
+            if len(val) != 0 and val[0] == '$':
                 varname = val[1:]
-                if self.debug:
-                    self.debug_print("found variable %s" % varname)
+                self.debug_print("found variable %s" % varname)
                 try:
                     value = self.env.get_value("variables", varname)
                     value = string.strip(value)
                     self.variables[varname] = value
                     if value == "":
-                        if self.debug:
-                            self.debug_print("variable %s is empty" % varname)
+                        self.debug_print("variable %s is empty" % varname)
                         self.missing_variables.append(varname)
                     else:
                         res.append(value)
@@ -173,6 +162,59 @@ class CaseFileParser(object):
             else:
                 res.append(val)
         return res
+
+    def format_string_parse(self, string):
+        """
+        For parsing formatted strings.
+        This functoin split string, and return a list.
+        String are splited by space, but quotated part won't be splited.
+
+        Example:
+            plain string: value => ['value']
+            empty string: '' => ['']
+            string with space: 'word1 word2' word3 => ['word1 word2', 'word3']
+            string with escaped quatatoin: libvirt\'s test => ['libvirt\'s', test]
+            string with diffrent quatatoin: "libvirt's", test => ['"libvirt\'s"', test]
+
+        The quotation format is basically the same python
+        """
+
+        string = iter(string)
+        quota_stack = []
+        value_list = []
+        value = ""
+        for char in string:
+            if char == "\\":
+                try:
+                    next_char = next(string)
+                    if next_char in ['"', "'", "\\"]:
+                        value += next_char
+                except StopIteration:
+                    raise exception.CaseConfigfileError(
+                        "Escape character at end of line.")
+            elif char in ["'", '"']:
+                if len(quota_stack) != 0:
+                    if char == quota_stack[-1]:
+                        quota_stack.pop()
+                        value_list.append(value)
+                        value = ""
+                    else:
+                        value += char
+                else:
+                    quota_stack.append(char)
+            elif char == " ":
+                if len(quota_stack) != 0:
+                    value += str(char)
+                elif value != "":
+                    value_list.append(value)
+                    value = ""
+            else:
+                value += char
+        if len(quota_stack) != 0:
+            raise exception.CaseConfigfileError("Quotation not ending!")
+        if value != "":
+            value_list.append(value)
+        return value_list
 
     def option_parse(self, fh, list, casename):
         """ For options of a case parsing. """
@@ -191,8 +233,7 @@ class CaseFileParser(object):
         else:
             pass
 
-        if self.debug:
-            self.debug_print("the option name is", tripped_optionname)
+        self.debug_print("the option name is", tripped_optionname)
 
         while True:
             temp_list = []
@@ -214,7 +255,8 @@ class CaseFileParser(object):
             elif indent == 8:
                 valuestring = self.get_next_line(fh)
 
-                tripped_valuelist = valuestring.strip().split()
+                # Split valuestring
+                tripped_valuelist = self.format_string_parse(valuestring.strip())
                 # look for variable and try to substitute them
                 tripped_valuelist = self.variables_lookup(tripped_valuelist)
                 if len(self.missing_variables) != 0:
@@ -224,31 +266,24 @@ class CaseFileParser(object):
 
                 tripped_valuename = tripped_valuelist[0]
 
-                if self.debug:
-                    self.debug_print(
-                        "the option_value we are parsing is", tripped_valuename)
-                    self.debug_print("the temp_list is", temp_list)
+                self.debug_print("the option_value we are parsing is", tripped_valuename)
+                self.debug_print("the temp_list is", temp_list)
 
                 filterter_list = []
 
                 for caselist in temp_list:
-                    if self.debug:
-                        self.debug_print(
-                            "before parsing, the caselist is",
-                            caselist)
+                    self.debug_print("before parsing, the caselist is", caselist)
 
                     if len(tripped_valuelist) > 1:
                         if (tripped_valuelist[1] == "only" and
                                 len(tripped_valuelist) == 3):
-                            if self.debug:
-                                self.debug_print("the value with a keywords which is",
-                                                 tripped_valuelist[1])
+                            self.debug_print("the value with a keywords which is",
+                                             tripped_valuelist[1])
 
                             filterters = tripped_valuelist[2].split("|")
                             for filterter in filterters:
-                                if self.debug:
-                                    self.debug_print("the filterter we will filt the"
-                                                     " temp_list is", filterter)
+                                self.debug_print("the filterter we will filt the"
+                                                 " temp_list is", filterter)
 
                                 if re.findall(filterter, str(caselist)):
                                     self.add_option_value(
@@ -261,9 +296,8 @@ class CaseFileParser(object):
                                 filterter_list.append(caselist)
                         elif (tripped_valuelist[1] == "no" and
                               len(tripped_valuelist) == 2):
-                            if self.debug:
-                                self.debug_print(
-                                    "the value with a keywords which is", tripped_valuelist[1])
+                            self.debug_print(
+                                "the value with a keywords which is", tripped_valuelist[1])
 
                             if re.findall(tripped_valuename, str(caselist)):
                                 temp_list = [case for case in caselist if case.has_key(casename)]
@@ -292,16 +326,11 @@ class CaseFileParser(object):
                                               tripped_optionname,
                                               tripped_valuename)
 
-                    if self.debug:
-                        self.debug_print(
-                            "after parsing the caselist is", caselist)
+                    self.debug_print("after parsing the caselist is", caselist)
 
                 trash = [temp_list.remove(i) for i in filterter_list]
 
-                if self.debug:
-                    self.debug_print(
-                        "after handling the temp_list is",
-                        temp_list)
+                self.debug_print("after handling the temp_list is", temp_list)
 
                 new_list += temp_list
             else:
@@ -314,8 +343,7 @@ class CaseFileParser(object):
 
         tripped_casename = ''
         while True:
-            if self.debug:
-                self.debug_print("the list is", list)
+            self.debug_print("the list is", list)
 
             indent = self.get_next_line_indent(fh)
             tripped_casename = ""
@@ -327,9 +355,7 @@ class CaseFileParser(object):
                 tripped_caselist = casestring.strip().split()
                 tripped_casename = tripped_caselist[0]
 
-                if self.debug:
-                    self.debug_print("we begin to handle the case",
-                                     tripped_casename)
+                self.debug_print("we begin to handle the case", tripped_casename)
 
                 if self.loop_finish:
                     for i in range(len(list)):
@@ -374,11 +400,10 @@ class CaseFileParser(object):
                         tripped_caselist[1] == "times":
                     times = tripped_caselist[2]
 
-                    if self.debug:
-                        self.debug_print(
-                            "the case with a keywords which is %s \
-                             keywords_value is %s" %
-                            (tripped_caselist[1], times))
+                    self.debug_print(
+                        "the case with a keywords which is %s \
+                         keywords_value is %s" %
+                        (tripped_caselist[1], times))
 
                     for i in range(int(times)):
                         for caselist in list:
@@ -423,8 +448,7 @@ class CaseFileParser(object):
                     caselist.append(newdict)
             elif indent > 0:
                 if indent == 4:
-                    if self.debug:
-                        self.debug_print("we begin to parse the option line")
+                    self.debug_print("we begin to parse the option line")
                     list = self.option_parse(fh, list, tripped_casename)
                 else:
                     raise exception.CaseConfigfileError("option indentation error!")
