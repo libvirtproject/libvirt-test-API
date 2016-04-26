@@ -17,8 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import re
 import copy
 import shutil
+import codecs
 import datetime
 from xml.dom import minidom
 from xml.dom.minidom import Document
@@ -50,14 +52,31 @@ class LogGenerator(object):
                     str(datetime.datetime.now().strftime("%y%m%d%H%M%S")))
         self.generate_logxml()
 
+    def get_xmldoc(self, xml=None):
+        # XML 1.0 does not support some unicode character
+        illegal_utf = re.compile(
+            u'[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]')
+
+        if not xml:
+            xml = self.logxml
+        with codecs.open(xml, "r", "unicode-escape") as content_file:
+            content = content_file.read()
+        try:
+            xmldoc = minidom.parseString(content.encode("utf-8"))
+        except ExpatError, e:
+            content = illegal_utf.sub("?", content)
+            xmldoc = minidom.parseString(content.encode("utf-8"))
+
+        return xmldoc
+
     def add_testrun_xml(self, testrunid):
         """ add testrun info into log xml file"""
         try:
-            xmldoc = minidom.parse(self.logxml)
+            xmldoc = self.get_xmldoc()
         except ExpatError, e:
             # Currupted log xml file, gen a new one.
             self.repair_logxml()
-            xmldoc = minidom.parse(self.logxml)
+            xmldoc = self.get_xmldoc()
         testrun = self.doc.createElement('testrun')
         testrun.setAttribute("name", testrunid)
         xmldoc.childNodes[1].appendChild(testrun)
@@ -66,7 +85,7 @@ class LogGenerator(object):
 
     def add_test_xml(self, testrunid, testid):
         """ add a test info into log xml file"""
-        xmldoc = minidom.parse(self.logxml)
+        xmldoc = self.get_xmldoc()
         test = self.doc.createElement('test')
         test.setAttribute("id", testid)
         testrunlist = xmldoc.getElementsByTagName('testrun')
@@ -79,7 +98,7 @@ class LogGenerator(object):
 
     def add_testprocedure_xml(self, testrunid, testid, test_procedure):
         """ add test procedure info into log xml file """
-        xmldoc = minidom.parse(self.logxml)
+        xmldoc = self.get_xmldoc()
 
         procedure = self.doc.createElement('test_procedure')
         casename = test_procedure.keys()[0]
@@ -112,7 +131,7 @@ class LogGenerator(object):
     def add_test_summary(self, testrunid, testid, result, case_retlist,
                          start_time, end_time, path):
         """ add a test summary xml block into log xml file """
-        xmldoc = minidom.parse(self.logxml)
+        xmldoc = self.get_xmldoc()
         testresult = self.doc.createElement('result')
         resulttext = self.doc.createTextNode(result)
         testresult.appendChild(resulttext)
@@ -161,7 +180,7 @@ class LogGenerator(object):
     def add_testrun_summary(self, testrunid, passnum, failnum, totalnum,
                             start_time, end_time):
         """ add a testrun summary xml block into log xml file """
-        xmldoc = minidom.parse(self.logxml)
+        xmldoc = self.get_xmldoc()
         testpass = self.doc.createElement('pass')
         passtext = self.doc.createTextNode(str(passnum))
         testpass.appendChild(passtext)
@@ -200,7 +219,7 @@ class LogGenerator(object):
 
     def remove_test_xml(self, testrunid, testid):
         """ to remove a test xml block from a log xml file """
-        xmldoc = minidom.parse(self.logxml)
+        xmldoc = self.get_xmldoc()
         testrunlist = xmldoc.getElementsByTagName('testrun')
         testrunattrlist = []
 
@@ -227,7 +246,7 @@ class LogGenerator(object):
 
     def remove_testrun_xml(self, testrunid):
         """ remove a testrun xml block from log xml file """
-        xmldoc = minidom.parse(self.logxml)
+        xmldoc = self.get_xmldoc()
         testrunlist = xmldoc.getElementsByTagName('testrun')
         testrunattrlist = []
 
@@ -245,7 +264,7 @@ class LogGenerator(object):
 
     def remove_alltestrun_xml(self):
         """ remove all testrun xml blocks from a log xml file """
-        xmldoc = minidom.parse(self.logxml)
+        xmldoc = self.get_xmldoc()
         testrunlist = xmldoc.getElementsByTagName('testrun')
         testrunattrlist = []
 
@@ -259,8 +278,10 @@ class LogGenerator(object):
 
     def merge_xmlfiles(self, logxml_two):
         """ merge two xmlfiles into one """
-        xmldoc_one = minidom.parse(self.logxml)
-        xmldoc_two = minidom.parse(logxml_two)
+        xmldoc_one = self.get_xmldoc()
+        file=codecs.open(logxml_two, "r", "unicode-escape")
+        xmldoc_two = minidom.parse(file)
+        file.close()
         testrunlist_two = xmldoc_two.getElementsByTagName('testrun')
         testrunlist_two_copy = copy.deepcopy(testrunlist_two)
 
@@ -272,6 +293,6 @@ class LogGenerator(object):
 
     def __write_to_file(self, xmldoc, logxml):
         """ save changes into log xml file """
-        file = open(logxml, "w")
-        xmldoc.writexml(file)
-        file.close()
+        with codecs.open(logxml, "w", "unicode-escape") as file:
+            xmldoc.writexml(file)
+

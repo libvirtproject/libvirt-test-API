@@ -189,6 +189,16 @@ class CaseFileParser(object):
                     next_char = next(string)
                     if next_char in ['"', "'", "\\"]:
                         value += next_char
+                    elif next_char == 'x':
+                        u_prefix = "\\x"
+                        for i in xrange(2):
+                            u_prefix += next(string)
+                        value += u_prefix.decode('unicode-escape')
+                    elif next_char == 'u':
+                        u_prefix = "\\u"
+                        for i in xrange(4):
+                            u_prefix += next(string)
+                        value += u_prefix.decode('unicode-escape')
                 except StopIteration:
                     raise exception.CaseConfigfileError(
                         "Escape character at end of line.")
@@ -285,7 +295,7 @@ class CaseFileParser(object):
                                 self.debug_print("the filterter we will filt the"
                                                  " temp_list is", filterter)
 
-                                if re.findall(filterter, str(caselist)):
+                                if re.findall(filterter.encode('unicode-escape'), str(caselist)):
                                     self.add_option_value(
                                         caselist,
                                         casename,
@@ -299,13 +309,14 @@ class CaseFileParser(object):
                             self.debug_print(
                                 "the value with a keywords which is", tripped_valuelist[1])
 
-                            if re.findall(tripped_valuename, str(caselist)):
+                            if re.findall(tripped_valuename.encode('unicode-escape'),
+                                          str(caselist)):
                                 temp_list = [case for case in caselist if case.has_key(casename)]
                         elif (tripped_valuelist[1] == "no" and
                               len(tripped_valuelist) == 3):
                             filterters = tripped_valuelist[2].split("|")
                             for filterter in filterters:
-                                if re.findall(filterter, str(caselist)):
+                                if re.findall(filterter.encode('unicode-escape'), str(caselist)):
                                     filterter_list.append(caselist)
                                     break
                             else:
@@ -314,7 +325,8 @@ class CaseFileParser(object):
                                                       tripped_valuename)
                         elif (tripped_valuelist[1] == "include" and
                               len(tripped_valuelist) == 2):
-                            if re.findall(tripped_valuename, str(caselist)):
+                            if re.findall(tripped_valuename.encode('unicode-escape'),
+                                          str(caselist)):
                                 self.add_option_value(caselist,
                                                       casename,
                                                       tripped_optionname,

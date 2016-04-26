@@ -124,7 +124,8 @@ class FuncGen(object):
             mod_case = mod_case_func.rsplit(":", 1)[0]
             self.fmt.print_start(mod_case, env_logger)
 
-            case_params = self.case_params_list[i]
+            case_params = {k: v.encode('utf-8')
+                           for k, v in self.case_params_list[i].items()}
             case_params['logger'] = case_logger
 
             if mod_case_func in self.cases_checkfunc_ref_dict:
