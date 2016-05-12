@@ -9,8 +9,8 @@
 from src import sharedmod
 from utils import utils
 
-required_params = ('guestname',)
-optional_params = {}
+required_params = ()
+optional_params = {'guestname': '',}
 
 VIRSH_LIST = "virsh list --all"
 RESTART_CMD = "service libvirtd restart"
@@ -72,38 +72,39 @@ def get_domain_pid(logger, guestname):
 def restart(params):
     """restart libvirtd test"""
     logger = params['logger']
-    guestname = params['guestname']
+    guestname = params.get('guestname', '')
 
     conn = sharedmod.libvirtobj['conn']
-
-    logger.info("check the domain state")
-    ret = check_domain_running(conn, guestname, logger)
-    if ret:
-        return 1
 
     logger.info("check the libvirtd status:")
     ret = libvirtd_check(logger)
     if ret:
         return 1
 
-    # Get domain ip
-    logger.info("get the mac address of domain %s" % guestname)
-    mac = utils.get_dom_mac_addr(guestname)
-    logger.info("the mac address of domain %s is %s" % (guestname, mac))
-    logger.info("get ip by mac address")
-    ip = utils.mac_to_ip(mac, 180)
-    logger.info("the ip address of domain %s is %s" % (guestname, ip))
+    if guestname != '':
+        logger.info("check the domain state")
+        ret = check_domain_running(conn, guestname, logger)
+        if ret:
+            return 1
 
-    logger.info("ping to domain %s" % guestname)
-    if utils.do_ping(ip, 0):
-        logger.info("Success ping domain %s" % guestname)
-    else:
-        logger.error("fail to ping domain %s" % guestname)
-        return 1
+        # Get domain ip
+        logger.info("get the mac address of domain %s" % guestname)
+        mac = utils.get_dom_mac_addr(guestname)
+        logger.info("the mac address of domain %s is %s" % (guestname, mac))
+        logger.info("get ip by mac address")
+        ip = utils.mac_to_ip(mac, 180)
+        logger.info("the ip address of domain %s is %s" % (guestname, ip))
 
-    ret, pid_before = get_domain_pid(logger, guestname)
-    if ret:
-        return 1
+        logger.info("ping to domain %s" % guestname)
+        if utils.do_ping(ip, 0):
+            logger.info("Success ping domain %s" % guestname)
+        else:
+            logger.error("fail to ping domain %s" % guestname)
+            return 1
+
+        ret, pid_before = get_domain_pid(logger, guestname)
+        if ret:
+            return 1
 
     logger.info("restart libvirtd service:")
     ret, out = utils.exec_cmd(RESTART_CMD, shell=True)
@@ -121,23 +122,24 @@ def restart(params):
     if ret:
         return 1
 
-    logger.info("ping to domain %s again" % guestname)
-    if utils.do_ping(ip, 0):
-        logger.info("Success ping domain %s" % guestname)
-    else:
-        logger.error("fail to ping domain %s" % guestname)
-        return 1
+    if guestname != '':
+        logger.info("ping to domain %s again" % guestname)
+        if utils.do_ping(ip, 0):
+            logger.info("Success ping domain %s" % guestname)
+        else:
+            logger.error("fail to ping domain %s" % guestname)
+            return 1
 
-    ret, pid_after = get_domain_pid(logger, guestname)
-    if ret:
-        return 1
+        ret, pid_after = get_domain_pid(logger, guestname)
+        if ret:
+            return 1
 
-    if pid_before != pid_after:
-        logger.error("%s pid changed during libvirtd restart" %
-                     guestname)
-        return 1
-    else:
-        logger.info("domain pid not change, %s keeps running during \
-                     libvirtd restart" % guestname)
+        if pid_before != pid_after:
+            logger.error("%s pid changed during libvirtd restart" %
+                         guestname)
+            return 1
+        else:
+            logger.info("domain pid not change, %s keeps running during \
+                         libvirtd restart" % guestname)
 
     return 0
