@@ -4,6 +4,7 @@
 import os
 import libvirt
 import thread
+import time
 
 from libvirt import libvirtError
 from src import sharedmod
@@ -122,19 +123,28 @@ def get_fileflags(topath, logger):
     """
        Get the file flags of coredump file
     """
-    CMD = "cat /proc/$(lsof -w %s|awk '/libvirt_i/{print $2}')/fdinfo/1 \
-            |grep flags|awk '{print $NF}'"
     global fileflags
+    CHECK_CMD = "lsof -w %s"
+    GET_CMD = "cat /proc/$(lsof -w %s|awk '/libvirt_i/{print $2}')/fdinfo/1 \
+            |grep flags|awk '{print $NF}'"
+    utils.wait_for(lambda: os.path.exists(topath), 5)
+    timeout = 10
     while True:
-        (status, output) = utils.exec_cmd(CMD % topath, shell=True)
-        if status == 0:
-            if len(output) == 1:
-                logger.info("The flags of saved file %s " % output[0])
-                fileflags = output[0][-5]
-                break
-        else:
-            logger.error("Fail to get the flags of saved file")
+        (status, output) = utils.exec_cmd(CHECK_CMD % topath, shell=True)
+        if status == 0 and len(output) > 0:
+            break
+        time.sleep(0.05)
+        timeout -= 0.05
+        if timeout < 0:
+            logger.error("Timeout waiting for coredump file.")
             return 1
+    (status, output) = utils.exec_cmd(GET_CMD % topath, shell=True)
+    if status == 0 and len(output) == 1:
+        logger.info("The flags of saved file %s " % output[0])
+        fileflags = output[0][-5]
+    else:
+        logger.error("Fail to get the flags of saved file")
+        return 1
 
     thread.exit_thread()
 
