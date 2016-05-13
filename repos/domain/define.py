@@ -6,21 +6,28 @@ import sys
 import commands
 import string
 import pexpect
+import shutil
 
 import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
 from utils import utils
+from repos.domain import domain_common
 
-required_params = ('guestname', 'diskpath',)
+required_params = ('guestname',)
 optional_params = {'memory': 1048576,
                    'vcpu': 1,
+                   'transport': '',
+                   'auth_tcp': '',
+                   'imagepath': '/var/lib/libvirt/images/libvirt-ci.qcow2',
+                   'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'imageformat': 'qcow2',
                    'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
                    'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
+                   'target_machine': None,
                    'username': None,
                    'password': None,
                    'virt_type': 'kvm',
@@ -69,14 +76,57 @@ def define(params):
     xmlstr = params['xml']
     logger.debug("domain xml:\n%s" % xmlstr)
 
-    conn = sharedmod.libvirtobj['conn']
-    uri = conn.getURI()
+    imagepath = params.get('imagepath', '/var/lib/libvirt/images/libvirt-ci.qcow2')
+    logger.info("using image %s" % imagepath)
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    logger.info("disk image is %s" % diskpath)
 
-    hostname = utils.parse_uri(uri)[1]
+    shutil.copyfile(imagepath, diskpath)
+    os.chown(diskpath, 107, 107)
+
+    transport = params.get('transport', '')
+    auth_tcp = params.get('auth_tcp', '')
+    target_machine = params.get('target_machine', '')
     username = params.get('username', '')
     password = params.get('password', '')
     virt_type = params.get('virt_type', 'kvm')
+    uuid = params.get('uuid', '05867c1a-afeb-300e-e55e-2673391ae080')
+    xmlstr = xmlstr.replace('UUID', uuid)
 
+    if target_machine == '':
+        conn = sharedmod.libvirtobj['conn']
+        uri = conn.getURI()
+    else:
+        #generate ssh key pair
+        ret = domain_common.ssh_keygen(logger)
+        if ret:
+            logger.error("failed to generate RSA key")
+            return 1
+
+        #setup ssh tunnel with target machine
+        ret = domain_common.ssh_tunnel(target_machine, username, password, logger)
+        if ret:
+            logger.error("faild to setup ssh tunnel with target machine %s" % target_machine)
+            return 1
+
+        if transport == 'ssh':
+            uri = 'qemu+ssh://root@%s/system' % target_machine
+        elif transport == 'tls':
+            uri = 'qemu://%s/system' % target_machine
+        elif transport == 'tcp':
+            uri = 'qemu+tcp://%s/system' % target_machine
+        else:
+            uri = 'qemu:///system'
+
+        if auth_tcp == '':
+            conn = libvirt.open(uri)
+        elif auth_tcp == 'sasl':
+            user_data = [username, password]
+            auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_PASSPHRASE],
+                    domain_common.request_credentials, user_data]
+            conn = libvirt.openAuth(uri, auth, 0)
+
+    hostname = utils.parse_uri(uri)[1]
     logger.info("define domain on %s" % uri)
 
     imageformat = params.get('imageformat', 'qcow2')

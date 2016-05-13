@@ -210,3 +210,12 @@ def tcp_setup_clean(params):
                                             password, sysconfig_libvirtd_restore)
     if ret:
         logger.error("failed to restore %s" % SYSCONFIG_LIBVIRTD)
+
+    # restart remote libvirtd service
+    libvirtd_restart_cmd = "service libvirtd restart"
+    logger.info("libvirtd restart")
+    ret, output = utils.remote_exec_pexpect(target_machine, username,
+                                            password, libvirtd_restart_cmd)
+    if ret:
+        logger.error("failed to restart libvirtd service")
+        return 1

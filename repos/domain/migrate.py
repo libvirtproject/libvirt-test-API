@@ -11,6 +11,7 @@ import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
+from repos.domain import domain_common
 
 required_params = ('transport',
                    'target_machine',
@@ -24,10 +25,7 @@ required_params = ('transport',
                    'predstconfig',
                    'postdstconfig',
                    'flags',)
-optional_params = {}
-
-SSH_KEYGEN = "ssh-keygen -t rsa"
-SSH_COPY_ID = "ssh-copy-id"
+optional_params = {'auth_tcp': '', }
 
 
 def get_state(state):
@@ -89,61 +87,6 @@ def env_clean(srcconn, dstconn, target_machine, guestname, logger):
         logger.error("failed to remove local ssh key")
 
 
-def ssh_keygen(logger):
-    """using pexpect to generate RSA"""
-    logger.info("generate ssh RSA \"%s\"" % SSH_KEYGEN)
-    child = pexpect.spawn(SSH_KEYGEN)
-    while True:
-        index = child.expect(['Enter file in which to save the key ',
-                              'Enter passphrase ',
-                              'Enter same passphrase again: ',
-                              pexpect.EOF,
-                              pexpect.TIMEOUT])
-        if index == 0:
-            child.sendline("\r")
-        elif index == 1:
-            child.sendline("\r")
-        elif index == 2:
-            child.sendline("\r")
-        elif index == 3:
-            logger.debug(string.strip(child.before))
-            child.close()
-            return 0
-        elif index == 4:
-            logger.error("ssh_keygen timeout")
-            logger.debug(string.strip(child.before))
-            child.close()
-            return 1
-
-    return 0
-
-
-def ssh_tunnel(hostname, username, password, logger):
-    """setup a tunnel to a give host"""
-    logger.info("setup ssh tunnel with host %s" % hostname)
-    user_host = "%s@%s" % (username, hostname)
-    child = pexpect.spawn(SSH_COPY_ID, [user_host])
-    while True:
-        index = child.expect(['yes\/no', 'password: ',
-                              pexpect.EOF,
-                              pexpect.TIMEOUT])
-        if index == 0:
-            child.sendline("yes")
-        elif index == 1:
-            child.sendline(password)
-        elif index == 2:
-            logger.debug(string.strip(child.before))
-            child.close()
-            return 0
-        elif index == 3:
-            logger.error("setup tunnel timeout")
-            logger.debug(string.strip(child.before))
-            child.close()
-            return 1
-
-    return 0
-
-
 def migrate(params):
     """ migrate a guest back and forth between two machines"""
     logger = params['logger']
@@ -159,6 +102,8 @@ def migrate(params):
     predstconfig = params['predstconfig']
     postdstconfig = params['postdstconfig']
     flags = params['flags']
+
+    auth_tcp = params.get('auth_tcp', '')
 
     logger.info("the flags is %s" % flags)
     flags_string = flags.split("|")
@@ -183,13 +128,13 @@ def migrate(params):
             logger.error("unknown flag")
             return 1
 
-    # generate ssh key pair
-    ret = ssh_keygen(logger)
+    #generate ssh key pair
+    ret = domain_common.ssh_keygen(logger)
     if ret:
         logger.error("failed to generate RSA key")
         return 1
-    # setup ssh tunnel with target machine
-    ret = ssh_tunnel(target_machine, username, password, logger)
+    #setup ssh tunnel with target machine
+    ret = domain_common.ssh_tunnel(target_machine, username, password, logger)
     if ret:
         logger.error(
             "faild to setup ssh tunnel with target machine %s" %
@@ -202,7 +147,14 @@ def migrate(params):
 
     # Connect to local hypervisor connection URI
     srcconn = sharedmod.libvirtobj['conn']
-    dstconn = libvirt.open(dsturi)
+
+    if auth_tcp == '':
+        dstconn = libvirt.open(dsturi)
+    elif auth_tcp == 'sasl':
+        user_data = [username, password]
+        auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_PASSPHRASE],
+                domain_common.request_credentials, user_data]
+        dstconn = libvirt.openAuth(dsturi, auth, 0)
 
     srcdom = srcconn.lookupByName(guestname)
 

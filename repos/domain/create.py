@@ -5,7 +5,7 @@ import os
 import re
 import sys
 import time
-
+import shutil
 import libvirt
 from libvirt import libvirtError
 
@@ -15,10 +15,12 @@ from utils import utils
 NONE = 0
 START_PAUSED = 1
 
-required_params = ('guestname', 'diskpath',)
+required_params = ('guestname',)
 optional_params = {'memory': 1048576,
                    'vcpu': 1,
-                   'imageformat': 'raw',
+                   'imagepath': '/var/lib/libvirt/images/libvirt-ci.qcow2',
+                   'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
+                   'imageformat': 'qcow2',
                    'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
@@ -26,6 +28,7 @@ optional_params = {'memory': 1048576,
                    'virt_type': 'kvm',
                    'flags': 'none',
                    'xml': 'xmls/kvm_guest_define.xml',
+                   'guestarch': 'x86_64',
                    'guestmachine': 'pc',
                    }
 
@@ -40,6 +43,17 @@ def create(params):
     if flags != "none" and flags != "start_paused":
         logger.error("flags value either \"none\" or \"start_paused\"")
         return 1
+
+    uuid = params.get('uuid', '05867c1a-afeb-300e-e55e-2673391ae080')
+    xmlstr = xmlstr.replace('UUID', uuid)
+
+    imagepath = params.get('imagepath', '/var/lib/libvirt/images/libvirt-ci.qcow2')
+    logger.info("using image %s" % imagepath)
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    logger.info("disk image is %s" % diskpath)
+
+    shutil.copyfile(imagepath, diskpath)
+    os.chown(diskpath, 107, 107)
 
     conn = sharedmod.libvirtobj['conn']
 
