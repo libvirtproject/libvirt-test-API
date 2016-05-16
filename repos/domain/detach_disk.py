@@ -12,6 +12,8 @@ from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 
+from repos.domain.start import start
+
 required_params = ('guestname', 'hddriver')
 optional_params = {'imageformat': 'raw',
                    'volumepath': '/var/lib/libvirt/images',
@@ -77,4 +79,23 @@ def detach_disk(params):
         logger.error("detach %s disk from guest %s" % (xmlstr, guestname))
         return 1
 
+    return 0
+
+
+def detach_disk_clean(params):
+    """
+    Cleanup the test environment.
+    """
+
+    logger = params['logger']
+    ret_flag = params.get("ret_flag")
+    logger.info("The test return %s, try to cleanup...\n" % ret_flag)
+
+    conn = sharedmod.libvirtobj['conn']
+    guestname = params['guestname']
+    domobj = conn.lookupByName(guestname)
+
+    if not domobj.isActive():
+        logger.info("Start the domain")
+        start(params)
     return 0

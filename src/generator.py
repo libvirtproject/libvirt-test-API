@@ -154,20 +154,19 @@ class FuncGen(object):
                             ret = 1
 
                         if clean_flag:
+                            # Pass return flag to cleanup function.
+                            case_params['ret_flag'] = ret
                             clean_func = mod_case_func + '_clean'
-                            self.fmt.print_string(
-                                12 * " " + "Cleaning...", env_logger)
+                            self.fmt.print_string(12*" " + "Cleaning...\n", env_logger)
                             # the return value of clean function is optional
                             clean_ret = self.cases_func_ref_dict[
                                 clean_func](case_params)
                             if clean_ret and clean_ret == 1:
-                                self.fmt.print_string(
-                                    21 * " " + "Fail", env_logger)
+                                self.fmt.print_string(21*" " + "Fail\n", env_logger)
                                 continue
 
-                            self.fmt.print_string(
-                                21 * " " + "Done", env_logger)
-                except Exception as e:
+                            self.fmt.print_string(21*" " + "Done\n", env_logger)
+                except Exception, e:
                     case_logger.error(traceback.format_exc())
                     continue
             finally:
