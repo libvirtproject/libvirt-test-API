@@ -14,6 +14,8 @@ from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 
+from repos.domain.start import start
+
 config_dir = '/etc/libvirt/qemu/'
 
 required_params = ('guestname',
@@ -276,3 +278,21 @@ def disk_hotplug(params):
         return 1
     else:
         return 0
+
+def disk_hotplug_clean(params):
+    """
+    Cleanup the test environment.
+    """
+
+    logger = params['logger']
+    ret_flag = params.get("ret_flag")
+    logger.info("The test return %s, try to cleanup...\n" % ret_flag)
+    conn = sharedmod.libvirtobj['conn']
+    guestname = params['guestname']
+    domobj = conn.lookupByName(guestname)
+    if not domobj.isActive():
+        logger.info("Start the domain")
+        start(params)
+
+    return 0
+
