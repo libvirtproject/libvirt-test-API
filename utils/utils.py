@@ -417,6 +417,19 @@ def mac_to_ip(mac, timeout, bridge='virbr0'):
         return ips[0]
 
 
+def get_bridge_ip(bridge):
+    """Get ip addresses binded to a brige
+
+       Return None on FAILURE and the ip address on SUCCESS
+    """
+    CMD = "ip route"
+    (ret, out) = commands.getstatusoutput(CMD)
+    ips = re.findall(r'(\d{1,3}(?:\.\d{1,3}){3}/\d{1,3}) dev %s'
+                     % bridge, out, re.IGNORECASE)
+
+    return ips[0] if ips else None
+
+
 def mac_to_ips(mac, timeout, bridge='virbr0'):
     """Get all ip addresses binded to a mac under a specified brige
 
@@ -425,16 +438,21 @@ def mac_to_ips(mac, timeout, bridge='virbr0'):
     if not mac:
         return None
 
+    bridge_ip = get_bridge_ip(bridge)
+    if not bridge_ip:
+        return None
+
     if timeout < 10:
         timeout = 10
 
+    CMD = "nmap -sP -n %s"
     while timeout > 0:
-        (ret, out) = commands.getstatusoutput("arp --device %s" % bridge)
+        (ret, out) = commands.getstatusoutput(CMD % bridge_ip)
         if ret != 0:
-            print "Failed to run arp command."
+            print "Failed to run nmap command."
             return None
 
-        ipaddr = re.findall(r'\n(\d{1,3}(?:\.\d{1,3}){3}).*%s'
+        ipaddr = re.findall(r'Nmap scan report for ([0-9\.]*)\n.*?\n.*?%s'
                             % mac, out, re.IGNORECASE)
 
         if len(ipaddr) > 0:
