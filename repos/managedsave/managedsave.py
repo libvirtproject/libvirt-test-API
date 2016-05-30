@@ -46,19 +46,28 @@ def check_savefile_create(*args):
 
 def get_fileflags():
     """Get the file flags of managed save file"""
-    cmds = "cat /proc/$(lsof -w /var/lib/libvirt/qemu/save/" + guestname + ".save"\
-        "|awk '/libvirt_i/{print $2}')/fdinfo/1|grep flags|awk '{print $NF}'"
+    CHECK_CMD = "lsof -w /var/lib/libvirt/qemu/save/" + guestname + ".save" \
+        "|awk '/libvirt_i/{print $2}'"
+    GET_CMD = "cat /proc/%s/fdinfo/1|grep flags|awk '{print $NF}'"
     global fileflags
+    timeout = 10
     while True:
-        (status, output) = utils.exec_cmd(cmds, shell=True)
-        if status == 0:
-            if len(output) == 1:
-                logger.info("The flags of saved file %s " % output[0])
-                fileflags = output[0][-5]
-                break
-        else:
-            logger.error("Fail to get the flags of saved file")
+        (status, pid) = utils.exec_cmd(CHECK_CMD, shell=True)
+        if status == 0 and len(pid) == 1:
+            break
+        time.sleep(0.1)
+        timeout -= 0.1
+        if timeout <= 0:
+            logger.error("Timeout waiting for save file to show up.")
             return 1
+
+    (status, output) = utils.exec_cmd(GET_CMD % pid[0], shell=True)
+    if status == 0 and len(output) == 1:
+        logger.info("The flags of saved file %s " % output[0])
+        fileflags = output[0][-5]
+    else:
+        logger.error("Fail to get the flags of saved file")
+        return 1
 
     thread.exit_thread()
 
