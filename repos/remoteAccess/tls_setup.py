@@ -312,19 +312,32 @@ def tls_libvirtd_set(target_machine, username, password,
 
 def iptables_stop(target_machine, username, password, logger):
     """ This is a temprory method in favor of migration """
-    logger.info("stop local and remote iptables temprorily")
-    iptables_stop_cmd = "service iptables stop"
-    ret, output = utils.remote_exec_pexpect(target_machine, username,
-                                            password, iptables_stop_cmd)
-    if ret:
-        logger.error("failed to stop remote iptables service")
-        return 1
+    logger.info("check local and remote iptables status")
 
-    iptables_stop = ["service", "iptables", "stop"]
-    ret, out = utils.exec_cmd(iptables_stop)
-    if ret:
-        logger.error("failed to stop local iptables service")
-        return 1
+    check_cmd = "systemctl status iptables | grep \"active (running)\""
+    ret, out = utils.remote_exec_pexpect(target_machine, username,
+                                         password, check_cmd)
+    logger.debug("ret = %s, out = %s" % (ret, out))
+    if "active (running)" in out:
+        logger.info("stop remote iptables temprorily")
+        stop_cmd = "systemctl stop iptables"
+        ret, output = utils.remote_exec_pexpect(target_machine, username,
+                                                password, stop_cmd)
+        if ret:
+            logger.error("failed to stop remote iptables service, %s" % ret)
+            logger.error("output: %s" % output)
+            return 1
+
+    ret, out = utils.exec_cmd(check_cmd, shell=True)
+    logger.debug("ret = %s, out = %s" % (ret, out))
+    if ret == 0:
+        logger.info("stop local iptables temprorily")
+        stop_cmd = "systemctl stop iptables"
+        ret, output = utils.exec_cmd(iptables_stop, shell=True)
+        if ret:
+            logger.error("failed to stop local iptables service, %s" % ret)
+            logger.error("output: %s" % output)
+            return 1
 
     logger.info("done the iptables stop job")
     return 0
