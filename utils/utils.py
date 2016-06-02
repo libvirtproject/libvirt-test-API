@@ -35,6 +35,7 @@ import libvirt
 import math
 from xml.dom import minidom
 from urlparse import urlparse
+from pexpect import *
 
 subproc_flag = 0
 
@@ -517,25 +518,30 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
     """ Remote exec function via pexpect """
     user_hostname = "%s@%s" % (username, hostname)
     while True:
-        child = pexpect.spawn("/usr/bin/ssh", [user_hostname, cmd],
-                              timeout=60, maxread=2000, logfile=None)
+        # login via ssh
+        child = pexpect.spawn("/usr/bin/ssh -l %s %s" % (username, hostname), timeout=60)
         while True:
-            index = child.expect(['(yes\/no)', 'password:', pexpect.EOF,
+            index = child.expect(['Are you sure you want to continue connecting',
+                                  'password:',
                                   'ssh: connect to host .+ Connection refused',
+                                  'Last login:',
                                   pexpect.TIMEOUT])
             if index == 0:
                 child.sendline("yes")
             elif index == 1:
                 child.sendline(password)
             elif index == 2:
-                child.close()
-                return 0, string.strip(child.before)
-            elif index == 3:
                 if timeout <= 0:
                     return 1, "Refused!!!!"
                 time.sleep(5)
                 timeout = timeout - 5
                 break
+            elif index == 3:
+                (out, status) = run ("ssh %s '%s'" % (user_hostname, cmd),
+                                     withexitstatus=1,
+                                     events={'(?i)password':'%s\n' % password})
+                child.close()
+                return (status, out)
             elif index == 4:
                 child.close()
                 if timeout <= 60:

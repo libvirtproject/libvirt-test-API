@@ -9,7 +9,7 @@ import commands
 
 import libvirt
 from libvirt import libvirtError
-
+from utils import utils
 from src import sharedmod
 from repos.domain import domain_common
 
@@ -87,6 +87,40 @@ def env_clean(srcconn, dstconn, target_machine, guestname, logger):
         logger.error("failed to remove local ssh key")
 
 
+def check_virtlogd(target_machine, username, password, logger):
+    logger.info("check local and remote virtlogd status")
+    logger.info("bug 1325503 : virtlogd is not started/enabled on fresh libvirt install")
+
+    check_cmd = "systemctl status virtlogd.socket | grep \"inactive (dead)\""
+    logger.debug("cmd : %s" % check_cmd)
+    ret, out = utils.remote_exec_pexpect(target_machine, username,
+                                         password, check_cmd)
+    logger.debug("ret = %s, out = %s" % (ret, out))
+    if "inactive (dead)" in out:
+        logger.info("start remote virtlogd.socket")
+        start_cmd = "systemctl start virtlogd.socket"
+        ret, output = utils.remote_exec_pexpect(target_machine, username,
+                                                password, start_cmd)
+        if ret:
+            logger.error("failed to start remote virtlogd.socket service, %s" % ret)
+            logger.error("output: %s" % output)
+            return 1
+
+    ret, out = utils.exec_cmd(check_cmd, shell=True)
+    logger.debug("ret = %s, out = %s" % (ret, out))
+    if ret == 3:
+        logger.info("start local virtlogd.socket")
+        start_cmd = "systemctl start virtlogd.socket"
+        ret, output = utils.exec_cmd(start_cmd, shell=True)
+        if ret:
+            logger.error("failed to start local virtlogd.socket service, %s" % ret)
+            logger.error("output: %s" % output)
+            return 1
+
+    logger.info("done the virtlogd.socket service start job")
+    return 0
+
+
 def migrate(params):
     """ migrate a guest back and forth between two machines"""
     logger = params['logger']
@@ -142,6 +176,8 @@ def migrate(params):
         return 1
 
     commands.getstatusoutput("ssh-add")
+
+    check_virtlogd(target_machine, username, password, logger)
 
     dsturi = "qemu+%s://%s/system" % (transport, target_machine)
 
