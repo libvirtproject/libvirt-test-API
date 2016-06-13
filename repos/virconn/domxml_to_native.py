@@ -33,11 +33,15 @@ def check_domxml_to_native(nativeconfig, guestname):
     # Remove vnc port because the port will change if there are
     # other vnc guests on the host, and this is not a problem for
     # this API.
+    #
+    # Remove 'object' and 'chardev' item because it contains
+    # dynamic domain ID.
 
     #convert native config from log
     temp = nativeconLog[:]
+    skipped_item = ['netdev', 'object', 'chardev']
     for item in temp:
-        if 'netdev' in item:
+        if any([ i for i in skipped_item if i in item ]):
             nativeconLog.remove(item)
 
         if "vnc" in item:
@@ -52,7 +56,7 @@ def check_domxml_to_native(nativeconfig, guestname):
     #convert native config from API
     temp = nativeconfig[:]
     for item in temp:
-        if 'netdev' in item:
+        if any([ i for i in skipped_item if i in item ]):
             nativeconfig.remove(item)
 
         if "vnc" in item:

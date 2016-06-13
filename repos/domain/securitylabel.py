@@ -53,7 +53,7 @@ def get_pid(name, logger):
     """
        get process id of specified domain.
     """
-    PID = "ps aux |grep -v grep | grep \" -name %s\" \
+    PID = "ps aux |grep -v grep | grep \"%s\" \
            |awk '{print $2}'"
     status, output = utils.exec_cmd(PID % name, shell=True)
     if not status:

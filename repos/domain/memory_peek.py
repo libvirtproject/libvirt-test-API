@@ -48,6 +48,9 @@ def memory_peek(params):
 
     except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
+        # Return true if we provide an invalid address
+        if "Invalid addr" in str(e):
+            return 0
         return 1
 
     return 0
