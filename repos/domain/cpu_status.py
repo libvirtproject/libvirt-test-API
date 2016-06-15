@@ -98,11 +98,11 @@ def cpu_status(params):
                                              [vcpus, cpu_path, n], [vm, n, 'vcpu_time'])
             logger.info("Standard Deviation for host cpu %d vcputime is %d" % (n, D))
 
-            """ expectations 4034 is a average collected in a x86_64 low load machine"""
-            if D > 4034 * 5 * vcpus:
+            """ expectations 200000 is a average collected in a x86_64 low load machine"""
+            if D > 200000 * 5 * vcpus:
                 fail = 1
                 logger.info("FAIL: Standard Deviation is too big \
-                             (biger than %d) for host cpu time %d" % (4034 * 5 * vcpus, n))
+                             (biger than %d) for host cpu time %d" % (200000 * 5 * vcpus, n))
 
         D = utils.get_standard_deviation(getcputime, virtgettotalcputime,
                                          [cpu_path + CGROUP_USAGE, 0], [vm, 'cpu_time'])
