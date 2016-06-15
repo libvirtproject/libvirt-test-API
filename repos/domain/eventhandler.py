@@ -34,8 +34,8 @@ def eventToString(event):
 
 def detailToString(event, detail):
     eventStrings = (
-        ("Added", "Updated"),
-        ("Removed", ),
+        ("Added", "Updated", "Renamed", "Snapshot"),
+        ("Removed", "Renamed"),
         ("Booted", "Migrated", "Restored", "Snapshot", "Wakeup"),
         ("Paused", "Migrated", "IOError", "Watchdog", "Restored", "Snapshot"),
         ("Unpaused", "Migrated", "Snapshot"),
