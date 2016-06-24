@@ -1,0 +1,8 @@
+<pool type='rbd'>
+  <name>POOLNAME</name>
+  <source>
+    <host name='CEPHSERVER'/>
+    <name>CEPHSERVERPOOL</name>
+  </source>
+</pool>
+

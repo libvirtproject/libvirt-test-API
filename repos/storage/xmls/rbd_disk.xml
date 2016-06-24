@@ -1,0 +1,8 @@
+<disk type='network'>
+  <driver name="qemu" type="raw"/>
+  <source protocol="rbd" name="SOURCENAME">
+    <host name="CEPHSERVER" port="6789"/>
+  </source>
+  <target dev="vdb" bud="virtio"/>
+</disk>
+
