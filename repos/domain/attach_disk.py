@@ -73,7 +73,7 @@ def check_disk_permission(guestname, devname, username, password):
             touchcmd = "touch test /mnt"
             (ret, output) = utils.remote_exec_pexpect(ip, username, password,
                                                       touchcmd)
-            if not ret:
+            if ret:
                 logger.info("Login guest to touch test /mnt : %s" % output)
                 if "Read-only file system" in output:
                     (ret, output) = utils.remote_exec_pexpect(ip, username,

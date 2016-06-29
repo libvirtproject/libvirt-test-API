@@ -525,6 +525,8 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
                                   'password:',
                                   'ssh: connect to host .+ Connection refused',
                                   'Last login:',
+                                  '[root@localhost ~]',
+                                  pexpect.EOF,
                                   pexpect.TIMEOUT])
             if index == 0:
                 child.sendline("yes")
@@ -536,17 +538,20 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
                 time.sleep(5)
                 timeout = timeout - 5
                 break
-            elif index == 3:
+            elif index == 3 or index == 4:
                 (out, status) = run ("ssh %s '%s'" % (user_hostname, cmd),
                                      withexitstatus=1,
                                      events={'(?i)password':'%s\n' % password})
                 child.close()
                 return (status, out)
-            elif index == 4:
+            elif index == 5:
                 child.close()
                 if timeout <= 60:
                     return 1, "Timeout!!!!"
                 timeout = timeout - 60
+                break
+            elif index == 6:
+                child.close()
                 break
 
 
