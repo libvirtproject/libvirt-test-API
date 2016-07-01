@@ -89,11 +89,15 @@ def validate_caps_from_hv(emulatorbin, logger):
         flags.append(True)
     else:
         flags.append(False)
-    libvirt_f = [drive, drive_forma, drive_readonly, device, blk_sg_io]
-    if flags == libvirt_f:
-        return True
+
+    if not utils.version_compare(1, 3, 5, logger):
+        libvirt_f = [drive, drive_forma, drive_readonly, device, blk_sg_io]
+        if flags == libvirt_f:
+            return True
+        else:
+            return False
     else:
-        return False
+        return True
 
 
 def generate_hash(emulatorbin, logger):
@@ -127,9 +131,13 @@ def get_os_flags(logger):
     global drive, drive_forma, drive_readonly
     xml = minidom.parse(QEMU_CAPS)
     qemu = xml.getElementsByTagName('qemuCaps')[0]
-    for item in qemu.getElementsByTagName('flag'):
-        if item.getAttribute('name') == "drive-readonly":
-            drive_readonly = True
+    if not utils.version_compare(1, 3, 5, logger):
+        for item in qemu.getElementsByTagName('flag'):
+            if item.getAttribute('name') == "drive-readonly":
+                drive_readonly = True
+    else:
+        drive_readonly = True
+
     logger.debug("drive = %s" % drive)
     logger.debug("drive_format = %s" % drive_forma)
     logger.debug("drive_readonly = %s" % drive_readonly)
@@ -143,11 +151,18 @@ def get_disk_flags(logger):
     global blk_sg_io, usb_storage
     xml = minidom.parse(QEMU_CAPS)
     qemu = xml.getElementsByTagName('qemuCaps')[0]
-    for item in qemu.getElementsByTagName('flag'):
-        if item.getAttribute('name') == "blk-sg-io":
-            blk_sg_io = True
-        if item.getAttribute('name') == "usb-storage":
-            usb_storage = True
+    if not utils.version_compare(1, 3, 5, logger):
+        for item in qemu.getElementsByTagName('flag'):
+            if item.getAttribute('name') == "blk-sg-io":
+                blk_sg_io = True
+            if item.getAttribute('name') == "usb-storage":
+                usb_storage = True
+    else:
+        blk_sg_io = True
+        for item in qemu.getElementsByTagName('flag'):
+            if item.getAttribute('name') == "usb-storage":
+                usb_storage = True
+
     logger.debug("blk_sg_io = %s" % blk_sg_io)
     logger.debug("usb_storage = %s" % usb_storage)
     return True
@@ -159,13 +174,22 @@ def get_hostdev_flags(logger):
     """
     global device, scsi_generic, vfio_pci
     xml = minidom.parse(QEMU_CAPS)
-    for item in xml.getElementsByTagName('flag'):
-        if item.getAttribute('name') == "device":
-            device = True
-        if item.getAttribute('name') == "scsi-generic":
-            scsi_generic = True
-        if item.getAttribute('name') == "vfio-pci":
-            vfio_pci = True
+    if not utils.version_compare(1, 3, 5, logger):
+        for item in xml.getElementsByTagName('flag'):
+            if item.getAttribute('name') == "device":
+                device = True
+            if item.getAttribute('name') == "scsi-generic":
+                scsi_generic = True
+            if item.getAttribute('name') == "vfio-pci":
+                vfio_pci = True
+    else:
+        device = True
+        for item in xml.getElementsByTagName('flag'):
+            if item.getAttribute('name') == "scsi-generic":
+                scsi_generic = True
+            if item.getAttribute('name') == "vfio-pci":
+                vfio_pci = True
+
     logger.debug("device = %s" % device)
     logger.debug("scsi_generic = %s" % scsi_generic)
     logger.debug("vfio_pci = %s" % vfio_pci)
@@ -250,6 +274,7 @@ def check_vmf(os_element, logger):
         return True
 
 
+# src/qemu/qemu_capabilites.c/virQEMUCapsFillDomainOSCaps()
 def check_os(arch, logger):
     """
        check the os part
@@ -288,6 +313,7 @@ def check_os(arch, logger):
     return True
 
 
+# src/qemu/qemu_capabilites.c/virQEMUCapsFillDomainDeviceDiskCaps()
 def check_disk(logger):
     """
     check the disk part in <devices>
@@ -323,6 +349,7 @@ def check_disk(logger):
     return True
 
 
+# src/qemu/qemu_capabilites.c/virQEMUCapsFillDomainDeviceHostdevCaps()
 def check_hostdev(logger):
     """
     check the hostdev part in <devices>

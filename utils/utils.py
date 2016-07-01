@@ -39,6 +39,8 @@ from pexpect import *
 
 subproc_flag = 0
 
+LIBVIRT_LIB_VERSION = 0
+
 
 def get_hypervisor():
     if commands.getoutput("lsmod | grep kvm"):
@@ -1196,3 +1198,48 @@ def parse_flags(params, default=0):
             return -1
 
     return flag_bit
+
+
+def version_compare(major, minor, update, logger):
+    """
+    Determine/use the current libvirt library version on the system
+    and compare input major, minor, and update values against it.
+    If the running version is greater than or equal to the input
+    params version, then return True; otherwise, return False
+
+    This is designed to handle upstream version comparisons for
+    test adjustments and/or comparisons as a result of upstream
+    fixes or changes that could impact test results.
+
+    :param major: Major version to compare against
+    :param minor: Minor version to compare against
+    :param update: Update value to compare against
+    :return: True if running version is greater than or
+                  equal to the input libvirt version
+    """
+    global LIBVIRT_LIB_VERSION
+
+    if LIBVIRT_LIB_VERSION == 0:
+        try:
+            cmd = "rpm -q libvirt"
+            ret, out = exec_cmd(cmd, shell=True)
+            if ret != 0:
+                logger.error("Get libvirt version failed.")
+                return 1
+
+            package = out[0].split('-')
+            for item in package:
+                if not item.isalnum() and ".x86_64" not in item:
+                    ver = item.split('.')
+                    LIBVIRT_LIB_VERSION = int(ver[0]) * 1000000 + \
+                        int(ver[1]) * 1000 + int(ver[2])
+                    break
+        except (ValueError, TypeError, AttributeError):
+            logger.error("Error determining libvirt version")
+            return False
+
+    compare_version = major * 1000000 + minor * 1000 + update
+
+    if LIBVIRT_LIB_VERSION >= compare_version:
+        return True
+    return False
