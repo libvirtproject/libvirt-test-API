@@ -68,7 +68,7 @@ def prepare_iso(iso_file):
 
 
 def prepare_floppy_image(guestname, guestos, guestarch,
-                         windows_unattended_path, cdkey, FLOOPY_IMG):
+                         windows_unattended_path, FLOOPY_IMG):
     """Making corresponding floppy images for the given guestname
     """
     if os.path.exists(FLOOPY_IMG):
@@ -120,10 +120,6 @@ def prepare_floppy_image(guestname, guestos, guestarch,
         dest = os.path.join(floppy_mount, dest_fname)
 
         unattended_contents = open(source).read()
-        dummy_cdkey_re = r'\bLIBVIRT_TEST_CDKEY\b'
-        if re.search(dummy_cdkey_re, unattended_contents):
-            unattended_contents = re.sub(dummy_cdkey_re, cdkey,
-                                         unattended_contents)
 
         logger.debug("Unattended install %s contents:" % dest_fname)
         logger.debug(unattended_contents)
@@ -298,7 +294,6 @@ def install_windows_cdrom(params):
     # Get iso file based on guest os and arch from global.cfg
     envparser = env_parser.Envparser(envfile)
     iso_file = envparser.get_value("guest", guestos + '_' + guestarch)
-    cdkey = envparser.get_value("guest", "%s_%s_key" % (guestos, guestarch))
 
     windows_unattended_path = os.path.join(HOME_PATH,
                                            "repos/domain/windows_unattended")
@@ -310,7 +305,7 @@ def install_windows_cdrom(params):
     xmlstr = xmlstr.replace('WINDOWSISO', iso_local_path)
 
     status = prepare_floppy_image(guestname, guestos, guestarch,
-                                  windows_unattended_path, cdkey, FLOOPY_IMG)
+                                  windows_unattended_path, FLOOPY_IMG)
     if status:
         logger.error("making floppy image failed")
         return 1
