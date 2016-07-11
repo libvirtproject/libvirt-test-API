@@ -35,7 +35,6 @@ import libvirt
 import math
 from xml.dom import minidom
 from urlparse import urlparse
-from pexpect import *
 
 subproc_flag = 0
 
@@ -520,40 +519,30 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
     """ Remote exec function via pexpect """
     user_hostname = "%s@%s" % (username, hostname)
     while True:
-        # login via ssh
-        child = pexpect.spawn("/usr/bin/ssh -l %s %s" % (username, hostname), timeout=60)
+        child = pexpect.spawn("/usr/bin/ssh", [user_hostname, cmd],
+                              timeout=60, maxread=2000, logfile=None)
         while True:
-            index = child.expect(['Are you sure you want to continue connecting',
-                                  'password:',
+            index = child.expect(['(yes\/no)', 'password:', pexpect.EOF,
                                   'ssh: connect to host .+ Connection refused',
-                                  'Last login:',
-                                  '[root@localhost ~]',
-                                  pexpect.EOF,
                                   pexpect.TIMEOUT])
             if index == 0:
                 child.sendline("yes")
             elif index == 1:
                 child.sendline(password)
             elif index == 2:
+                child.close()
+                return child.exitstatus, string.strip(child.before)
+            elif index == 3:
                 if timeout <= 0:
                     return 1, "Refused!!!!"
                 time.sleep(5)
                 timeout = timeout - 5
                 break
-            elif index == 3 or index == 4:
-                (out, status) = run ("ssh %s '%s'" % (user_hostname, cmd),
-                                     withexitstatus=1,
-                                     events={'(?i)password':'%s\n' % password})
-                child.close()
-                return (status, out)
-            elif index == 5:
+            elif index == 4:
                 child.close()
                 if timeout <= 60:
                     return 1, "Timeout!!!!"
                 timeout = timeout - 60
-                break
-            elif index == 6:
-                child.close()
                 break
 
 
