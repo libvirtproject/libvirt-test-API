@@ -21,6 +21,12 @@ VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
 VM_DESTROY = "virsh destroy %s"
 VM_UNDEFINE = "virsh undefine %s"
 
+#virtio win disk driver
+VIRTIO_WIN_64 = "/usr/share/virtio-win/virtio-win_amd64.vfd"
+VIRTIO_WIN_32 = "/usr/share/virtio-win/virtio-win_x86.vfd"
+#virtio win net driver
+#VIRTIO_WIN_ISO = "/usr/share/virtio-win/virtio-win.iso"
+
 FLOOPY_IMG = "/tmp/floppy.img"
 HOME_PATH = os.getcwd()
 
@@ -150,14 +156,18 @@ def prepare_floppy_image(guestname, guestos, guestarch,
     return 0
 
 
-def prepare_boot_guest(domobj, xmlstr, guestname, installtype):
+def prepare_boot_guest(domobj, xmlstr, guestname, installtype, guestos, iso_file):
     """ After guest installation is over, undefine the guest with
         bootting off cdrom, to define the guest to boot off harddisk.
     """
     xmlstr = xmlstr.replace('<boot dev="cdrom"/>', '<boot dev="hd"/>')
     xmlstr = re.sub('<disk device="floppy".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
-    xmlstr = re.sub('<disk device="cdrom".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
     xmlstr = re.sub('<disk type="file".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
+
+    if guestos == "win10" or guestos == "win8u1":
+        xmlstr = xmlstr.replace('/tmp/%s' % iso_file.split('/')[-1], '/usr/share/virtio-win/virtio-win.iso')
+    else:
+        xmlstr = re.sub('<disk device="cdrom".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
 
     if installtype != 'create':
         domobj.undefine()
@@ -269,25 +279,17 @@ def install_windows_cdrom(params):
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
         if guestarch == "x86_64":
-            driverpath = params.get('driverpath', '/usr/share/virtio-win/virtio-win_amd64.vfd')
-            xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd',
-                                    driverpath)
+            xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
         else:
-            driverpath = params.get('driverpath', '/usr/share/virtio-win/virtio-win_x86.vfd')
-            xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_x86.vfd',
-                                    driverpath)
+            xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
     elif hddriver == 'ide':
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
         xmlstr = xmlstr.replace('DEV', 'sda')
         if guestarch == "x86_64":
-            driverpath = params.get('driverpath', '/usr/share/virtio-win/virtio-win_amd64.vfd')
-            xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd',
-                                    driverpath)
+            xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
         else:
-            driverpath = params.get('driverpath', '/usr/share/virtio-win/virtio-win_x86.vfd')
-            xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_x86.vfd',
-                                    driverpath)
+            xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
@@ -371,7 +373,7 @@ def install_windows_cdrom(params):
             if(state == libvirt.VIR_DOMAIN_SHUTOFF):
                 logger.info("guest installaton of define type is complete.")
                 logger.info("boot guest vm off harddisk")
-                ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype)
+                ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, guestos, iso_file)
                 if ret:
                     logger.info("booting guest vm off harddisk failed")
                     return 1
@@ -389,8 +391,7 @@ def install_windows_cdrom(params):
             if guestname not in guest_names:
                 logger.info("guest installation of create type is complete.")
                 logger.info("define the vm and boot it up")
-                ret = prepare_boot_guest(
-                    domobj, xmlstr, guestname, installtype)
+                ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, guestos, iso_file)
                 if ret:
                     logger.info("booting guest vm off harddisk failed")
                     return 1
