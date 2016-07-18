@@ -377,7 +377,7 @@ def install_linux_net_remote(params):
             logger.info("geust is booting up")
     else:
         interval = 0
-        while(interval < 3600):
+        while(interval < 8000):
             time.sleep(10)
             if installtype is None or installtype == 'define':
                 state = domobj.info()[0]
@@ -413,8 +413,8 @@ def install_linux_net_remote(params):
                     interval += 10
                     logger.info('%s seconds passed away...' % interval)
 
-        if interval == 3600:
-            logger.info("guest installation timeout 3600s")
+        if interval == 8000:
+            logger.info("guest installation timeout 8000s")
             return 1
         else:
             logger.info("guest is booting up")

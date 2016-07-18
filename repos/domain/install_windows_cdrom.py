@@ -370,7 +370,7 @@ def install_windows_cdrom(params):
             return 1
 
     interval = 0
-    while(interval < 7200):
+    while(interval < 18000):
         time.sleep(20)
         if installtype == 'define':
             state = domobj.info()[0]
@@ -404,8 +404,8 @@ def install_windows_cdrom(params):
                 interval += 20
                 logger.info('%s seconds passed away...' % interval)
 
-    if interval == 7200:
-        logger.info("guest installation timeout 7200s")
+    if interval == 18000:
+        logger.info("guest installation timeout 18000s")
         return 1
     else:
         logger.info("guest is booting up")

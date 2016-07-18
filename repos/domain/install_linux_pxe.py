@@ -246,7 +246,7 @@ def install_linux_pxe(params):
             return 1
 
     interval = 0
-    while(interval < 3600):
+    while(interval < 8000):
         time.sleep(10)
         if installtype == 'define':
             state = domobj.info()[0]
@@ -280,7 +280,7 @@ def install_linux_pxe(params):
                 interval += 10
                 logger.info('%s seconds passed away...' % interval)
 
-    if interval == 3600:
+    if interval == 8000:
         if 'rhel3u9' in guestname:
             logger.info("guest installaton will be destoryed forcelly for rhel3u9 guest")
             domobj.destroy()
@@ -290,7 +290,7 @@ def install_linux_pxe(params):
                 logger.info("booting guest vm off harddisk failed")
                 return 1
         else:
-            logger.info("guest installation timeout 3600s")
+            logger.info("guest installation timeout 8000s")
             return 1
     else:
         logger.info("guest is booting up")

@@ -408,7 +408,7 @@ def install_ubuntu(params):
             return 1
 
     interval = 0
-    while(interval < 2400):
+    while(interval < 8000):
         time.sleep(10)
         if installtype == 'define':
             try:

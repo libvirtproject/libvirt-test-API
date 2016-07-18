@@ -440,7 +440,7 @@ def install_linux_cdrom(params):
             return 1
 
     interval = 0
-    while interval < 2400:
+    while interval < 8000:
         time.sleep(10)
         if installtype == 'define':
             state = domobj.info()[0]
@@ -476,7 +476,7 @@ def install_linux_cdrom(params):
                 interval += 10
                 logger.info('%s seconds passed away...' % interval)
 
-    if interval == 2400:
+    if interval == 8000:
         if 'rhel3u9' in guestname:
             logger.info(
                 "guest installaton will be destoryed forcelly for rhel3u9 guest")
@@ -487,7 +487,7 @@ def install_linux_cdrom(params):
                 logger.info("booting guest vm off harddisk failed")
                 return 1
         else:
-            logger.info("guest installation timeout 2400s")
+            logger.info("guest installation timeout 8000s")
             return 1
     else:
         logger.info("guest is booting up")
