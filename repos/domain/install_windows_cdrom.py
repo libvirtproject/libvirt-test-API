@@ -108,8 +108,9 @@ def prepare_floppy_image(guestname, guestos, guestarch,
                 "failed to mount /tmp/floppy.img to /mnt/libvirt_floppy")
             return 1
 
-        if '2008' in guestos or '7' in guestos or 'vista' in guestos \
-                or 'win8' in guestos or "win2012" in guestos or "win10" in guestos:
+        if ('2008' in guestos or 'win7' in guestos or 'vista' in guestos
+            or 'win8' in guestos or "win2012" in guestos or "win10" in guestos
+            or 'win2016' in guestos):
             dest_fname = "autounattend.xml"
             source = os.path.join(windows_unattended_path, "%s_%s.xml" %
                                   (guestos, guestarch))
