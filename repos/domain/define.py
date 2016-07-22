@@ -39,7 +39,7 @@ optional_params = {'memory': 1048576,
                    }
 
 
-def check_define_domain(guestname, virt_type, hostname, username,
+def check_define_domain(guestname, virt_type, ip, username,
                         password, logger):
     """Check define domain result, if define domain is successful,
        guestname.xml will exist under /etc/libvirt/qemu/
@@ -52,9 +52,9 @@ def check_define_domain(guestname, virt_type, hostname, username,
     else:
         logger.error("unknown virt type")
 
-    if hostname:
+    if ip:
         cmd = "ls %s" % path
-        ret, output = utils.remote_exec_pexpect(hostname, username,
+        ret, output = utils.remote_exec_pexpect(ip, username,
                                                 password, cmd)
         if ret:
             logger.error("guest %s xml file doesn't exsits" % guestname)
@@ -126,7 +126,6 @@ def define(params):
                     domain_common.request_credentials, user_data]
             conn = libvirt.openAuth(uri, auth, 0)
 
-    hostname = utils.parse_uri(uri)[1]
     logger.info("define domain on %s" % uri)
 
     imageformat = params.get('imageformat', 'qcow2')
@@ -145,7 +144,7 @@ def define(params):
     # Define domain from xml
     try:
         conn.defineXML(xmlstr)
-        if check_define_domain(guestname, virt_type, hostname,
+        if check_define_domain(guestname, virt_type, target_machine,
                                username, password, logger):
             logger.info("define a domain form xml is successful")
         else:

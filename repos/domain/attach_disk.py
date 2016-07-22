@@ -65,7 +65,6 @@ def check_disk_permission(guestname, devname, username, password):
 
     cmd = "mount /dev/" + devname + " /mnt"
     (ret, output) = utils.remote_exec_pexpect(ip, username, password, cmd)
-
     if not ret:
         logger.info("Login guest to run mount /dev/%s /mnt : %s" % (devname,
                                                                     output))
@@ -79,7 +78,15 @@ def check_disk_permission(guestname, devname, username, password):
                     (ret, output) = utils.remote_exec_pexpect(ip, username,
                                                               password, "umount /mnt")
                     return True
+            else:
+                logger.error("Fail: touch file failed.")
+                return False
+        else:
+            logger.error("Fail: %s don't write-protected." % devname)
+            return False
     else:
+        logger.error("Failed to mount /dev/%s" % devname)
+        logger.error("ret = %s, out = %s" % (ret, output))
         return False
 
 
