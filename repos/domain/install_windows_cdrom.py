@@ -236,10 +236,11 @@ def install_windows_cdrom(params):
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
 
-    if guestos == "win10": 
-        xmlstr = params.get('xml', 'xmls/kvm_win10_guest_install_cdrom.xml')
-    else:
-        xmlstr = params.get('xml')
+    xmlstr = params.get('xml')
+    if guestos == "win10":
+        xmlstr = xmlstr.replace("</os>\n  <features>", "</os>\n  <cpu mode="
+                                "'custom' match='exact'>\n    <model fallback="
+                                "'allow'>Westmere</model>\n  </cpu>\n  <features>")
 
     logger.info("the name of guest is %s" % guestname)
 
