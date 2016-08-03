@@ -95,6 +95,9 @@ def set_perf_events(params):
             logger.info("When host don't support CMT, the path of"
                         " '/sys/devices/intel_cqm/type' don't exist.")
             return 0
+        elif ("Bad file descriptor" in e.message):
+            logger.info("Currently cmt/mbml/mbmt status is disable.")
+            return 0
 
         return 1
 
