@@ -189,7 +189,7 @@ def mk_kickstart_iso(kscfg, guestos, logger):
     remove_all(custom_iso_dir)
 
 
-def prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger):
+def prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger, rhelnewest):
     """ to customize boot.iso file to add kickstart
         file into it for automatic guest installation
     """
@@ -417,7 +417,7 @@ def install_linux_cdrom(params):
     cache_folder = envparser.get_value("variables", "domain_cache_folder")
     logger.info("begin to customize the custom.iso file")
     try:
-        prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger)
+        prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger, rhelnewest)
     except TestError, err:
         logger.error("Failed to prepare boot cdrom!")
         return 1
