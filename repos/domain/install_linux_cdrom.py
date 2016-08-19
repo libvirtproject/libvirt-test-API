@@ -408,7 +408,7 @@ def install_linux_cdrom(params):
         kscfg = envparser.get_value("guest", os_arch + "_http_ks")
 
     logger.info('install source:    %s' % ostree)
-    logger.info('kisckstart file:    %s' % ks)
+    logger.info('kisckstart file:    %s' % kscfg)
 
     if ostree == 'http://':
         logger.error("no os tree defined in %s for %s" % (envfile, os_arch))
