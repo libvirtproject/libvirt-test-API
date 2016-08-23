@@ -217,7 +217,7 @@ def prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger, rheln
     urllib.urlretrieve(kscfg, '%s/%s' % (new_dir, ks_name))
     logger.info("the url of kickstart is %s" % kscfg)
 
-    if "RHEL-7" in rhelnewest:
+    if rhelnewest is not None and "RHEL-7" in rhelnewest:
         old_ks_fp = open('%s/%s' % (new_dir, ks_name), "rw+")
         new_ks_fp = open("%s/new_ks.cfg" % new_dir, "w")
         old_ks_file = old_ks_fp.read()
@@ -401,7 +401,7 @@ def install_linux_cdrom(params):
 
     rhelnewest = params.get('rhelnewest')
     logger.info("rhel newest: %s", rhelnewest)
-    if "RHEL-7" in rhelnewest:
+    if rhelnewest is not None and "RHEL-7" in rhelnewest:
         ostree = rhelnewest + "/x86_64/os"
         kscfg = envparser.get_value("guest", "rhel7_newest_http_ks")
     else:

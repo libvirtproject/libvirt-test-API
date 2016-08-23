@@ -144,7 +144,7 @@ def create_image(params, diskpath, logger):
     return 0
 
 
-def set_xml(xmlstr, hddriver, diskpath, logger):
+def set_xml(params, xmlstr, hddriver, diskpath, logger):
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
     elif hddriver == 'ide':
@@ -215,7 +215,7 @@ def install_linux_iso(params):
         if ret:
             return 1
 
-    xmlstr = set_xml(xmlstr, hddriver, diskpath, logger)
+    xmlstr = set_xml(params, xmlstr, hddriver, diskpath, logger)
 
     graphic = params.get('graphic', 'spice')
     logger.info("graphic: %s" % graphic)
@@ -233,12 +233,12 @@ def install_linux_iso(params):
     envparser = env_parser.Envparser(envfile)
 
     rhelnewest = params.get('rhelnewest')
-    if rhelnewest != '' and guestarch == 'x86_64':
+    if rhelnewest is not None and guestarch == 'x86_64':
         ostree = rhelnewest + "x86_64/os"
         ks = envparser.get_value("guest", "rhelnewest_iso_ks")
         repo_name = rhelnewest.split('/')[4]
         isolink = rhelnewest + "x86_64/iso/" + repo_name + "-Server-x86_64-dvd1.iso"
-    elif rhelnewest != '' and guestarch == 'i386':
+    elif rhelnewest is not None and guestarch == 'i386':
         ostree = rhelnewest + "i386/os"
         ks = envparser.get_value("guest", "rhelnewest_iso_ks")
         repo_name = rhelnewest.split('/')[4]
@@ -420,8 +420,8 @@ def install_linux_iso_clean(params):
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     os_arch = guestos + "_" + guestarch
     envparser = env_parser.Envparser(envfile)
-    if "rhel7u3" in guestos or "rhel6u8" in guestos:
-        rhelnewest = params.get('rhelnewest')
+    rhelnewest = params.get('rhelnewest')
+    if rhelnewest is not None and "RHEL-7" in rhelnewest:
         repo_name = rhelnewest.split('/')[4]
         isolink = rhelnewest + "iso/" + repo_name + "-Server-x86_64-dvd1.iso"
     else:

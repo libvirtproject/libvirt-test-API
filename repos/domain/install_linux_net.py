@@ -181,7 +181,7 @@ def install_linux_net(params):
     os_arch = guestos + "_" + guestarch
 
     if installmethod == 'http':
-        if "RHEL-7" in rhelnewest:
+        if rhelnewest is not None and "RHEL-7" in rhelnewest:
             ostree = rhelnewest + "x86_64/os"
             ks = envparser.get_value("guest", "rhel7_newest_http_ks")
         else:
