@@ -199,7 +199,7 @@ def install_linux_net(params):
         os.remove("/tmp/%s" % ks_name)
 
     urllib.urlretrieve(ks, "/tmp/%s" % ks_name)
-    if "RHEL-7" in rhelnewest:
+    if rhelnewest is not None and "RHEL-7" in rhelnewest:
         old_ks_fp = open('/tmp/%s' % ks_name, "rw+")
         new_ks_fp = open("/tmp/test_api_new_ks.cfg", "w")
         old_ks_file = old_ks_fp.read()
