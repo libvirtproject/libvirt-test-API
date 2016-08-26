@@ -111,55 +111,30 @@ def install_linux_net(params):
     """install a new virtual machine"""
     # Initiate and check parameters
     logger = params['logger']
-
     guestname = params.get('guestname')
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
+
     xmlstr = params['xml']
-
-    installmethod = params.get('netmethod', 'http')
-
-    logger.info("the name of guest is %s" % guestname)
-    logger.info("the installation method is %s" % installmethod)
-
     graphic = params.get('graphic', 'spice')
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    logger.info('the graphic type of VM is %s' % graphic)
 
     video = params.get('video', 'qxl')
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
 
-    logger.info('the video type of VM is %s' % video)
-
-    conn = sharedmod.libvirtobj['conn']
-    check_domain_state(conn, guestname, logger)
-
-    logger.info("the macaddress is %s" %
-                params.get('macaddr', '52:54:00:97:e4:28'))
-
-    diskpath = params.get(
-        'diskpath',
-        '/var/lib/libvirt/images/libvirt-test-api')
-    logger.info("disk image is %s" % diskpath)
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     seeksize = params.get('disksize', 10)
     imageformat = params.get('imageformat', 'raw')
-    logger.info(
-        "create disk image with size %sG, format %s" %
-        (seeksize, imageformat))
-    disk_create = "qemu-img create -f %s %s %sG" % \
-        (imageformat, diskpath, seeksize)
-    logger.debug("the command line of creating disk images is '%s'" %
-                 disk_create)
-
-    (status, message) = commands.getstatusoutput(disk_create)
-    if status != 0:
-        logger.debug(message)
+    disk_create = "qemu-img create -f %s %s %sG" % (imageformat, diskpath, seeksize)
+    logger.debug("cmd: %s" % disk_create)
+    (stat, out) = commands.getstatusoutput(disk_create)
+    if stat:
+        logger.debug("create image failed: %s" % out)
         return 1
 
     os.chown(diskpath, 107, 107)
-    logger.info("creating disk images file is successful.")
 
     hddriver = params.get('hddriver', 'virtio')
     if hddriver == 'virtio':
@@ -169,17 +144,27 @@ def install_linux_net(params):
     elif hddriver == 'scsi':
         xmlstr = xmlstr.replace('DEV', 'sda')
 
+    nicdriver = params.get('nicdriver', 'virtio')
+
+    logger.info("guestname: %s" % guestname)
+    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s" %
+                (guestos, guestarch, nicdriver, hddriver, imageformat,
+                 graphic, video))
+    logger.info("disk path: %s" % diskpath)
+
+    installmethod = params.get('netmethod', 'http')
+    logger.info("installation method: %s" % installmethod)
+
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
-    logger.info("the environment file is %s" % envfile)
-
+    logger.info("the environment file: %s" % envfile)
     envparser = env_parser.Envparser(envfile)
 
     # Get http, ftp or nfs url based on guest os, arch
     # and installation method from global.cfg
     rhelnewest = params.get("rhelnewest")
+    logger.info("rhel newest: %s" % rhelnewest)
     os_arch = guestos + "_" + guestarch
-
     if installmethod == 'http':
         if rhelnewest is not None and "RHEL-7" in rhelnewest:
             ostree = rhelnewest + "x86_64/os"
@@ -195,26 +180,36 @@ def install_linux_net(params):
         ostree = envparser.get_value("guest", os_arch)
 
     ks_name = os.path.basename(ks)
-    if os.path.exists("/tmp/%s" % ks_name):
-        os.remove("/tmp/%s" % ks_name)
-
-    urllib.urlretrieve(ks, "/tmp/%s" % ks_name)
     if rhelnewest is not None and "RHEL-7" in rhelnewest:
-        old_ks_fp = open('/tmp/%s' % ks_name, "rw+")
-        new_ks_fp = open("/tmp/test_api_new_ks.cfg", "w")
+        cmd = "mount -t nfs download.libvirt.redhat.com:/srv/www/html/test-api-ks/tmp-ks /mnt"
+        (stat, out) = commands.getstatusoutput(cmd)
+        if stat:
+            logger.error("mount failed: %s" % cmd)
+            return 1
+        if os.path.exists("/mnt/%s" % ks_name):
+            os.remove("/mnt/%s" % ks_name)
+
+        urllib.urlretrieve(ks, "/mnt/%s" % ks_name)
+        old_ks_fp = open('/mnt/%s' % ks_name, "rw+")
+        new_ks_fp = open("/mnt/test_api_new_ks.cfg", "w")
         old_ks_file = old_ks_fp.read()
         old_ks_file = old_ks_file.replace("url --url=", "url --url=%s" % ostree)
         old_ks_file = old_ks_file.replace("baseurl=", "baseurl=%s" % ostree)
         new_ks_fp.write(old_ks_file)
         new_ks_fp.close()
         old_ks_fp.close()
-        shutil.move("/tmp/test_api_new_ks.cfg", "/tmp/%s" % ks_name)
-        xmlstr = xmlstr.replace('KS', 'file:/tmp/%s' % ks_name)
+        shutil.move("/mnt/test_api_new_ks.cfg", "/mnt/%s" % ks_name)
+        cmd = "umount /mnt"
+        (stat, out) = commands.getstatusoutput(cmd)
+        if stat:
+            logger.error("umount failed: %s" % cmd)
+            return 1
+        xmlstr = xmlstr.replace('KS', 'http://download.libvirt.redhat.com/test-api-ks/tmp-ks/%s' % ks_name)
     else:
         xmlstr = xmlstr.replace('KS', ks)
 
-    logger.debug('install source:\n    %s' % ostree)
-    logger.debug('kisckstart file:\n    %s' % ks)
+    logger.debug('install source: %s' % ostree)
+    logger.debug('kisckstart file: %s' % ks)
 
     if (ostree == 'http://'):
         logger.error("no os tree defined in %s for %s" % (envfile, os_arch))
@@ -225,8 +220,8 @@ def install_linux_net(params):
     vmlinuzpath = os.path.join(ostree, 'isolinux/vmlinuz')
     initrdpath = os.path.join(ostree, 'isolinux/initrd.img')
 
-    logger.debug("the url of vmlinuz file is %s" % vmlinuzpath)
-    logger.debug("the url of initrd file is %s" % initrdpath)
+    logger.debug("vmlinuz: %s" % vmlinuzpath)
+    logger.debug("initrd: %s" % initrdpath)
 
     urllib.urlretrieve(vmlinuzpath, VMLINUZ)
     urllib.urlretrieve(initrdpath, INITRD)
@@ -237,6 +232,8 @@ def install_linux_net(params):
     xmlstr = xmlstr.replace('INITRD', INITRD)
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
 
+    conn = sharedmod.libvirtobj['conn']
+    check_domain_state(conn, guestname, logger)
     installtype = params.get('type', 'define')
     if installtype == 'define':
         logger.info('define guest from xml description')

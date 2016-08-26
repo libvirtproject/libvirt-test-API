@@ -118,11 +118,7 @@ def check_domain_state(conn, guestname, logger):
 
 def create_image(params, diskpath, logger):
     seeksize = params.get('disksize', 10)
-    logger.info("disksize: %s" % seeksize)
-
     imageformat = params.get('imageformat', 'qcow2')
-    logger.info("imageformat: %s" % imageformat)
-
     qcow2version = params.get('qcow2version', 'v3')
     # qcow2version includes "v3","v3_lazy_refcounts"
     if qcow2version.startswith('v3'):
@@ -178,22 +174,14 @@ def set_xml(params, xmlstr, hddriver, diskpath, logger):
 def install_linux_iso(params):
     """ install a new virtual machine """
     logger = params['logger']
-
     guestname = params.get('guestname')
-    logger.info("guestname: %s" % guestname)
-
     guestos = params.get('guestos')
-    logger.info("guestos: %s" % guestos)
-
     guestarch = params.get('guestarch')
-    logger.info("guestarch: %s" % guestarch)
+    imageformat = params.get('imageformat', 'qcow2')
 
     nicdriver = params.get('nicdriver', 'virtio')
-    logger.info("nicdriver: %s" % nicdriver)
     # Checking the nicdriver define
-    if nicdriver == 'virtio' or nicdriver == 'e1000' or nicdriver == 'rtl8139':
-        logger.info('The kind of nicdriver is %s' % nicdriver)
-    else:
+    if nicdriver not in ['virtio', 'e1000', 'rtl8139']:
         logger.error('unsupported nicdirver')
         return 1
 
@@ -203,13 +191,9 @@ def install_linux_iso(params):
     check_domain_state(conn, guestname, logger)
 
     macaddr = utils.get_rand_mac()
-    logger.info("the macaddress is %s" % macaddr)
-
     diskpath = params.get('diskpath', "/var/lib/libvirt/images/libvirt-test-api")
-    logger.info("diskpath: %s" % diskpath)
 
     hddriver = params.get('hddriver', 'virtio')
-    logger.info("hddriver: %s" % hddriver)
     if hddriver != "lun" and hddriver != "scsilun":
         ret = create_image(params, diskpath, logger)
         if ret:
@@ -218,14 +202,19 @@ def install_linux_iso(params):
     xmlstr = set_xml(params, xmlstr, hddriver, diskpath, logger)
 
     graphic = params.get('graphic', 'spice')
-    logger.info("graphic: %s" % graphic)
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
 
     video = params.get('video', 'qxl')
-    logger.info("video: %s" % video)
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
+
+    logger.info("guestname: %s" % guestname)
+    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s" %
+                (guestos, guestarch, nicdriver, hddriver, imageformat,
+                 graphic, video))
+    logger.info("disk path: %s" % diskpath)
+    logger.info("the macaddress is %s" % macaddr)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
@@ -233,6 +222,7 @@ def install_linux_iso(params):
     envparser = env_parser.Envparser(envfile)
 
     rhelnewest = params.get('rhelnewest')
+    logger.info("rhel newest: %s" % rhelnewest)
     if rhelnewest is not None and guestarch == 'x86_64':
         ostree = rhelnewest + "x86_64/os"
         ks = envparser.get_value("guest", "rhelnewest_iso_ks")

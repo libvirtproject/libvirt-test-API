@@ -108,9 +108,8 @@ def prepare_floppy_image(guestname, guestos, guestarch,
                 "failed to mount /tmp/floppy.img to /mnt/libvirt_floppy")
             return 1
 
-        if ('2008' in guestos or 'win7' in guestos or 'vista' in guestos
-            or 'win8' in guestos or "win2012" in guestos or "win10" in guestos
-            or 'win2016' in guestos):
+        win_os = ['win2008', 'win7', 'vista', 'win8', 'win2012', 'win10', 'win2016']
+        if any(os in guestos for os in win_so):
             dest_fname = "autounattend.xml"
             source = os.path.join(windows_unattended_path, "%s_%s.xml" %
                                   (guestos, guestarch))
@@ -144,14 +143,14 @@ def prepare_floppy_image(guestname, guestos, guestarch,
         logger.debug(unattended_contents)
 
     finally:
-        umount_cmd = 'umount %s' % floppy_mount
-        r = 'check mounting status'
-        while r != '':
-            (s, r) = commands.getstatusoutput("lsof /mnt/libvirt_floppy|grep mount")
-        (status, text) = commands.getstatusoutput(umount_cmd)
-        if status:
-            logger.error("failed to umount %s" % floppy_mount)
-            return 1
+        cmd = "mount | grep '/mnt/libvirt_floppy'"
+        (stat, out) = commands.getstatusoutput(cmd)
+        if stat == 0:
+            umount_cmd = 'umount %s' % floppy_mount
+            (stat, out) = commands.getstatusoutput(umount_cmd)
+            if stat:
+                logger.error("umount failed: %s" % umount_cmd)
+                return 1
 
         cleanup(floppy_mount)
 
@@ -230,37 +229,26 @@ def install_windows_cdrom(params):
     """ install a windows guest virtual machine by using iso file """
     # Initiate and check parameters
     global logger
+
     logger = params['logger']
-
     guestname = params.get('guestname')
-    logger.info("guestname: %s" % guestname)
-
     guestos = params.get('guestos')
-    logger.info("guestos: %s" % guestos)
-
     guestarch = params.get('guestarch')
-    logger.info("guestarch: %s" % guestarch)
+    seeksize = params.get('disksize', 20)
+    imageformat = params.get('imageformat', 'qcow2')
 
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-    logger.info("diskpath: %s" % diskpath)
     if os.path.exists(diskpath):
         os.remove(diskpath)
 
-    seeksize = params.get('disksize', 20)
-    logger.info("disksize: %s" % seeksize)
-
-    imageformat = params.get('imageformat', 'qcow2')
-    logger.info("imageformat: %s" % imageformat)
-
-    disk_create = ("qemu-img create -f %s %s %sG" %
-                   (imageformat, diskpath, seeksize))
-    logger.debug("cmd: '%s'" % disk_create)
-    (status, message) = commands.getstatusoutput(disk_create)
-    if status != 0:
-        logger.debug(message)
+    disk_create = ("qemu-img create -f %s %s %sG" % (imageformat, diskpath, seeksize))
+    logger.info("cmd: %s" % disk_create)
+    (stat, out) = commands.getstatusoutput(disk_create)
+    if stat:
+        logger.debug("create image failed: %s" % out)
+        return 1
 
     os.chown(diskpath, 107, 107)
-    logger.info("create disk image file is successful.")
 
     xmlstr = params.get('xml')
     if guestos == "win10":
@@ -268,12 +256,8 @@ def install_windows_cdrom(params):
                                 "'custom' match='exact'>\n    <model fallback="
                                 "'allow'>Westmere</model>\n  </cpu>\n  <features>")
 
-    conn = sharedmod.libvirtobj['conn']
-    check_domain_state(conn, guestname)
-
     # NICDRIVER
     nicdriver = params.get('nicdriver', 'virtio')
-    logger.info('nicdriver: %s' % nicdriver)
     if nicdriver == 'virtio' or nicdriver == 'e1000' or nicdriver == 'rtl8139':
         xmlstr = xmlstr.replace("type='virtio'", "type='%s'" % nicdriver)
     else:
@@ -282,19 +266,16 @@ def install_windows_cdrom(params):
 
     # Graphic type
     graphic = params.get('graphic', 'spice')
-    logger.info('graphic: %s' % graphic)
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
 
     # Video type
     video = params.get('video', 'qxl')
-    logger.info('video: %s' % video)
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
 
     # Hard disk type
     hddriver = params.get('hddriver', 'virtio')
-    logger.info("hddriver: %s" % hddriver)
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
         if guestarch == "x86_64":
@@ -316,6 +297,12 @@ def install_windows_cdrom(params):
     elif hddriver == 'scsilun':
         xmlstr = xmlstr.replace('DEV', 'sda')
 
+    logger.info("guestname: %s" % guestname)
+    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s" %
+                (guestos, guestarch, nicdriver, hddriver, imageformat,
+                 graphic, video))
+    logger.info("disk path: %s" % diskpath)
+
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     logger.info("the environment file is %s" % envfile)
@@ -332,7 +319,7 @@ def install_windows_cdrom(params):
     windows_unattended_path = os.path.join(HOME_PATH,
                                            "repos/domain/windows_unattended")
 
-    logger.debug('install source:\n    %s' % iso_file)
+    logger.debug('install source: %s' % iso_file)
     logger.info('prepare pre-installation environment...')
 
     iso_local_path = prepare_iso(iso_file)
@@ -347,6 +334,8 @@ def install_windows_cdrom(params):
 
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
 
+    conn = sharedmod.libvirtobj['conn']
+    check_domain_state(conn, guestname)
     # Generate guest xml
     installtype = params.get('type', 'define')
     if installtype == 'define':
