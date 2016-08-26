@@ -109,7 +109,7 @@ def prepare_floppy_image(guestname, guestos, guestarch,
             return 1
 
         win_os = ['win2008', 'win7', 'vista', 'win8', 'win2012', 'win10', 'win2016']
-        if any(os in guestos for os in win_so):
+        if any(os in guestos for os in win_os):
             dest_fname = "autounattend.xml"
             source = os.path.join(windows_unattended_path, "%s_%s.xml" %
                                   (guestos, guestarch))
