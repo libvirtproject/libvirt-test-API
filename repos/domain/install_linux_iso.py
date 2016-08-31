@@ -237,11 +237,11 @@ def install_linux_iso(params):
         os_arch = guestos + "_" + guestarch
         ostree = envparser.get_value("guest", os_arch)
         ks = envparser.get_value("guest", os_arch + "_iso_ks")
-        ioslink = envparser.get_value("guest", os_arch + "_iso")
+        isolink = envparser.get_value("guest", os_arch + "_iso")
 
     logger.info('install source:    %s' % ostree)
     logger.info('kisckstart file:    %s' % ks)
-    logger.info("iso link:    %s" % ioslink)
+    logger.info("iso link:    %s" % isolink)
 
     if (ostree == 'http://'):
         logger.error("no os tree defined in %s for %s" % (envfile, os_arch))
@@ -249,9 +249,9 @@ def install_linux_iso(params):
 
     logger.info("begin to download the iso file")
     cache_floder = "/var/lib/libvirt/images/"
-    bootcd = cache_floder + ioslink.split("/")[-1]
+    bootcd = cache_floder + isolink.split("/")[-1]
     if not os.path.exists(bootcd):
-        prepare_iso(ioslink, cache_floder)
+        prepare_iso(isolink, cache_floder)
 
     logger.info("Finish download the iso file: %s" % bootcd)
 
@@ -284,7 +284,6 @@ def install_linux_iso(params):
 
     installtype = params.get('type', 'define')
     if installtype == 'define':
-        logger.info('define guest from xml description')
         try:
             logger.info('define guest from xml description')
             domobj = conn.defineXML(xmlstr)
@@ -416,9 +415,9 @@ def install_linux_iso_clean(params):
         isolink = rhelnewest + "iso/" + repo_name + "-Server-x86_64-dvd1.iso"
     else:
         os_arch = guestos + "_" + guestarch
-        ioslink = envparser.get_value("guest", os_arch + "_iso")
+        isolink = envparser.get_value("guest", os_arch + "_iso")
 
-    isopath = '/var/lib/libvirt/images/' + ioslink.split('/')[-1]
+    isopath = '/var/lib/libvirt/images/' + isolink.split('/')[-1]
     if os.path.exists(isopath):
         os.remove(isopath)
 
