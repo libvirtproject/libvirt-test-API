@@ -10,6 +10,12 @@
                                 <PathAndCredentials wcm:keyValue="1" wcm:action="add">
                                         <Path>A:\amd64\PATHOFDRIVER</Path>
                                 </PathAndCredentials>
+                                <PathAndCredentials wcm:keyValue="2" wcm:action="add">
+                                        <Path>A:\amd64\PATHOFDRIVER</Path>
+                                </PathAndCredentials>
+                                <PathAndCredentials wcm:keyValue="3" wcm:action="add">
+                                        <Path>A:\amd64\PATHOFDRIVER</Path>
+                                </PathAndCredentials>
                         </DriverPaths>
                 </component>
 		<component name="Microsoft-Windows-Setup"
