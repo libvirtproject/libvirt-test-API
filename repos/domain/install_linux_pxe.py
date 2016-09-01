@@ -5,6 +5,7 @@ import os
 import re
 import time
 import commands
+import shutil
 
 import libvirt
 from libvirt import libvirtError
@@ -14,8 +15,7 @@ from src import env_parser
 from utils import utils
 
 required_params = ('guestname', 'guestos', 'guestarch',)
-optional_params = {
-                   'memory': 1048576,
+optional_params = {'memory': 1048576,
                    'vcpu': 1,
                    'disksize': 10,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
@@ -28,8 +28,7 @@ optional_params = {
                    'graphic': "spice",
                    'video': 'qxl',
                    'guestmachine': 'pc',
-                   'rhelnewest': '',
-                  }
+                   'rhelnewest': '', }
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
 VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
@@ -68,7 +67,14 @@ def clean_env(diskpath, logger):
 def prepare_install(default_file, logger):
     if not os.path.exists(TFTPPATH + "/pxelinux.cfg"):
         logger.info("%s not exists, create it" % (TFTPPATH + "/pxelinux.cfg"))
-        os.makedirs(TFTPPATH + "/pxelinux.cfg")
+        os.makedirs(TFTPPATH + "/pxelinux.cfg", mode=0777)
+    else:
+        os.chmod(TFTPPATH + "/pxelinux.cfg", 0777)
+    # Get rid of selinux problem
+    os.system("restorecon -Rv %s" % TFTPPATH)
+    bootp_file = TFTPPATH + "/pxelinux.0"
+    if not os.path.exists(bootp_file):
+        shutil.copy("/usr/share/syslinux/pxelinux.0", TFTPPATH)
 
     cmd = "wget " + default_file + " -P " + TFTPPATH + "/pxelinux.cfg/"
     logger.info("%s" % cmd)
@@ -206,7 +212,7 @@ def install_linux_pxe(params):
     envparser = env_parser.Envparser(envfile)
     rhelnewest = params.get("rhelnewest", "")
     if rhelnewest is not None and "RHEL-7" in rhelnewest:
-        default_file = envparser.get_value("guest", "rhelnewest_x86_64_pxe_default")
+        default_file = envparser.get_value("guest", "rhel7_newest_pxe_default")
     else:
         default_file = envparser.get_value("guest", os_arch + "_pxe_default")
     logger.debug('default file:\n    %s' % default_file)
