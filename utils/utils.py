@@ -239,6 +239,14 @@ def get_rand_mac():
     return ':'.join(map(lambda x: "%02x" % x, mac))
 
 
+def get_rand_str(length=32):
+    ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    chars=[]
+    for i in xrange(16):
+        chars.append(random.choice(ALPHABET))
+    return chars
+
+
 def get_dom_mac_addr(domname):
     """Get mac address of a domain
 
@@ -1147,13 +1155,13 @@ def wait_for(func, timeout, first=0.0, step=1.0):
     return None
 
 
-def parse_flags(params, default=0):
+def parse_flags(params, default=0, param_name="flags"):
     """
     Read and generate bitwise-or of given flags.
     return -1 on illegal flag.
     """
     logger = params['logger']
-    flags = params.get('flags', None)
+    flags = params.get(param_name, None)
     if flags is None:
         return default
 
