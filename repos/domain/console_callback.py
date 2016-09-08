@@ -104,7 +104,13 @@ def check_domain_kernel_line(guestname, username, password, logger):
         logger.error("vm %s fail to get ip address" % guestname)
         return 1
 
-    cmd = "cat /boot/grub/grub.conf"
+    if os.path.exists("/boot/grub2"):
+        grub_file = "/boot/grub2/grub.cfg"
+        grub_etc = "/etc/grub2.cfg"
+    else:
+        grub_file = "/boot/grub/grub.conf"
+        grub_etc = "/etc/grub.conf"
+    cmd = "cat %s" % grub_file
     ret, output = utils.remote_exec_pexpect(ipaddr, username, password, cmd)
     if ret:
         return 1
@@ -126,11 +132,11 @@ def check_domain_kernel_line(guestname, username, password, logger):
     if change:
         str = "\n".join(out)
         logger.debug("Update guest kernel line to:\n%s" % str)
-        cmd = "echo '%s' > /etc/grub.conf" % str
+        cmd = "echo '%s' > %s" % (str, grub_etc)
         ret, output = utils.remote_exec_pexpect(ipaddr, username, password,
                                                 cmd)
         if ret:
-            logger.error("fail to write /etc/grub.conf in guest")
+            logger.error("fail to write %s in guest" % grub_etc)
             return 1
         logger.info("Updated guest kernel line")
     else:
@@ -171,7 +177,7 @@ def console_callback(params):
             domobj.create()
             time.sleep(180)
 
-        timeout = 500
+        timeout = 50
         logger.info("Now add libvirt timeout handler with timeout as: %sms" %
                     timeout)
         timer = libvirt.virEventAddTimeout(int(timeout), timeout_callback,
@@ -179,8 +185,8 @@ def console_callback(params):
         logger.info("Added timeout handler with a new timer: %s" % timer)
 
         logger.info("Open console to a new stream")
-        stream = conn.newStream(0)
-        domobj.openConsole(None, stream, libvirt.VIR_DOMAIN_CONSOLE_FORCE)
+        stream = conn.newStream(libvirt.VIR_STREAM_NONBLOCK)
+        domobj.openConsole(None, stream, 0)
 
         logger.info("Add libvirt event handler on VIR_EVENT_HANDLE_READABLE")
         watch = libvirt.virEventAddHandle(0, libvirt.VIR_EVENT_HANDLE_READABLE,
@@ -203,7 +209,7 @@ def console_callback(params):
         libvirt.virEventUpdateHandle(watch, libvirt.VIR_EVENT_HANDLE_WRITABLE |
                                      libvirt.VIR_EVENT_HANDLE_READABLE)
         logger.info("Now update libvirt timeout value as: 15ms")
-        libvirt.virEventUpdateTimeout(timer, 15)
+        libvirt.virEventUpdateTimeout(timer, 5)
 
         count = 0
         while True:
