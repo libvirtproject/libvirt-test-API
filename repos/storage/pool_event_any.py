@@ -43,7 +43,7 @@ def pool_event_any(params):
 
     random_str = get_rand_str()
     eventListener = eventListenerThread(poolname, event_id, event_type,
-                                        event_detail, random_str)
+                                        event_detail, logger, random_str)
     eventListener.start()
 
     try:
@@ -55,7 +55,7 @@ def pool_event_any(params):
 
         conn.storagePoolEventRegisterAny(poolobj, event_id,
                                          eventListener.callback,
-                                         (random_str, logger))
+                                         random_str)
 
         event_runner_entry = event_runner.split(':')[-1]
         event_runner = importlib.import_module(
