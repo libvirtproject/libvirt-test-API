@@ -8,6 +8,7 @@ import time
 import commands
 import shutil
 import urllib
+import requests
 
 import libvirt
 from libvirt import libvirtError
