@@ -50,7 +50,7 @@ def get_fileflags():
         "|awk '/libvirt_i/{print $2}'"
     GET_CMD = "cat /proc/%s/fdinfo/1|grep flags|awk '{print $NF}'"
     global fileflags
-    timeout = 10
+    timeout = 100
     while True:
         (status, pid) = utils.exec_cmd(CHECK_CMD, shell=True)
         if status == 0 and len(pid) == 1:

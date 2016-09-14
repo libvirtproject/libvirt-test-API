@@ -189,7 +189,7 @@ def mk_kickstart_iso(kscfg, guestos, logger):
     remove_all(custom_iso_dir)
 
 
-def prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger, rhelnewest):
+def prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger):
     """ to customize boot.iso file to add kickstart
         file into it for automatic guest installation
     """
@@ -216,17 +216,6 @@ def prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger, rheln
 
     urllib.urlretrieve(kscfg, '%s/%s' % (new_dir, ks_name))
     logger.info("the url of kickstart is %s" % kscfg)
-
-    if rhelnewest is not None and "RHEL-7" in rhelnewest:
-        old_ks_fp = open('%s/%s' % (new_dir, ks_name), "rw+")
-        new_ks_fp = open("%s/new_ks.cfg" % new_dir, "w")
-        old_ks_file = old_ks_fp.read()
-        old_ks_file = old_ks_file.replace("url --url=", "url --url=%s" % ostree)
-        old_ks_file = old_ks_file.replace("baseurl=", "baseurl=%s" % ostree)
-        new_ks_fp.write(old_ks_file)
-        new_ks_fp.close()
-        old_ks_fp.close()
-        shutil.move("%s/new_ks.cfg" % new_dir, "%s/%s" % (new_dir, ks_name))
 
     src_path = os.getcwd()
 
@@ -419,7 +408,7 @@ def install_linux_cdrom(params):
     cache_folder = envparser.get_value("variables", "domain_cache_folder")
     logger.info("begin to customize the custom.iso file")
     try:
-        prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger, rhelnewest)
+        prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger)
     except TestError, err:
         logger.error("Failed to prepare boot cdrom!")
         return 1

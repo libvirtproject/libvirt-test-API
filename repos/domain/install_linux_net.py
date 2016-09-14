@@ -179,34 +179,7 @@ def install_linux_net(params):
         ks = envparser.get_value("guest", os_arch + "_nfs_ks")
         ostree = envparser.get_value("guest", os_arch)
 
-    ks_name = os.path.basename(ks)
-    if rhelnewest is not None and "RHEL-7" in rhelnewest:
-        cmd = "mount -t nfs download.libvirt.redhat.com:/srv/www/html/test-api-ks/tmp-ks /mnt"
-        (stat, out) = commands.getstatusoutput(cmd)
-        if stat:
-            logger.error("mount failed: %s" % cmd)
-            return 1
-        if os.path.exists("/mnt/%s" % ks_name):
-            os.remove("/mnt/%s" % ks_name)
-
-        urllib.urlretrieve(ks, "/mnt/%s" % ks_name)
-        old_ks_fp = open('/mnt/%s' % ks_name, "rw+")
-        new_ks_fp = open("/mnt/test_api_new_ks.cfg", "w")
-        old_ks_file = old_ks_fp.read()
-        old_ks_file = old_ks_file.replace("url --url=", "url --url=%s" % ostree)
-        old_ks_file = old_ks_file.replace("baseurl=", "baseurl=%s" % ostree)
-        new_ks_fp.write(old_ks_file)
-        new_ks_fp.close()
-        old_ks_fp.close()
-        shutil.move("/mnt/test_api_new_ks.cfg", "/mnt/%s" % ks_name)
-        cmd = "umount /mnt"
-        (stat, out) = commands.getstatusoutput(cmd)
-        if stat:
-            logger.error("umount failed: %s" % cmd)
-            return 1
-        xmlstr = xmlstr.replace('KS', 'http://download.libvirt.redhat.com/test-api-ks/tmp-ks/%s' % ks_name)
-    else:
-        xmlstr = xmlstr.replace('KS', ks)
+    xmlstr = xmlstr.replace('KS', ks)
 
     logger.debug('install source: %s' % ostree)
     logger.debug('kisckstart file: %s' % ks)
