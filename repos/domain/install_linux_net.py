@@ -168,7 +168,7 @@ def install_linux_net(params):
     remote_url = envparser.get_value("other", "remote_url")
     location = utils.get_local_hostname()
     logger.info("location: %s" % location)
-    if rhelnewest is None or "RHEL-7.2" in rhelnewest:
+    if rhelnewest is None or "RHEL-6.8" in rhelnewest or "RHEL-7.2" in rhelnewest:
         if "pek2" in location:
             ostree = local_url + envparser.get_value("guest", os_arch)
         else:

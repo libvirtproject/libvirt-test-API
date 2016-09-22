@@ -8,6 +8,7 @@ import time
 import commands
 import shutil
 import urllib
+import tempfile
 
 import libvirt
 from libvirt import libvirtError
@@ -175,29 +176,31 @@ def set_xml(params, xmlstr, hddriver, diskpath, ks, nfs_server, logger):
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
 
     ks_name = os.path.basename(ks)
-    cmd = "mount -t nfs %s:/srv/www/html/test-api-ks/tmp-ks /mnt" % nfs_server
+    tmppath = tempfile.mkdtemp()
+    cmd = "mount -t nfs %s:/srv/www/html/test-api-ks/tmp-ks %s" % (nfs_server, tmppath)
     (stat, out) = commands.getstatusoutput(cmd)
     if stat:
         logger.error("mount failed: %s" % cmd)
         return 1
-    if os.path.exists("/mnt/%s" % ks_name):
-        os.remove("/mnt/%s" % ks_name)
+    if os.path.exists("%s/%s" % (tmppath, ks_name)):
+        os.remove("%s/%s" % (tmppath, ks_name))
 
-    urllib.urlretrieve(ks, "/mnt/%s" % ks_name)
-    old_ks_fp = open('/mnt/%s' % ks_name, "rw+")
-    new_ks_fp = open("/mnt/test_api_iso_ks.cfg", "w")
+    urllib.urlretrieve(ks, "%s/%s" % (tmppath, ks_name))
+    old_ks_fp = open('%s/%s' % (tmppath, ks_name), "rw+")
+    new_ks_fp = open("%s/test_api_iso_ks.cfg" % tmppath, "w")
     old_ks_file = old_ks_fp.read()
     old_ks_file = old_ks_file.replace("--boot-drive=", "--boot-drive=%s" % boot_driver)
     new_ks_fp.write(old_ks_file)
     new_ks_fp.close()
     old_ks_fp.close()
-    shutil.move("/mnt/test_api_iso_ks.cfg", "/mnt/%s" % ks_name)
-    cmd = "umount /mnt"
+    shutil.move("%s/test_api_iso_ks.cfg" % tmppath, "%s/%s" % (tmppath, ks_name))
+    cmd = "umount %s" % tmppath
     (stat, out) = commands.getstatusoutput(cmd)
     if stat:
         logger.error("umount failed: %s" % cmd)
         return 1
     xmlstr = xmlstr.replace('KS', 'http://%s/test-api-ks/tmp-ks/%s' % (nfs_server, ks_name))
+    shutil.rmtree(tmppath)
 
     return xmlstr
 
@@ -257,7 +260,7 @@ def install_linux_iso(params):
     logger.info("rhel newest: %s" % rhelnewest)
     if rhelnewest is not None:
         if local_url in rhelnewest:
-            repo_name = rhelnewest.split('/')[7]
+            repo_name = rhelnewest.split('/')[6]
         elif remote_url in rhelnewest:
             repo_name = rhelnewest.split('/')[4]
         ostree = rhelnewest + guestarch +"/os"
@@ -445,15 +448,22 @@ def install_linux_iso_clean(params):
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     os_arch = guestos + "_" + guestarch
     envparser = env_parser.Envparser(envfile)
+    local_url = envparser.get_value("other", "local_url")
+    remote_url = envparser.get_value("other", "remote_url")
+    location = utils.get_local_hostname()
     rhelnewest = params.get('rhelnewest')
-    if rhelnewest is not None and "RHEL-7" in rhelnewest:
-        repo_name = rhelnewest.split('/')[4]
-        isolink = rhelnewest + "iso/" + repo_name + "-Server-x86_64-dvd1.iso"
+    if rhelnewest is not None:
+        if local_url in rhelnewest:
+            repo_name = rhelnewest.split('/')[6]
+        elif remote_url in rhelnewest:
+            repo_name = rhelnewest.split('/')[4]
+        isopath = ("/var/lib/libvirt/images/%s-Server-%s-dvd1.iso" %
+                   (repo_name, guestarch))
     else:
         os_arch = guestos + "_" + guestarch
         isolink = envparser.get_value("guest", os_arch + "_iso")
+        isopath = '/var/lib/libvirt/images/' + isolink.split('/')[-1]
 
-    isopath = '/var/lib/libvirt/images/' + isolink.split('/')[-1]
     if os.path.exists(isopath):
         os.remove(isopath)
 

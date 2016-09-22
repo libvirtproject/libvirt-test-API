@@ -252,7 +252,7 @@ def install_windows_cdrom(params):
     os.chown(diskpath, 107, 107)
 
     xmlstr = params.get('xml')
-    if guestos == "win10":
+    if guestos == "win10" or guestos == "win2016":
         xmlstr = xmlstr.replace("</os>\n  <features>", "</os>\n  <cpu mode="
                                 "'custom' match='exact'>\n    <model fallback="
                                 "'allow'>Westmere</model>\n  </cpu>\n  <features>")

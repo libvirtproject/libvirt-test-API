@@ -382,7 +382,7 @@ def install_linux_cdrom(params):
 
     rhelnewest = params.get('rhelnewest')
     logger.info("rhel newest: %s", rhelnewest)
-    if rhelnewest is None or "RHEL-7.2" in rhelnewest:
+    if rhelnewest is None or "RHEL-6.8" in rhelnewest or "RHEL-7.2" in rhelnewest:
         local_url = envparser.get_value("other", "local_url")
         remote_url = envparser.get_value("other", "remote_url")
         location = utils.get_local_hostname()
