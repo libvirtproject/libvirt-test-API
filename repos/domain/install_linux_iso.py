@@ -16,7 +16,7 @@ from libvirt import libvirtError
 from src import sharedmod
 from src import env_parser
 from utils import utils
-
+from repos.domain import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch')
 optional_params = {
@@ -35,6 +35,9 @@ optional_params = {
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'disksymbol': 'sdb',
                    'rhelnewest': '',
+                   'storage': 'local',
+                   'sourcehost': '',
+                   'sourcepath': '',
 }
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
@@ -142,7 +145,7 @@ def create_image(params, diskpath, logger):
     return 0
 
 
-def set_xml(params, xmlstr, hddriver, diskpath, ks, nfs_server, logger):
+def set_xml(sourcehost, sourcepath, xmlstr, hddriver, diskpath, ks, nfs_server, logger):
     boot_driver = 'vda'
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
@@ -160,9 +163,8 @@ def set_xml(params, xmlstr, hddriver, diskpath, ks, nfs_server, logger):
         xmlstr = xmlstr.replace('DEV', 'vda')
         xmlstr = xmlstr.replace('"file"', '"block"')
         xmlstr = xmlstr.replace('"disk"', '"lun"')
-        xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='/dev/SDX'")
-        disksymbol = params.get('disksymbol', 'sdb')
-        xmlstr = xmlstr.replace('SDX', disksymbol)
+        iscsi_path = install_common.get_iscsi_disk_path(sourcehost, sourcepath)
+        xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='%s'" % iscsi_path)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
     elif hddriver == 'scsilun':
         boot_driver = 'sda'
@@ -170,9 +172,8 @@ def set_xml(params, xmlstr, hddriver, diskpath, ks, nfs_server, logger):
         xmlstr = xmlstr.replace('DEV', 'sda')
         xmlstr = xmlstr.replace('"file"', '"block"')
         xmlstr = xmlstr.replace('"disk"', '"lun"')
-        xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='/dev/SDX'")
-        disksymbol = params.get('disksymbol', 'sdb')
-        xmlstr = xmlstr.replace('SDX', disksymbol)
+        iscsi_path = install_common.get_iscsi_disk_path(sourcehost, sourcepath)
+        xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='%s'" % iscsi_path)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
 
     ks_name = os.path.basename(ks)
@@ -225,13 +226,16 @@ def install_linux_iso(params):
     check_domain_state(conn, guestname, logger)
 
     macaddr = utils.get_rand_mac()
-    diskpath = params.get('diskpath', "/var/lib/libvirt/images/libvirt-test-api")
+    mountpath = tempfile.mkdtemp()
+    diskpath = install_common.setup_storage(params, mountpath, logger)
+    xmlstr = xmlstr.replace('/var/lib/libvirt/images/libvirt-test-api', diskpath)
+    if os.path.exists(diskpath):
+        os.remove(diskpath)
 
     hddriver = params.get('hddriver', 'virtio')
-    if hddriver != "lun" and hddriver != "scsilun":
-        ret = create_image(params, diskpath, logger)
-        if ret:
-            return 1
+    ret = create_image(params, diskpath, logger)
+    if ret:
+        return 1
 
     graphic = params.get('graphic', 'spice')
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
@@ -241,10 +245,11 @@ def install_linux_iso(params):
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
 
+    storage = params.get('storage', 'local')
     logger.info("guestname: %s" % guestname)
-    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s" %
+    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s, %s(storage)" %
                 (guestos, guestarch, nicdriver, hddriver, imageformat,
-                 graphic, video))
+                 graphic, video, storage))
     logger.info("disk path: %s" % diskpath)
     logger.info("the macaddress is %s" % macaddr)
 
@@ -282,7 +287,9 @@ def install_linux_iso(params):
     logger.info("iso link:    %s" % isolink)
 
     nfs_server = envparser.get_value("other", "nfs_server")
-    xmlstr = set_xml(params, xmlstr, hddriver, diskpath, ks, nfs_server, logger)
+    sourcehost = params.get('sourcehost', '')
+    sourcepath = params.get('sourcepath', '')
+    xmlstr = set_xml(sourcehost, sourcepath, xmlstr, hddriver, diskpath, ks, nfs_server, logger)
 
     if (ostree == 'http://'):
         logger.error("no os tree defined in %s for %s" % (envfile, os_arch))
@@ -434,6 +441,10 @@ def install_linux_iso(params):
         return 1
 
     time.sleep(60)
+    domobj.destroy()
+    domobj.undefine()
+    if storage != "local":
+        install_common.cleanup_storage(params, mountpath, logger)
 
     return 0
 

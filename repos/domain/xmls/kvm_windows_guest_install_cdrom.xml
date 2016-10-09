@@ -1,5 +1,6 @@
 <domain type="kvm">
   <name>GUESTNAME</name>
+  <uuid>UUID</uuid>
   <memory>MEMORY</memory>
   <vcpu>VCPU</vcpu>
   <os>

@@ -9,6 +9,7 @@ import commands
 import shutil
 import urllib
 import requests
+import tempfile
 
 import libvirt
 from libvirt import libvirtError
@@ -16,6 +17,8 @@ from libvirt import libvirtError
 from src import sharedmod
 from src import env_parser
 from utils import utils
+from repos.domain import install_common
+
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
 VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
@@ -47,6 +50,9 @@ optional_params = {'memory': 1048576,
                    'driverpath': '/usr/share/virtio-win/virtio-win_amd64.vfd',
                    'graphic': 'spice',
                    'video': 'qxl',
+                   'storage': 'local',
+                   'sourcehost': '',
+                   'sourcepath': '',
                    }
 
 
@@ -226,6 +232,14 @@ def check_domain_state(conn, guestname):
         domobj.undefine()
 
 
+def get_file_from_url(url):
+    web_con = requests.get(url)
+    match = re.compile(r'<a href=".*">.*.iso</a>')
+    iso_name = re.findall(match, web_con.content)[0].split("\"")[1]
+    iso_file = "%s/%s" % (url, iso_name)
+    return iso_file
+
+
 def install_windows_cdrom(params):
     """ install a windows guest virtual machine by using iso file """
     # Initiate and check parameters
@@ -238,7 +252,16 @@ def install_windows_cdrom(params):
     seeksize = params.get('disksize', 20)
     imageformat = params.get('imageformat', 'qcow2')
 
-    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    xmlstr = params.get('xml')
+    if guestos == "win10" or guestos == "win2016":
+        xmlstr = xmlstr.replace("</os>\n  <features>", "</os>\n  <cpu mode="
+                                "'custom' match='exact'>\n    <model fallback="
+                                "'allow'>Westmere</model>\n  </cpu>\n  <features>")
+
+    mountpath = tempfile.mkdtemp()
+    diskpath = install_common.setup_storage(params, mountpath, logger)
+    xmlstr = xmlstr.replace('/var/lib/libvirt/images/libvirt-test-api', diskpath)
+
     if os.path.exists(diskpath):
         os.remove(diskpath)
 
@@ -251,11 +274,8 @@ def install_windows_cdrom(params):
 
     os.chown(diskpath, 107, 107)
 
-    xmlstr = params.get('xml')
-    if guestos == "win10" or guestos == "win2016":
-        xmlstr = xmlstr.replace("</os>\n  <features>", "</os>\n  <cpu mode="
-                                "'custom' match='exact'>\n    <model fallback="
-                                "'allow'>Westmere</model>\n  </cpu>\n  <features>")
+    uuid = params.get('uuid', '05867c1a-afeb-300e-e55e-2673391ae080')
+    xmlstr = xmlstr.replace('UUID', uuid)
 
     # NICDRIVER
     nicdriver = params.get('nicdriver', 'virtio')
@@ -294,14 +314,27 @@ def install_windows_cdrom(params):
         else:
             xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
     elif hddriver == 'lun':
+        xmlstr = xmlstr.replace("'lun'", "'virtio'")
         xmlstr = xmlstr.replace('DEV', 'vda')
+        xmlstr = xmlstr.replace('device="disk"', 'device="lun"')
+        xmlstr = xmlstr.replace('disk device="lun" type="file"', 'disk device="lun" type="block"')
+        iscsi_path = install_common.get_iscsi_disk_path(sourcehost, sourcepath)
+        xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='%s'" % iscsi_path)
+        xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
     elif hddriver == 'scsilun':
+        xmlstr = xmlstr.replace("'scsilun'", "'scsi'")
         xmlstr = xmlstr.replace('DEV', 'sda')
+        xmlstr = xmlstr.replace('device="disk"', 'device="lun"')
+        xmlstr = xmlstr.replace('disk device="lun" type="file"', 'disk device="lun" type="block"')
+        iscsi_path = install_common.get_iscsi_disk_path(sourcehost, sourcepath)
+        xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='%s'" % iscsi_path)
+        xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
 
+    storage = params.get('storage', 'local')
     logger.info("guestname: %s" % guestname)
-    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s" %
+    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s, %s(storage)" %
                 (guestos, guestarch, nicdriver, hddriver, imageformat,
-                 graphic, video))
+                 graphic, video, storage))
     logger.info("disk path: %s" % diskpath)
 
     logger.info("get system environment information")
@@ -311,10 +344,7 @@ def install_windows_cdrom(params):
     # Get iso file based on guest os and arch from global.cfg
     envparser = env_parser.Envparser(envfile)
     iso_url = envparser.get_value("guest", guestos + '_' + guestarch)
-    web_con = requests.get(iso_url)
-    match = re.compile(r'<a href=".*">.*.iso</a>')
-    iso_name = re.findall(match, web_con.content)[0].split("\"")[1]
-    iso_file = "%s/%s" % (iso_url, iso_name)
+    iso_file = get_file_from_url(iso_url)
 
     if "win7" in guestos or "win2008" in guestos:
         cdkey = envparser.get_value("guest", "%s_%s_key" % (guestos, guestarch))
@@ -347,7 +377,6 @@ def install_windows_cdrom(params):
         try:
             logger.info('define guest from xml description')
             domobj = conn.defineXML(xmlstr)
-
             logger.info('start installation guest ...')
             domobj.create()
 
@@ -430,6 +459,11 @@ def install_windows_cdrom(params):
         return 1
 
     time.sleep(60)
+    storage = params.get('storage', 'local')
+    if storage != "local":
+        domobj.destroy()
+        domobj.undefine()
+        install_common.cleanup_storage(params, mountpath, logger)
 
     return 0
 
@@ -467,8 +501,8 @@ def install_windows_cdrom_clean(params):
 
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     envparser = env_parser.Envparser(envfile)
-    iso_file = envparser.get_value("guest", guestos + '_' + guestarch)
-
+    iso_url = envparser.get_value("guest", guestos + '_' + guestarch)
+    iso_file = get_file_from_url(iso_url)
     iso_local_path = prepare_iso(iso_file)
     if os.path.exists(iso_local_path):
         os.remove(iso_local_path)

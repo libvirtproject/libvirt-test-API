@@ -33,6 +33,8 @@ import subprocess
 import hashlib
 import libvirt
 import math
+import shutil
+
 from xml.dom import minidom
 from urlparse import urlparse
 
@@ -1240,3 +1242,345 @@ def version_compare(major, minor, update, logger):
     if LIBVIRT_LIB_VERSION >= compare_version:
         return True
     return False
+
+
+def gluster_status(logger):
+    cmd = "service glusterd status"
+    ret, out = commands.getstatusoutput(cmd)
+    if not ret:
+        if "active" not in out or "running" not in out:
+            cmd = "service glusterd start"
+            logger.info("Starting glusterd ...")
+            ret, out = commands.getstatusoutput(cmd)
+            if ret:
+                logger.error("cmd failed: %s" % cmd)
+                logger.error("ret: %s, out: %s" % (ret, out))
+                return False
+
+    else:
+        logger.error("cmd failed: %s." % cmd)
+        logger.error("ret: %s, out: %s." % (ret, out))
+        return False
+    return True
+
+
+def is_gluster_vol_started(vol_name, logger):
+    cmd = "gluster volume info %s" % vol_name
+    ret, out = commands.getstatusoutput(cmd)
+    vol_status = re.findall(r'Status: (\S+)', out)
+    if 'Started' in vol_status:
+        return True
+    else:
+        return False
+
+
+def gluster_vol_start(vol_name, logger):
+    if not is_gluster_vol_started(vol_name, logger):
+        cmd = "gluster volume start %s" % vol_name
+        ret, out = commands.getstatusoutput(cmd)
+        if ret:
+            logger.error("cmd failed: %s" % cmd)
+            logger.error("ret: %s, out: %s" % (ret, out))
+            return False
+
+    return True
+
+
+def gluster_vol_stop(vol_name, logger, force=False):
+    if is_gluster_vol_started(vol_name, logger):
+        if force:
+            cmd = "echo 'y' | gluster volume stop %s force" % vol_name
+        else:
+            cmd = "echo 'y' | gluster volume stop %s" % vol_name
+        ret, out = commands.getstatusoutput(cmd)
+        if ret:
+            logger.error("cmd failed: %s" % cmd)
+            logger.error("ret: %s, out: %s" % (ret, out))
+            return False
+    return True
+
+
+def gluster_vol_delete(vol_name, logger):
+    if not is_gluster_vol_started(vol_name, logger):
+        cmd = "echo 'y' | gluster volume delete %s" % vol_name
+        ret, out = commands.getstatusoutput(cmd)
+        if ret:
+            logger.error("cmd failed: %s" % cmd)
+            logger.error("ret: %s, out: %s" % (ret, out))
+            return False
+        return True
+    else:
+        return False
+
+
+def is_gluster_vol_avail(vol_name, logger):
+    cmd = "gluster volume info"
+    ret, out = commands.getstatusoutput(cmd)
+    volume_name = re.findall(r'Volume Name: (%s)\n' % vol_name, out)
+    if volume_name:
+       return gluster_vol_start(vol_name, logger)
+
+
+def gluster_vol_create(vol_name, ip, brick_path, logger, force=False):
+    if is_gluster_vol_avail(vol_name, logger):
+        gluster_vol_stop(vol_name, logger, True)
+        gluster_vol_delete(vol_name, logger)
+        
+    if force:
+       force_opt = "force"
+    else:
+       force_opt = ""
+
+    cmd = "gluster volume create %s %s:/%s %s" % (vol_name, ip,
+                                                  brick_path, force_opt)
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return False
+
+    return is_gluster_vol_avail(vol_name, logger)
+
+
+def gluster_allow_insecure(vol_name, logger):
+    cmd = "gluster volume set %s server.allow-insecure on" % vol_name
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return 1
+
+    cmd = "gluster volume info"
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return 1
+    match = re.findall(r'server.allow-inscure: on', out)
+    if not match:
+        return 1
+    else:
+        return 0
+
+
+def set_fusefs(logger):
+    cmd = "setsebool virt_use_fusefs on"
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return 1
+    return 0
+
+def setup_gluster(vol_name, ip, brick_path, logger):
+    """
+    Set up glusterfs environment on localhost
+    """
+    gluster_status(logger)
+    gluster_vol_create(vol_name, ip, brick_path, logger, force=True)
+    gluster_allow_insecure(vol_name, logger)
+    set_fusefs(logger)
+    return 0
+
+
+def cleanup_gluster(vol_name, logger):
+    """
+    Clean up glusterfs enviroment on localhost
+    """
+    gluster_vol_stop(vol_name, logger, True)
+    gluster_vol_delete(vol_name, logger)
+    return 0
+
+
+def mount_gluster(vol_name, ip, path, logger):
+    cmd = "mount -t glusterfs %s:%s %s" %(ip, vol_name, path)
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return 1
+    return 0
+
+
+def umount_gluster(path, logger):
+    cmd = "umount %s" % path
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return 1
+    return 0
+
+
+def setup_nfs(ip, nfspath, mountpath, logger):
+    if not os.path.isdir(mountpath):
+        logger.info("%s not exist." % mountpath)
+        return 1
+
+    cmd = "mount -t nfs %s:%s %s" % (ip, nfspath, mountpath)
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return 1
+    return 0
+
+
+def cleanup_nfs(path, logger):
+    cmd = "umount %s" % path
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return 1
+    return 0
+
+
+def iscsi_login(target, portal, logger):
+    cmd = "iscsiadm --mode node --login --targetname %s" % target
+    cmd += " --portal %s" % portal
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+    if "successful" in out:
+        return True
+    else:
+        return False
+
+
+def iscsi_logout(logger, target=None):
+    if target:
+        cmd = "iscsiadm --mode node --logout -T %s" % target
+    else:
+        cmd = "iscsiadm --mode node --logout all"
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+    if "successful" in out:
+        return True
+    else:
+        return False
+
+
+def iscsi_discover(portal, logger):
+    cmd = "iscsiadm -m discovery -t sendtargets -p %s" % portal
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return False
+    return True
+
+
+def iscsi_get_sessions(logger):
+    cmd = "iscsiadm --mode session"
+    ret, out = commands.getstatusoutput(cmd)
+    sessions = []
+    if "No active sessions" not in out:
+        for session in out.splitlines():
+            ip = session.split()[2].split(',')[0]
+            target = session.split()[3]
+            sessions.append((ip, target))
+    return sessions
+
+
+def is_login(target, logger):
+    sessions = iscsi_get_sessions(logger)
+    login = False
+    if target in map(lambda x:x[1], sessions):
+        login = True
+    return login
+
+
+def get_device_name(target, logger):
+    if is_login(target, logger):
+        cmd = "iscsiadm -m session -P 3"
+        ret, out = commands.getstatusoutput(cmd)
+        if ret:
+            logger.error("cmd failed: %s" % cmd)
+            logger.error("ret: %s, out: %s" % (ret, out))
+        pattern = r"Target:\s+%s.*?disk\s(\w+)\s+\S+\srunning" % target
+        device_name = re.findall(pattern, out, re.S)
+        try:
+            device_name = "/dev/%s" % device_name[0]
+        except IndexError:
+            logger.error("Can not find target '%s'." % target)
+    else:
+        logger.error("Session is not logged in yet.")
+    return device_name
+
+
+def create_partition(device, logger):
+    timeout = 10
+    cmd = "echo -e 'o\\nn\\np\\n1\\n\\n\\nw\\n' | fdisk %s" % device
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+    while timeout > 0:
+        if os.path.exists(device):
+            cmd = "dd if=/dev/zero of=%s bs=512 count=10000; sync" % device
+            ret, out = commands.getstatusoutput(cmd)
+            if ret:
+                logger.error("cmd failed: %s" % cmd)
+                logger.error("ret: %s, out: %s" % (ret, out))
+            return True
+        cmd = "partprobe %s" % device
+        ret, out = commands.getstatusoutput(cmd)
+        if ret:
+            logger.error("cmd failed: %s" % cmd)
+            logger.error("ret: %s, out: %s" % (ret, out))
+        time.sleep(1)
+        timeout = timeout - 1
+    return False
+
+
+def create_fs(device, logger):
+    cmd = "mkfs.ext3 -F %s" % device
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return False
+    return True
+
+
+def mount_iscsi(device, mountpath, logger):
+    cmd = "mount %s %s" % (device, mountpath)
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return 1
+    return 0
+
+
+def umount_iscsi(mountpath, logger):
+    cmd = "umount %s" % mountpath
+    ret, out = commands.getstatusoutput(cmd)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return 1
+    return 0
+
+
+def setup_iscsi(portal, target, mountpath, logger):
+    iscsi_discover(portal, logger)
+    if not is_login(target, logger):
+        iscsi_login(target, portal, logger)
+    time.sleep(5)
+    device = get_device_name(target, logger)
+    create_partition(device, logger)
+    create_fs(device, logger)
+    mount_iscsi(device, mountpath, logger)
+    return 0
+
+
+def cleanup_iscsi(target, mountpath, logger):
+    if is_login(target, logger):
+        iscsi_logout(logger, target)
+    umount_iscsi(mountpath, logger)
+    return 0
