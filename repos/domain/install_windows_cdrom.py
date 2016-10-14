@@ -297,6 +297,8 @@ def install_windows_cdrom(params):
 
     # Hard disk type
     hddriver = params.get('hddriver', 'virtio')
+    sourcehost = params.get('sourcehost', '')
+    sourcepath = params.get('sourcepath', '')
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
         if guestarch == "x86_64":
