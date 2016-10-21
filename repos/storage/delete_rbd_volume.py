@@ -9,11 +9,10 @@ from utils import utils
 
 required_params = ('poolname',
                    'volname',
-                   'snapshotname',
                    'cephserver',
                    'cephserverpool',
                    'flags',)
-optional_params = {}
+optional_params = {'snapshotname': ''}
 
 
 def prepare_snapshot(cephserver, cephserverpool, volname, sn, logger):
@@ -47,7 +46,7 @@ def delete_rbd_volume(params):
     logger = params['logger']
     poolname = params['poolname']
     volname = params['volname']
-    sn = params['snapshotname']
+    sn = params.get('snapshotname', '')
     cephserver = params['cephserver']
     cephserverpool = params['cephserverpool']
     flags = params['flags']
@@ -58,9 +57,10 @@ def delete_rbd_volume(params):
                 (cephserver, cephserverpool))
     logger.info("the flags given is %s" % flags)
 
-    ret = prepare_snapshot(cephserver, cephserverpool, volname, sn, logger)
-    if ret == 1:
-        return 1
+    if sn:
+        ret = prepare_snapshot(cephserver, cephserverpool, volname, sn, logger)
+        if ret == 1:
+            return 1
 
     try:
         conn = sharedmod.libvirtobj['conn']

@@ -33,9 +33,9 @@ def write_img(ip, logger):
         logger.error("write img failed: %s" % out)
         return 1
 
-    cmd = "for i in {1..50000}; do echo \"for test\" >> /mnt/test-api-file; done"
+    cmd = "for i in {1..500}; do echo \"for test\" >> /mnt/test-api-file; done"
     logger.debug("write_img: cmd: %s" % cmd)
-    ret, out = utils.remote_exec_pexpect(ip, "root", "redhat", cmd)
+    ret, out = utils.remote_exec_pexpect(ip, "root", "redhat", cmd, 360)
     if ret:
         logger.error("write img failed: %s" % out)
         return 1
@@ -49,16 +49,23 @@ def write_img(ip, logger):
 
 
 def get_size(cephserver, cephserverpool, poolname, volname, logger):
-    cmd = ("rbd -m %s -p %s du %s | grep %s | awk '{ print $3 }'" %
+    cmd = ("rbd -m %s -p %s du %s | grep %s" %
            (cephserver, cephserverpool, volname, volname))
     logger.debug("get_size: cmd: %s" % cmd)
     ret, out = commands.getstatusoutput(cmd)
     if ret:
         logger.error("get_size: failed.")
         logger.error("out: %s" % out)
-        return 1
+        return
 
-    return out
+    warn_str = ("warning: fast-diff map is not enabled for %s. operation "
+                "may be slow.\n" % volname)
+    image_size = ''
+    if warn_str in out:
+        image_size = filter(None, out.strip(warn_str).split(' '))[1]
+    else:
+        image_size = filter(None, out.split(' '))[2]
+    return image_size
 
 
 def rbd_vol_wipe(params):
