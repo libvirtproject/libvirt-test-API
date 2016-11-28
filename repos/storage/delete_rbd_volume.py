@@ -76,3 +76,29 @@ def delete_rbd_volume(params):
         return 1
 
     return 0
+
+def delete_rbd_volume_clean(params):
+    global logger
+
+    logger = params['logger']
+    volname = params['volname']
+    cephserver = params.get('cephserver', '')
+    cephserverpool = params.get('cephserverpool', '')
+    snapshotname = params.get('snapshotname', '')
+
+    if snapshotname:
+        cmd = ("rbd -m %s -p %s --image %s snap purge" %
+               (cephserver, cephserverpool, volname))
+        (ret, output) = utils.exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("Delete snapshot for %s failed." % volname)
+            logger.error("Output: %s" % output)
+
+    cmd = ("rbd -m %s -p %s ls | grep %s" %
+           (cephserver, cephserverpool, volname))
+    (ret, output) = utils.exec_cmd(cmd, shell=True)
+    if not ret:
+        cmd = "rbd -m %s -p %s remove %s" % (cephserver, cephserverpool, volname)
+        (ret, output) = utils.exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("Remove %s failure." % volname)
