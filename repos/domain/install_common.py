@@ -355,6 +355,8 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, installmethod, lo
     elif installmethod == "iso":
         xmlstr = xmlstr.replace('<boot dev="cdrom"/>', '<boot dev="hd"/>')
         xmlstr = re.sub('<disk device="cdrom".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
+        xmlstr = re.sub("<kernel>.*</kernel>\n", "", xmlstr)
+        xmlstr = re.sub("<initrd>.*</initrd>\n", "", xmlstr)
         xmlstr = re.sub('<cmdline>.*</cmdline>', '', xmlstr)
     elif installmethod == "http" or installmethod == "ftp" :
         xmlstr = re.sub("<kernel>.*</kernel>\n", "", xmlstr)

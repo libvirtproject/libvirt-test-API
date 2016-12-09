@@ -12,7 +12,6 @@ optional_params = {'cmt': 'True',
                    'mbmt': 'True',
                    'mbml': 'True'}
 
-TYPE_FILE = "/sys/devices/intel_cqm/type"
 XML_PATH = "/var/run/libvirt/qemu/"
 
 
@@ -89,14 +88,8 @@ def set_perf_events(params):
     except libvirtError, e:
         logger.error("API error message: %s, error code: %s" %
                      (e.message, e.get_error_code()))
-        err_str = ("Failed to open file '/sys/devices/intel_cqm/type'"
-                   ": No such file or directory")
-        if ((not os.path.exists(TYPE_FILE)) and (err_str in e.message)):
-            logger.info("When host don't support CMT, the path of"
-                        " '/sys/devices/intel_cqm/type' don't exist.")
-            return 0
-        elif ("Bad file descriptor" in e.message):
-            logger.info("Currently cmt/mbml/mbmt status is disable.")
+        err_str = ("argument unsupported: unable to enable host cpu perf event for")
+        if (err_str in e.message):
             return 0
 
         return 1

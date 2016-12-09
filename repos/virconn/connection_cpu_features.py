@@ -65,10 +65,6 @@ def gen_cpu_invalidsets(cpu_xml):
             <topology cores="4" sockets="1" threads="1"/>
         </cpu>
         """,
-        """
-        <cpu>
-        </cpu>
-        """,
     ]
 
 
