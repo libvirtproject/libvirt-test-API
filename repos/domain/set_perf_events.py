@@ -98,6 +98,11 @@ def set_perf_events(params):
         if (err_str in e.message):
             return 0
 
+        # For RHEL 7.3, when cmt/mbmt/mbml status are 'disable', they can't be disabled again.
+        err_str = ("Unable to disable perf event type=")
+        if (err_str in e.message and e.get_error_code() == 38):
+            return 0
+
         return 1
 
     if check_events(events, guestname):
