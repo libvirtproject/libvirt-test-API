@@ -88,7 +88,13 @@ def set_perf_events(params):
     except libvirtError, e:
         logger.error("API error message: %s, error code: %s" %
                      (e.message, e.get_error_code()))
+        # For REHL 7.4
         err_str = ("argument unsupported: unable to enable host cpu perf event for")
+        if (err_str in e.message):
+            return 0
+
+        # For RHEL 7.3
+        err_str = ("Failed to open file '/sys/devices/intel_cqm/type': No such file or directory")
         if (err_str in e.message):
             return 0
 
