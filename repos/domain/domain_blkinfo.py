@@ -14,7 +14,7 @@ QEMU_IMAGE_CLUSTER_SIZE = "qemu-img info %s |grep cluster_size |awk -F': ' '{pri
 QEMU_IMAGE_CHECK = "qemu-img check %s"
 QEMU_IMAGE_CHECK_RE = r"(\d+)/(\d+) = \d+.\d+% allocated, (\d+.\d+)% fragmented,"
 GET_CAPACITY = "qemu-img info %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'"
-GET_PHYSICAL_K = " du -B K %s | awk '{print $1}'"
+GET_PHYSICAL = "ls -al %s | awk '{print $5}'"
 
 required_params = ('guestname', 'blockdev',)
 optional_params = {}
@@ -24,6 +24,7 @@ def get_output(command, logger):
     """execute shell command
     """
     status, ret = commands.getstatusoutput(command)
+    logger.debug("cmd: %s" % command)
     if status:
         logger.error("executing " + "\"" + command + "\"" + " failed")
         logger.error(ret)
@@ -73,16 +74,15 @@ def check_block_data(blockdev, blkdata, logger):
     else:
         return 1
 
-    status, block_size_k = get_output(GET_PHYSICAL_K % blockdev, logger)
+    status, block_size_b = get_output(GET_PHYSICAL % blockdev, logger)
     format_status, img_format = get_output(QEMU_IMAGE_FORMAT % blockdev, logger)
 
     if not status and not format_status:
-        block_size_b = int(block_size_k[:-1]) * 1024
         # Temporarily, we only test the default case, assuming
         # Allocation value is equal to Physical value
         logger.info("the block size of '%s' is %s"
                     % (blockdev, block_size_b))
-        if img_format.strip() == 'qcow2' and block_size_b == blkdata[2]:
+        if img_format.strip() == 'qcow2' and int(block_size_b) == blkdata[2]:
             logger.info("Physical value's checking succeeded")
             status, cluster_size = get_output(QEMU_IMAGE_CLUSTER_SIZE % blockdev, logger)
             status, alloc_info = get_output(QEMU_IMAGE_CHECK % blockdev, logger)
@@ -101,10 +101,10 @@ def check_block_data(blockdev, blkdata, logger):
                 return 1
 
 
-        elif block_size_b == blkdata[1] and block_size_b == blkdata[2]:
+        elif block_size_b == blkdata[1] and int(block_size_b) == blkdata[2]:
             logger.info("Allocation and Physical value's checking succeeded")
         else:
-            logger.error("the block size from 'du' is %d" % block_size_b)
+            logger.error("the block size from 'ls' is %s" % block_size_b)
             logger.error("the Allocation value is %d, Physical value is %d"
                          % (blkdata[1], blkdata[2]))
             logger.error("checking failed")
