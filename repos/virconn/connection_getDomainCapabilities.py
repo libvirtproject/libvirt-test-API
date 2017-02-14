@@ -90,7 +90,7 @@ def validate_caps_from_hv(emulatorbin, logger):
     else:
         flags.append(False)
 
-    if not utils.version_compare(1, 3, 5, logger):
+    if not utils.version_compare("libvirt", 1, 3, 5, logger):
         libvirt_f = [drive, drive_forma, drive_readonly, device, blk_sg_io]
         if flags == libvirt_f:
             return True
@@ -131,7 +131,7 @@ def get_os_flags(logger):
     global drive, drive_forma, drive_readonly
     xml = minidom.parse(QEMU_CAPS)
     qemu = xml.getElementsByTagName('qemuCaps')[0]
-    if not utils.version_compare(1, 3, 5, logger):
+    if not utils.version_compare("libvirt", 1, 3, 5, logger):
         for item in qemu.getElementsByTagName('flag'):
             if item.getAttribute('name') == "drive-readonly":
                 drive_readonly = True
@@ -151,7 +151,7 @@ def get_disk_flags(logger):
     global blk_sg_io, usb_storage
     xml = minidom.parse(QEMU_CAPS)
     qemu = xml.getElementsByTagName('qemuCaps')[0]
-    if not utils.version_compare(1, 3, 5, logger):
+    if not utils.version_compare("libvirt", 1, 3, 5, logger):
         for item in qemu.getElementsByTagName('flag'):
             if item.getAttribute('name') == "blk-sg-io":
                 blk_sg_io = True
@@ -174,7 +174,7 @@ def get_hostdev_flags(logger):
     """
     global device, scsi_generic, vfio_pci
     xml = minidom.parse(QEMU_CAPS)
-    if not utils.version_compare(1, 3, 5, logger):
+    if not utils.version_compare("libvirt", 1, 3, 5, logger):
         for item in xml.getElementsByTagName('flag'):
             if item.getAttribute('name') == "device":
                 device = True
