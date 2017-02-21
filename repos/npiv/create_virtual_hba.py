@@ -1,18 +1,14 @@
 #!/usr/bin/env python
 # To test vHBA creating with npiv.
 
-import os
-import sys
 import re
 import commands
-import xml.dom.minidom
 
-import libvirt
 from libvirt import libvirtError
-
+from utils import utils
 from src import sharedmod
 
-required_params = ('wwpn',)
+required_params = ('wwpn', 'wwnn',)
 optional_params = {'xml': 'xmls/virtual_hba.xml',
                    }
 
@@ -49,11 +45,25 @@ def check_nodedev_parent(nodedev_obj, device_parent, device_name):
         return False
 
 
+def check_port_state(scsi_name, logger):
+    cmd = "cat /sys/class/fc_host/%s/port_state" % scsi_name
+    status, out = utils.exec_cmd(cmd, shell=True)
+    if status:
+        logger.error("Get port state failed: %s" % scsi_name)
+        return 1
+    logger.info("%s state is %s" % (scsi_name, out))
+    if out[0] == "Online":
+        return 0
+    else:
+        return 1
+
+
 def create_virtual_hba(params):
     """Create a vHBA with NPIV supported FC HBA."""
     global logger
     logger = params['logger']
-    wwpn = params['wwpn']
+    wwpn_node = params['wwpn']
+    wwnn_node = params['wwnn']
     xmlstr = params['xml']
 
     conn = sharedmod.libvirtobj['conn']
@@ -66,25 +76,25 @@ def create_virtual_hba(params):
         fc_xml = nodedev.XMLDesc(0)
         fc_cap = re.search('vport_ops', fc_xml)
         if fc_cap:
+            scsi_name = fc_name.split('_')
+            if check_port_state(scsi_name[1], logger):
+                continue
+
             device_parent = fc_name
             xmlstr = xmlstr.replace('PARENT', device_parent)
-            doc = xml.dom.minidom.parseString(fc_xml)
-            wwnn_node = doc.getElementsByTagName('wwnn')[0]
-            xmlstr = xmlstr.replace('WWNN', wwnn_node.childNodes[0].nodeValue.encode('ascii', 'ignore'))
+            xmlstr = xmlstr.replace('WWNN', wwnn_node)
+            xmlstr = xmlstr.replace('WWPN', wwpn_node)
             logger.info("NPIV support on '%s'" % fc_name)
             break
-        else:
-            logger.info("No NPIV capabilities on '%s'" % fc_name)
 
-    logger.debug("node device xml:\n%s" % xmlstr)
-    return 0
+    logger.info("node device xml:\n%s" % xmlstr)
 
     try:
         logger.info("creating a virtual HBA ...")
         nodedev_obj = conn.nodeDeviceCreateXML(xmlstr, 0)
         dev_name = nodedev_obj.name()
 
-        if check_nodedev_create(wwpn, dev_name) and \
+        if check_nodedev_create(wwpn_node, dev_name) and \
                 check_nodedev_parent(nodedev_obj, device_parent, dev_name):
             logger.info("the virtual HBA '%s' was created successfully"
                         % dev_name)

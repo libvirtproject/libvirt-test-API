@@ -1,0 +1,9 @@
+<device>
+  <parent>PARENT</parent>
+  <capability type="scsi_host">
+    <capability type="fc_host">
+      <wwpn>WWPN</wwpn>
+      <wwnn>WWNN</wwnn>
+    </capability>
+  </capability>
+</device>
