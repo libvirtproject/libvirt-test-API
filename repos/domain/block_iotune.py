@@ -27,7 +27,8 @@ optional_params = {'total_bytes_sec': '',
                    'write_bytes_sec_max_length': '',
                    'total_iops_sec_max_length': '',
                    'read_iops_sec_max_length': '',
-                   'write_iops_sec_max_length': ''
+                   'write_iops_sec_max_length': '',
+                   'group_name': ''
                    }
 
 
@@ -46,8 +47,8 @@ def prepare_block_iotune(params, logger):
     """prepare the block iotune parameter
     """
     params_list = {}
-    # libvirt-python version >= 2.5.0
-    if utils.version_compare("libvirt-python", 2, 5, 0, logger):
+    # libvirt-python version >= 3.0.0
+    if utils.version_compare("libvirt-python", 3, 0, 0, logger):
         name_list = ('total_bytes_sec', 'read_bytes_sec', 'write_bytes_sec',
                      'total_iops_sec', 'read_iops_sec', 'write_iops_sec',
                      'total_bytes_sec_max', 'read_bytes_sec_max',
@@ -56,13 +57,16 @@ def prepare_block_iotune(params, logger):
                      'size_iops_sec', 'total_bytes_sec_max_length',
                      'read_bytes_sec_max_length', 'write_bytes_sec_max_length',
                      'total_iops_sec_max_length', 'read_iops_sec_max_length',
-                     'write_iops_sec_max_length')
+                     'write_iops_sec_max_length', 'group_name')
     else:
         name_list = ('total_bytes_sec', 'read_bytes_sec', 'write_bytes_sec',
                      'total_iops_sec', 'read_iops_sec', 'write_iops_sec')
     for i in name_list:
         if params.get(i) is not None:
-            params_list[i] = int(params.get(i))
+            if i == "group_name":
+                params_list[i] = params.get(i)
+            else:
+                params_list[i] = int(params.get(i))
 
     logger.info("Params list: %s" % params_list)
     return params_list
