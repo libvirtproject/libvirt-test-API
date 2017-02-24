@@ -62,6 +62,7 @@ def defineSecret(params):
     global logger
 
     logger = params['logger']
+    xmlstr = params['xml']
     secret_params = {}
     secret_params['ephemeral'] = params['ephemeral']
     secret_params['private'] = params['private']
@@ -76,6 +77,7 @@ def defineSecret(params):
         if status != 0:
             logger.debug(message)
             return 1
+        xmlstr = xmlstr.replace('DISKPATH', secret_params['diskpath'])
     elif secret_params['usage_type'] == 'tls':
         if utils.version_compare("libvirt-python", 2, 5, 0, logger):
             secret_params['tlsname'] = params['tlsname']
@@ -86,7 +88,9 @@ def defineSecret(params):
         logger.error("unexpected secret usage type: %s" % usage_type)
         return 1
 
-    xmlstr = params['xml']
+    xmlstr = xmlstr.replace('EPHEMERAL', secret_params['ephemeral'])
+    xmlstr = xmlstr.replace('PRIVATE', secret_params['private'])
+    xmlstr = xmlstr.replace('SECRETUUID', secret_params['secretUUID'])
     logger.debug("secret xml:\n%s" % xmlstr)
     conn = sharedmod.libvirtobj['conn']
 

@@ -106,7 +106,6 @@ def create_virtual_hba(params):
     except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
-        logger.error("Error: fail to create %s virtual hba" % dev_name)
         return 1
 
     return 0
