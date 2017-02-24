@@ -16,7 +16,14 @@ optional_params = {'flags': 'current',
                    'cpu_cycles': '',
                    'instructions': '',
                    'cache_references': '',
-                   'cache_misses': ''}
+                   'cache_misses': '',
+                   'branch_instructions': '',
+                   'branch_misses': '',
+                   'bus_cycles': '',
+                   'ref_cpu_cycles': '',
+                   'stalled_cycles_backend': '',
+                   'stalled_cycles_frontend': '',
+                   }
 
 XML_PATH = "/var/run/libvirt/qemu/"
 
@@ -86,9 +93,11 @@ def set_perf_events(params):
         return 0
 
     events = {}
-    if utils.version_compare("libvirt-python", 2, 5, 0, logger):
+    if utils.version_compare("libvirt-python", 3, 0, 0, logger):
         params_list = ('cmt', 'mbmt', 'mbml', 'cpu_cycles', 'instructions',
-                       'cache_references', 'cache_misses')
+                       'cache_references', 'cache_misses', 'branch_instructions',
+                       'branch_misses', 'bus_cycles', 'ref_cpu_cycles',
+                       'stalled_cycles_backend', 'stalled_cycles_frontend')
     else:
         params_list = ('cmt', 'mbmt', 'mbml')
 

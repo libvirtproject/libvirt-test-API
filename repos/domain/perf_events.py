@@ -29,12 +29,17 @@ def parse_flag(params, logger):
 
 
 def check_events(events, guestname, flags, domstate, dom, logger):
-    if utils.version_compare("libvirt-python", 2, 5, 0, logger):
+    if utils.version_compare("libvirt-python", 3, 0, 0, logger):
         values = {'cmt': False, 'mbml': False, 'mbmt': False, 'cpu_cycles': False,
                   'instructions': False, 'cache_references': False,
-                  'cache_misses': False}
+                  'cache_misses': False, 'branch_instructions': False,
+                  'branch_misses': False, 'bus_cycles': False,
+                  'ref_cpu_cycles': False, 'stalled_cycles_backend': False,
+                  'stalled_cycles_frontend': False}
         event_list = ('cmt', 'mbmt', 'mbml', 'cpu_cycles', 'instructions',
-                      'cache_references', 'cache_misses')
+                      'cache_references', 'cache_misses', 'branch_instructions',
+                      'branch_misses', 'bus_cycles', 'ref_cpu_cycles',
+                      'stalled_cycles_backend', 'stalled_cycles_frontend')
     else:
         values = {'cmt': False, 'mbml': False, 'mbmt': False}
         event_list = ('cmt', 'mbmt', 'mbml')
