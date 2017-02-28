@@ -12,7 +12,11 @@ from src import sharedmod
 from utils import utils
 
 required_params = ('guestname',)
-optional_params = {'flags': 'none', 'files': None}
+optional_params = {'flags': 'none',
+                   'files': None,
+                   'wait_time': 40
+                  }
+
 test_text = "Test Content - libvirt-test-api"
 noping = False
 
@@ -97,6 +101,7 @@ def start(params):
 
     domname = params['guestname']
     logger = params['logger']
+    wait_time = params.get('wait_time', 40)
     flags = parse_flags(logger, params)
     files = create_files(logger, params)
 
@@ -180,6 +185,9 @@ def start(params):
             if test_text != output:
                 logger.err("File in guest doesn't match file in hosts!")
                 return 1
+
+    if noping:
+        time.sleep(wait_time)
 
     logger.info("Guest started successfully")
     logger.info("PASS")
