@@ -65,7 +65,7 @@ class eventListenerThread(threading.Thread):
         else:
             src_idtype, src_id = 'NO ID Avaliable', ''
 
-        logger.info("Got EVENT: From %s (%s%s), Type:%d, Detail:%d" %
+        logger.info("Got EVENT: From %s (%s%s), Type:%d, Detail:%s" %
                     (src_name, src_idtype, src_id, event_type, event_detail))
 
         if random != self.rand:
