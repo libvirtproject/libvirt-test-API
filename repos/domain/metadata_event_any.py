@@ -23,6 +23,13 @@ def metadata_event_any(params):
     This test case listen for specified event.
     """
     logger = params['logger']
+
+    if (not utils.version_compare("libvirt-python", 3, 0, 0, logger) and
+            params['event_id'] == "VIR_DOMAIN_EVENT_ID_METADATA_CHANGE"):
+        logger.info("Current libvirt-python don't support "
+                    "VIR_DOMAIN_EVENT_ID_METADATA_CHANGE flag.")
+        return 0
+
     event_id = parse_flags(params, param_name="event_id")
     event_type = parse_flags(params, param_name="event_type")
     event_detail = params.get('event_detail', None)

@@ -49,6 +49,10 @@ def vol_info(params):
     volname = params['volname']
     flags = params['flags']
 
+    if not utils.version_compare("libvirt-python", 3, 0, 0, logger):
+        logger.info("Current libvirt-python don't support infoFlags().")
+        return 0
+
     logger.info("poolname: %s" % poolname)
     logger.info("volume name: %s" % volname)
     logger.info("flags: %s" % flags)
