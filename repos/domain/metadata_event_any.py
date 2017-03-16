@@ -2,7 +2,7 @@ import threading
 import importlib
 import libvirt
 from utils.events import eventListenerThread, virEventLoopPureThread
-from utils.utils import parse_flags, get_rand_str
+from utils.utils import parse_flags, get_rand_str, version_compare
 
 from libvirt import libvirtError
 
@@ -24,7 +24,7 @@ def metadata_event_any(params):
     """
     logger = params['logger']
 
-    if (not utils.version_compare("libvirt-python", 3, 0, 0, logger) and
+    if (not version_compare("libvirt-python", 3, 0, 0, logger) and
             params['event_id'] == "VIR_DOMAIN_EVENT_ID_METADATA_CHANGE"):
         logger.info("Current libvirt-python don't support "
                     "VIR_DOMAIN_EVENT_ID_METADATA_CHANGE flag.")
