@@ -108,6 +108,10 @@ def block_iotune(params):
         logger.info("prepare block iotune:")
         iotune_param = prepare_block_iotune(params, logger)
 
+        if len(iotune_param) == 0:
+            logger.info("block iotune: parameter is empty.")
+            return 0
+
         logger.info("start to set block iotune:")
         domobj.setBlockIoTune(vdev, iotune_param, flag)
 
