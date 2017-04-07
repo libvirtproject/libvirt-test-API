@@ -33,6 +33,8 @@ import subprocess
 import hashlib
 import libvirt
 import math
+import lxml
+import lxml.etree
 
 from xml.dom import minidom
 from urlparse import urlparse
@@ -1592,3 +1594,21 @@ def get_env(section, option):
     envfile = os.path.join(pwd, 'global.cfg')
     envparser = env_parser.Envparser(envfile)
     return envparser.get_value(section, option)
+
+
+def del_file(path, logger):
+    if os.path.exists(path):
+        cmd = 'rm -f %s' % (path)
+        ret, out = exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("delete file failed.")
+            logger.error("cmd: %s, out: %s" % (cmd, out))
+            return False
+
+    return True
+
+
+def get_xml_value(dom, path):
+    dom_xml = dom.XMLDesc(0)
+    tree = lxml.etree.fromstring(dom_xml)
+    return tree.xpath(path)

@@ -1,37 +1,15 @@
 #!/usr/bin/evn python
 # To test blockJobInfo()
 
-import lxml
-import lxml.etree
-import os
-
 import libvirt
 from libvirt import libvirtError
 
-from utils import utils
-from utils.utils import parse_flags
+from utils.utils import parse_flags, del_file, get_xml_value
 
 IMG = '/var/lib/libvirt/images/test-api-blockcopy'
 
 required_params = ('guestname', 'flags',)
 optional_params = {}
-
-
-def get_path(dom):
-    dom_xml = dom.XMLDesc(0)
-    tree = lxml.etree.fromstring(dom_xml)
-    return tree.xpath("/domain/devices/disk/target/@dev")
-
-
-def del_img(img):
-    if os.path.exists(img):
-        cmd = 'rm -f %s' % (img)
-        ret, out = utils.exec_cmd(cmd, shell=True)
-        if ret:
-            logger.error("delete img failed. cmd: %s, out: %s" % (cmd, out))
-            return False
-
-    return True
 
 
 def block_job_info(params):
@@ -44,7 +22,7 @@ def block_job_info(params):
 
     conn = libvirt.open()
     domobj = conn.lookupByName(guestname)
-    path = get_path(domobj)
+    path = get_xml_value(domobj, "/domain/devices/disk/target/@dev")
 
     blockcopy_xml = "<disk><source file='%s'/></disk>" % IMG
     logger.info("blockcopy xml: %s" % blockcopy_xml)
@@ -60,7 +38,7 @@ def block_job_info(params):
         logger.info("after blockJobInfo: %s." % new_info)
 
         domobj.blockJobAbort(path[0])
-        if not del_img(IMG):
+        if not del_file(IMG, logger):
             return 1
 
         if flags == libvirt.VIR_DOMAIN_BLOCK_JOB_INFO_BANDWIDTH_BYTES:
