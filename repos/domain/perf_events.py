@@ -29,17 +29,24 @@ def parse_flag(params, logger):
 
 
 def check_events(events, guestname, flags, domstate, dom, logger):
-    if utils.version_compare("libvirt-python", 3, 0, 0, logger):
+    if utils.version_compare("libvirt-python", 3, 2, 0, logger):
         values = {'cmt': False, 'mbml': False, 'mbmt': False, 'cpu_cycles': False,
                   'instructions': False, 'cache_references': False,
                   'cache_misses': False, 'branch_instructions': False,
                   'branch_misses': False, 'bus_cycles': False,
                   'ref_cpu_cycles': False, 'stalled_cycles_backend': False,
-                  'stalled_cycles_frontend': False}
+                  'stalled_cycles_frontend': False, 'alignment_faults': False,
+                  'context_switches': False, 'cpu_clock': False,
+                  'cpu_migrations': False, 'emulation_faults': False,
+                  'page_faults': False, 'page_faults_maj': False,
+                  'page_faults_min': False, 'task_clock': False}
         event_list = ('cmt', 'mbmt', 'mbml', 'cpu_cycles', 'instructions',
                       'cache_references', 'cache_misses', 'branch_instructions',
                       'branch_misses', 'bus_cycles', 'ref_cpu_cycles',
-                      'stalled_cycles_backend', 'stalled_cycles_frontend')
+                      'stalled_cycles_backend', 'stalled_cycles_frontend',
+                      'alignment_faults', 'context_switches', 'cpu_clock',
+                      'cpu_migrations', 'emulation_faults', 'page_faults',
+                      'page_faults_maj', 'page_faults_min', 'task_clock')
     else:
         values = {'cmt': False, 'mbml': False, 'mbmt': False}
         event_list = ('cmt', 'mbmt', 'mbml')
