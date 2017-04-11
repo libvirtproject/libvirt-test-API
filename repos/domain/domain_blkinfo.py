@@ -14,7 +14,7 @@ QEMU_IMAGE_CLUSTER_SIZE = "qemu-img info %s |grep cluster_size |awk -F': ' '{pri
 QEMU_IMAGE_CHECK = "qemu-img check %s"
 QEMU_IMAGE_CHECK_RE = r"(\d+)/(\d+) = \d+.\d+% allocated, (\d+.\d+)% fragmented,"
 GET_CAPACITY = "qemu-img info %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'"
-GET_PHYSICAL = "ls -al %s | awk '{print $5}'"
+GET_PHYSICAL = "qemu-img info --output=json %s | grep 'actual-size' | awk '{print $2}' | sed 's/,//g'"
 
 required_params = ('guestname', 'blockdev',)
 optional_params = {}
@@ -104,7 +104,7 @@ def check_block_data(blockdev, blkdata, logger):
         elif block_size_b == blkdata[1] and int(block_size_b) == blkdata[2]:
             logger.info("Allocation and Physical value's checking succeeded")
         else:
-            logger.error("the block size from 'ls' is %s" % block_size_b)
+            logger.error("the block size from 'qemu-img info' is %s" % block_size_b)
             logger.error("the Allocation value is %d, Physical value is %d"
                          % (blkdata[1], blkdata[2]))
             logger.error("checking failed")

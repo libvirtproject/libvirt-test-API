@@ -319,7 +319,7 @@ def check_disk(logger):
     check the disk part in <devices>
     """
     alldevice = ["disk", "cdrom", "floppy", "lun"]
-    allbus = ["ide", "fdc", "scsi", "virtio", "usb"]
+    allbus = ["ide", "fdc", "scsi", "virtio", "usb", "sata"]
     device_api = []
     bus_api = []
     xml = minidom.parse(API_FILE)
