@@ -6,6 +6,7 @@ import commands
 
 from libvirt import libvirtError
 from src import sharedmod
+from utils.utils import exec_cmd, version_compare
 
 required_params = ('networkname',)
 optional_params = {}
@@ -14,12 +15,31 @@ optional_params = {}
 def start(params):
     """activate a defined network"""
 
-    global logger
     logger = params['logger']
-    params.pop('logger')
     networkname = params['networkname']
     logger.info("the name of virtual network to be activated is %s" %
                 networkname)
+
+    if version_compare("libvirt", 3, 2, 0, logger):
+        cmd = "ip route | grep \'default via\' | awk \'{print $5}\'"
+        logger.debug("cmd: %s" % cmd)
+        ret, out = exec_cmd(cmd, shell=True)
+        logger.debug("interface: %s" % out[0])
+        if ret != 0:
+            logger.error("fail to get interface.")
+            logger.error("ret: %s, out: %s" % (ret, out))
+            return 1
+
+        if len(out) != 0:
+            cmd = "/sbin/sysctl -w net.ipv6.conf.%s.accept_ra=2" % out[0]
+        else:
+            cmd = "/sbin/sysctl -w net.ipv6.conf.all.accept_ra=2"
+        logger.debug("cmd: %s" % cmd)
+        ret, out = exec_cmd(cmd, shell=True)
+        if ret != 0:
+            logger.error("cmd failed: %s" % cmd)
+            logger.error("ret: %s, out: %s" % (ret, out))
+            return 1
 
     conn = sharedmod.libvirtobj['conn']
 

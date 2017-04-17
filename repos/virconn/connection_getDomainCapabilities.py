@@ -9,6 +9,7 @@ from xml.dom import minidom
 from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
+from utils.utils import version_compare
 
 required_params = ('emulatorbin', 'arch', 'machine', 'virttype',)
 optional_params = {}
@@ -319,7 +320,10 @@ def check_disk(logger):
     check the disk part in <devices>
     """
     alldevice = ["disk", "cdrom", "floppy", "lun"]
-    allbus = ["ide", "fdc", "scsi", "virtio", "usb", "sata"]
+    if version_compare('libvirt', 3, 2, 0, logger):
+        allbus = ["ide", "fdc", "scsi", "virtio", "usb", "sata"]
+    else:
+        allbus = ["ide", "fdc", "scsi", "virtio", "usb"]
     device_api = []
     bus_api = []
     xml = minidom.parse(API_FILE)
