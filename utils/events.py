@@ -65,7 +65,7 @@ class eventListenerThread(threading.Thread):
         else:
             src_idtype, src_id = 'NO ID Avaliable', ''
 
-        logger.info("Got EVENT: From %s (%s%s), Type:%d, Detail:%s" %
+        logger.info("Got EVENT: From %s (%s%s), Type:%s, Detail:%s" %
                     (src_name, src_idtype, src_id, event_type, event_detail))
 
         if random != self.rand:
@@ -83,6 +83,54 @@ class eventListenerThread(threading.Thread):
         logger.info("Just as expected!")
         self.result = True
         return
+
+    def run(self):
+        while self.result is None:
+            time.sleep(1)
+
+    def stop(self):
+        self.result = False
+
+
+class eventListenerThreadThreshold(threading.Thread):
+    def __init__(self, event_source, event_id, threshold, logger, rand=None):
+        threading.Thread.__init__(self, name="libvirtEventListener")
+        self.result = None
+        self.rand = rand
+        self.logger = logger
+        self.event_id = event_id
+        self.event_source = event_source
+        self.threshold = threshold
+
+    def callbackThreshold(self, conn, source, dev, path, threshold, excess, opaque):
+        random = opaque
+        logger = self.logger
+        if hasattr(source, 'name'):
+            src_name = source.name()
+        else:
+            src_name = str(source)
+        if hasattr(source, 'UUIDString'):
+            src_idtype, src_id = 'UUID: ', source.UUIDString()
+        elif hasattr(source, 'ID'):
+            src_idtype, src_id = 'ID: ', str(source.ID())
+        else:
+            src_idtype, src_id = 'NO ID Avaliable', ''
+
+        logger.info("Got EVENT: From %s (%s%s), Threshold:%s" %
+                    (src_name, src_idtype, src_id, threshold))
+
+        if random != self.rand:
+            logger.error("Callback's opaque is currupted !")
+            return
+        if self.event_source is not None and source.name() != self.event_source:
+            logger.error("Wrong event source!")
+            return
+        if self.threshold is not None and str(threshold) != self.threshold:
+            logger.error("Wrong threshold!")
+            return
+
+        logger.info("Just as expected!")
+        self.result = True
 
     def run(self):
         while self.result is None:
