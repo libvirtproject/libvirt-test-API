@@ -1,6 +1,8 @@
 #!/usr/bin/evn python
 # To test blockCommit()
 
+import time
+
 import libvirt
 from libvirt import libvirtError
 
@@ -42,6 +44,7 @@ def block_commit(params):
         logger.info("job info: %s" % new_info)
         mirror_file = get_xml_value(domobj, "/domain/devices/disk/mirror/source/@file")
         job_type = get_xml_value(domobj, "/domain/devices/disk/mirror/@job")
+        time.sleep(1)
         domobj.blockJobAbort(path[0], libvirt.VIR_DOMAIN_BLOCK_JOB_ABORT_PIVOT)
         if len(new_info) == 4 and new_info['type'] == 4:
             if "VIR_DOMAIN_BLOCK_COMMIT_SHALLOW" in params.get('flags', None):

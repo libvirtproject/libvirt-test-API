@@ -67,6 +67,7 @@ def block_copy(params):
                         return 1
                     else:
                         logger.info("check dest file successful.")
+                domobj.blockJobAbort(path[0])
 
             time.sleep(1)
 

@@ -1,9 +1,12 @@
 #!/usr/bin/evn python
 # To test blockJobAbort()
 
+import time
+
 import libvirt
 from libvirt import libvirtError
 
+from utils import utils
 from utils.utils import parse_flags, get_rand_str, del_file, get_xml_value
 
 IMG = '/var/lib/libvirt/images/test-api-blockjobabort'
@@ -32,7 +35,11 @@ def block_job_abort(params):
     try:
         domobj.snapshotCreateXML(snapshot_xml, 16)
         domobj.blockCommit(path[0], None, None, 1048576, 4)
+        time.sleep(1)
         domobj.blockJobAbort(path[0], flags)
+        if not utils.wait_for(lambda: not domobj.blockJobInfo(path[0], 0), 5):
+            logger.error("block job abort failed.")
+            return 1
         new_info = domobj.blockJobInfo(path[0], 0)
 
     except libvirtError, e:
