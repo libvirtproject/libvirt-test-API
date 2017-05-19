@@ -14,7 +14,7 @@ QEMU_IMAGE_CLUSTER_SIZE = "qemu-img info %s |grep cluster_size |awk -F': ' '{pri
 QEMU_IMAGE_CHECK = "qemu-img check %s"
 QEMU_IMAGE_CHECK_RE = r"(\d+)/(\d+) = \d+.\d+% allocated, (\d+.\d+)% fragmented,"
 GET_CAPACITY = "qemu-img info %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'"
-GET_PHYSICAL = "qemu-img info --output=json %s | grep 'actual-size' | awk '{print $2}' | sed 's/,//g'"
+GET_PHYSICAL = "ls -l %s | awk '{print $5}'"
 
 required_params = ('guestname', 'blockdev',)
 optional_params = {}
@@ -25,6 +25,7 @@ def get_output(command, logger):
     """
     status, ret = commands.getstatusoutput(command)
     logger.debug("cmd: %s" % command)
+    logger.debug("ret: %s" % ret)
     if status:
         logger.error("executing " + "\"" + command + "\"" + " failed")
         logger.error(ret)
@@ -73,6 +74,15 @@ def check_block_data(blockdev, blkdata, logger):
             return 1
     else:
         return 1
+
+    # Add for test
+    cmd_str = "du --apparent-size --block-size=1 %s | awk '{print $1}'" % blockdev
+    get_output(cmd_str, logger)
+    cmd_str = "du --block-size=1 %s | awk '{print $1}'" % blockdev
+    get_output(cmd_str, logger)
+    cmd_str = "qemu-img info --output=json %s | grep 'actual-size' | awk '{print $2}' | sed 's/,//g'" % blockdev
+    get_output(cmd_str, logger)
+    # End for test
 
     status, block_size_b = get_output(GET_PHYSICAL % blockdev, logger)
     format_status, img_format = get_output(QEMU_IMAGE_FORMAT % blockdev, logger)

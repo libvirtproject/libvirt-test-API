@@ -203,7 +203,9 @@ def install_windows_cdrom(params):
     if guestos == "win10" or guestos == "win2016":
         xmlstr = xmlstr.replace("</os>\n  <features>", "</os>\n  <cpu mode="
                                 "'custom' match='exact'>\n    <model fallback="
-                                "'allow'>Westmere</model>\n  </cpu>\n  <features>")
+                                "'allow'>Westmere</model>\n    <feature "
+                                "policy='optional' name='aes'/>\n  </cpu>\n"
+                                "  <features>")
 
     xmlstr = xmlstr.replace('UUID', uuid)
 
