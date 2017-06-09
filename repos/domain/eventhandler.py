@@ -40,7 +40,7 @@ def detailToString(event, detail):
         ("Paused", "Migrated", "IOError", "Watchdog", "Restored", "Snapshot"),
         ("Unpaused", "Migrated", "Snapshot"),
         ("Shutdown", "Destroyed", "Crashed", "Migrated", "Saved", "Failed", "Snapshot"),
-        ("Finished", ),
+        ("Finished", "Finished after guest request", "Finished after host request"),
         ("Memory", "Disk")
     )
     return eventStrings[event][detail]

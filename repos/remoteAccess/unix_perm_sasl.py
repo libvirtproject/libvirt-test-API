@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import re
-import sys
 import commands
 from pwd import getpwnam
 
@@ -17,6 +15,7 @@ optional_params = {'unix_sock_group': 'libvirt'}
 TESTING_USER = 'testapi'
 LIBVIRTD_CONF = "/etc/libvirt/libvirtd.conf"
 SASLPASSWD2 = "/usr/sbin/saslpasswd2"
+TICKET_CACHE = "/tmp/krb5cc_0"
 
 
 def get_output(command, flag, logger):
@@ -129,7 +128,7 @@ def request_credentials(credentials, user_data):
     return 0
 
 
-def hypervisor_connecting_test(uri, auth_unix_ro, auth_unix_rw, logger):
+def hypervisor_connecting_test(uri, unix_sock_group, auth_unix_ro, auth_unix_rw, logger):
     """connect to hypervisor"""
     logger.info("connect to hypervisor")
     orginal_user = os.geteuid()
@@ -138,6 +137,22 @@ def hypervisor_connecting_test(uri, auth_unix_ro, auth_unix_rw, logger):
 
     logger.info("set euid to %d" % testing_user_id)
     os.seteuid(testing_user_id)
+
+    if utils.version_compare("libvirt", 3, 2, 0, logger):
+        cmd = "klist -A | grep 'Ticket cache: FILE:' | awk '{print $3}'"
+        ret, out = utils.exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("get ticket cache file failed.")
+            logger.error("cmd: %s" % cmd)
+            logger.error("out: %s" % out)
+            return 1
+
+        TICKET_CACHE = out[0].split(':')[1]
+        cmd = "chown %s:%s %s" % (TESTING_USER, unix_sock_group, TICKET_CACHE)
+        ret, out = utils.exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("change %s owner failed." % path)
+            return 1
 
     try:
         if auth_unix_ro == 'none':
@@ -184,13 +199,30 @@ def unix_perm_sasl(params):
 
     uri = "qemu:///system"
 
+    if utils.version_compare("libvirt", 3, 2, 0, logger):
+        cmd = ("sed -i 's/127.0.0.1   localhost/127.0.0.1   %s localhost/g'"
+               " /etc/hosts" % utils.get_local_hostname())
+        ret, out = utils.exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("set /etc/hosts failed: %s." % cmd)
+            logger.error("out: %s" % out)
+            return 1
+
+        cmd = ("sed -i 's/::1         localhost/::1         %s localhost/g'"
+               " /etc/hosts" % utils.get_local_hostname())
+        ret, out = utils.exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("set /etc/hosts failed: %s." % cmd)
+            logger.error("out: %s" % out)
+            return 1
+
     if group_sasl_set(unix_sock_group, auth_unix_ro, auth_unix_rw, logger):
         return 1
 
     if libvirt_configure(unix_sock_group, auth_unix_ro, auth_unix_rw, logger):
         return 1
 
-    if hypervisor_connecting_test(uri, auth_unix_ro, auth_unix_rw, logger):
+    if hypervisor_connecting_test(uri, unix_sock_group, auth_unix_ro, auth_unix_rw, logger):
         return 1
 
     return 0
@@ -203,9 +235,29 @@ def unix_perm_sasl_clean(params):
     auth_unix_ro = params['auth_unix_ro']
     auth_unix_rw = params['auth_unix_rw']
 
-    unix_sock_group = 'libvirt-api'
+    unix_sock_group = 'libvirt'
     if params.has_key('unix_sock_group'):
         unix_sock_group = params['unix_sock_group']
+
+    if utils.version_compare("libvirt", 3, 2, 0, logger):
+        # change owner for ticker cache file
+        cmd = "chown root:root %s" % TICKET_CACHE
+        ret, out = utils.exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("change owner failed: %s" % out)
+
+        hostname = utils.get_local_hostname()
+        cmd = "sed -i 's/127.0.0.1   %s/127.0.0.1  /g' /etc/hosts" % hostname
+        ret, out = utils.exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("set /etc/hosts failed: %s." % cmd)
+            logger.error("out: %s" % out)
+
+        cmd = "sed -i 's/::1         %s/::1        /g' /etc/hosts" % hostname
+        ret, out = utils.exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("set /etc/hosts failed: %s." % cmd)
+            logger.error("out: %s" % out)
 
     # delete "testapi" user
     libvirt_user_del = "userdel %s" % TESTING_USER
