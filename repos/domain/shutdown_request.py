@@ -9,7 +9,7 @@ required_params = ('guestname', 'flags')
 optional_params = {}
 
 
-def shutdown_event(params):
+def shutdown_request(params):
     guestname = params['guestname']
     logger = params['logger']
     flags = params['flags']
