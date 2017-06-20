@@ -250,13 +250,6 @@ def tls_libvirtd_set(target_machine, username, password,
                      listen_tls, auth_tls, logger):
     """ configure libvirtd.conf on tls server """
     logger.info("setting libvirtd.conf on tls server")
-    # open libvirtd --listen option
-    listen_open_cmd = 'echo "LIBVIRTD_ARGS=\\\"--listen\\\"" >> %s' % SYSCONFIG_LIBVIRTD
-    ret, output = utils.remote_exec_pexpect(target_machine, username,
-                                            password, listen_open_cmd)
-    if ret:
-        logger.error("failed to uncomment --listen in %s" % SYSCONFIG_LIBVIRTD)
-        return 1
 
     # set listen_tcp
     logger.info("set listen_tcp to 0 in %s" % LIBVIRTD_CONF)

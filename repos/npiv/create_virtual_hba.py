@@ -26,9 +26,9 @@ def check_nodedev_create(wwpn, device_name):
             logger.info("created virtual port name is %s" % portid)
             logger.info("The vHBA '%s' was created." % device_name)
             return True
-        else:
-            logger.info("No any virtual HBA was created")
-            return False
+
+    logger.info("No any virtual HBA was created")
+    return False
 
 
 def check_nodedev_parent(nodedev_obj, device_parent, device_name):
