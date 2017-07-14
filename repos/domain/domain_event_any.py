@@ -17,6 +17,10 @@ optional_params = {
 }
 
 
+def error_handle(unused, error):
+    logger.info("error: %s" % error)
+
+
 def domain_event_any(params):
     """
     Listen for event, event_runner will do the job to trigger the event
@@ -43,6 +47,7 @@ def domain_event_any(params):
     else:
         logger.info("Listening for events")
 
+    libvirt.registerErrorHandler(error_handle, None)
     eventLoop = virEventLoopPureThread(logger)
     eventLoop.regist(libvirt)
     eventLoop.start()

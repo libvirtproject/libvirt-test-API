@@ -12,8 +12,11 @@ def xml_file_to_str(proxy_obj, mod_case, case_params):
 
     if 'xml' in case_params:
         file_name = case_params.pop('xml')
-    elif 'xml' in optional_params:
-        file_name = optional_params['xml']
+    elif optional_params.has_key('xml'):
+        if optional_params['xml'] is None:
+            return None
+        else:
+            file_name = optional_params['xml']
     else:
         return None
 

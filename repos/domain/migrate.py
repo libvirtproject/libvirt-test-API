@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 
-import os
-import re
-import sys
-import pexpect
-import string
 import commands
+import json
 
 import libvirt
 from libvirt import libvirtError
@@ -25,7 +21,10 @@ required_params = ('transport',
                    'predstconfig',
                    'postdstconfig',
                    'flags',)
-optional_params = {'auth_tcp': '', }
+optional_params = {'auth_tcp': '',
+                   'xml': None,
+                   'migrate_uri': None,
+                   'params_list': None}
 
 
 def get_state(state):
@@ -138,6 +137,12 @@ def migrate(params):
     flags = params['flags']
 
     auth_tcp = params.get('auth_tcp', '')
+    domxml = params.get('xml', None)
+    migrate_uri = params.get('migrate_uri', None)
+    tmp_list = params.get('params_list', None)
+    params_list = None
+    if tmp_list:
+        params_list = json.loads(tmp_list)
 
     logger.info("the flags is %s" % flags)
     flags_string = flags.split("|")
@@ -206,8 +211,23 @@ def migrate(params):
 
     try:
         if(migflags & libvirt.VIR_MIGRATE_PEER2PEER):
-            logger.info("use migrate_to_uri() API to migrate")
-            srcdom.migrateToURI(dsturi, migflags, None, 0)
+            if domxml is None:
+                logger.info("use migrateToURI() to migrate")
+                srcdom.migrateToURI(dsturi, migflags, None, 0)
+            else:
+                domxml = domxml.replace('GUESTNAME', guestname)
+                domxml = domxml.replace('UUID', srcdom.UUIDString())
+                if params_list:
+                    if migrate_uri:
+                        params_list['migrate_uri'] = migrate_uri
+                    if domxml:
+                        params_list['destination_xml'] = domxml
+                    logger.info("use migrateToURI3() to migrate")
+                    srcdom.migrateToURI3(dsturi, params_list, migflags)
+                else:
+                    logger.info("migrate_uri: %s" % migrate_uri)
+                    logger.info("use migrateToURI2() to migrate")
+                    srcdom.migrateToURI2(dsturi, migrate_uri, domxml, migflags, None, 0)
         else:
             logger.info("use migrate() to migrate")
             srcdom.migrate(dstconn, migflags, None, None, 0)
