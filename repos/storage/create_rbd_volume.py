@@ -3,7 +3,6 @@
 
 import commands
 
-from xml.dom import minidom
 from libvirt import libvirtError
 from src import sharedmod
 
@@ -15,27 +14,56 @@ optional_params = {'xml': 'xmls/rbd_volume.xml',
                    }
 
 
+def check_volume_from_server(poolname, volname, cephserver, cephserverpool, logger):
+    cmd = "rbd -m %s -p %s ls | grep %s" % (cephserver, cephserverpool, volname)
+    (stat, ret) = commands.getstatusoutput(cmd)
+    if not stat:
+        logger.info("%s already exist in ceph server, remove it." % volname)
+        cmd = "rbd -m %s -p %s rm %s" % (cephserver, cephserverpool, volname)
+        (stat, ret) = commands.getstatusoutput(cmd)
+        if stat:
+            logger.info("Remove %s failed." % volname)
+            logger.debug(ret)
+            return 1
+
+    return 0
+
+
+def check_volume_from_pool(poolobj, volname, logger):
+    vol_list = poolobj.listVolumes()
+    if volname in vol_list:
+        logger.info("%s already exist in pool, remove it." % volname)
+        volobj = poolobj.storageVolLookupByName(volname)
+        volobj.delete(0)
+
+    return 0
+
+
 def create_rbd_volume(params):
     """create a volume in the rbd type of pool"""
-
-    global logger
     logger = params['logger']
     poolname = params['poolname']
     volname = params['volname']
     xmlstr = params['xml']
+    cephserver = params['cephserver']
+    cephserverpool = params['cephserverpool']
 
     logger.info("the poolname is %s, volname is %s" %
                 (poolname, volname))
+    if check_volume_from_server(poolname, volname, cephserver, cephserverpool, logger):
+        return 1
 
     try:
         conn = sharedmod.libvirtobj['conn']
         storage_pool_list = conn.listStoragePools()
 
         if poolname not in storage_pool_list:
-            logger.error("pool %s doesn't exist or not running")
+            logger.error("pool %s doesn't exist or not running" % poolname)
             return 1
 
         poolobj = conn.storagePoolLookupByName(poolname)
+        if check_volume_from_pool(poolobj, volname, logger):
+            return 1
         logger.info("before create the new volume, current volume list is %s" %
                     poolobj.listVolumes())
         logger.debug("volume xml:\n%s" % xmlstr)
@@ -54,7 +82,6 @@ def create_rbd_volume(params):
 
 
 def create_rbd_volume_clean(params):
-    global logger
     logger = params['logger']
     poolname = params['poolname']
     volname = params['volname']
@@ -62,10 +89,12 @@ def create_rbd_volume_clean(params):
     cephserverpool = params['cephserverpool']
 
     conn = sharedmod.libvirtobj['conn']
-    poollist = conn.listDefinedStoragePools()
+    poollist = conn.listStoragePools()
+    logger.debug("poollist : %s" % poollist)
     if poolname in poollist:
         poolobj = conn.storagePoolLookupByName(poolname)
         vollist = poolobj.listVolumes()
+        logger.debug("vollist : %s" % vollist)
         if volname in vollist:
             volobj = poolobj.storageVolLookupByName(volname)
             volobj.delete(0)
