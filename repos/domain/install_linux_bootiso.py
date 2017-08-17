@@ -223,7 +223,7 @@ def prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger):
     os.chdir(src_path)
 
 
-def install_linux_cdrom(params):
+def install_linux_bootiso(params):
     """ install a new virtual machine """
     logger = params['logger']
 
@@ -285,7 +285,7 @@ def install_linux_cdrom(params):
     return 0
 
 
-def install_linux_cdrom_clean(params):
+def install_linux_bootiso_clean(params):
     """ clean testing environment """
     logger = params['logger']
     guestname = params.get('guestname')

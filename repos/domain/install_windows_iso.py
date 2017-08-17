@@ -167,7 +167,7 @@ def prepare_floppy_image(guestname, guestos, guestarch,
     return 0
 
 
-def install_windows_cdrom(params):
+def install_windows_iso(params):
     """ install a windows guest virtual machine by using iso file """
     # Initiate and check parameters
     global logger
@@ -304,7 +304,7 @@ def install_windows_cdrom(params):
     return 0
 
 
-def install_windows_cdrom_clean(params):
+def install_windows_iso_clean(params):
     """ clean testing environment """
     logger = params['logger']
     guestname = params.get('guestname')

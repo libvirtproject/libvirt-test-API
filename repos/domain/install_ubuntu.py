@@ -272,23 +272,27 @@ def install_ubuntu(params):
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
     br = params.get('bridgename', 'virbr0')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    hddriver = params.get('hddriver', 'virtio')
+    seeksize = params.get('disksize', 10)
+    imageformat = params.get('imageformat', 'raw')
+    graphic = params.get('graphic', 'spice')
+    installtype = params.get('type', 'define')
+    nicdriver = params.get('nicdriver', 'virtio')
+    video = params.get('video', 'qxl')
 
-    logger.info("the name of guest is %s" % guestname)
+    logger.info("guestname: %s" % guestname)
+    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s, %s(storage)" %
+                (guestos, guestarch, nicdriver, hddriver, imageformat,
+                 graphic, video, "local"))
 
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
 
-    logger.info("the macaddress is %s" %
-                params.get('macaddr', '52:54:00:97:e4:28'))
-
-    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     xmlstr = xmlstr.replace('DISKPATH', diskpath)
 
     # prepare the image
-    hddriver = params.get('hddriver', 'virtio')
     logger.info("disk image is %s" % diskpath)
-    seeksize = params.get('disksize', 10)
-    imageformat = params.get('imageformat', 'raw')
     if hddriver != 'lun' and hddriver != "scsilun":
         logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
         disk_create = "qemu-img create -f %s %s %sG" % \
@@ -336,7 +340,6 @@ def install_ubuntu(params):
                                 "<disk type='file' device='cdrom'>")
 
     # prepare the graphic
-    graphic = params.get('graphic', 'spice')
     if graphic == 'spice':
         xmlstr = xmlstr.replace('vnc', 'spice')
     logger.info('the graphic type of VM is %s' % graphic)
@@ -380,7 +383,6 @@ def install_ubuntu(params):
         bootcd = custom + "/custom.iso"
     xmlstr = xmlstr.replace('CUSTOMISO', bootcd)
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
-    installtype = params.get('type', 'define')
     if installtype == 'define':
         logger.info('define guest from xml description')
         try:

@@ -27,7 +27,7 @@ optional_params = {'memory': 1048576,
                    }
 
 
-def install_linux_net(params):
+def install_linux_http(params):
     """install a new virtual machine by http method"""
     # Initiate and check parameters
     logger = params['logger']
@@ -81,7 +81,7 @@ def install_linux_net(params):
     return 0
 
 
-def install_linux_net_clean(params):
+def install_linux_http_clean(params):
     """ clean testing environment """
     logger = params['logger']
     guestname = params.get('guestname')
