@@ -133,9 +133,15 @@ def get_ostree(rhelnewest, guestos, guestarch, logger):
         release_ver = get_value_from_global("other", "release_ver")
         location = utils.get_local_hostname()
         if "pek2" in location:
-            version = rhelnewest.split("/")[6].split("-")[1]
+            if "RHEL-ALT" in rhelnewest:
+                version = rhelnewest.split("/")[6].split("-")[2]
+            else:
+                version = rhelnewest.split("/")[6].split("-")[1]
         else:
-            version = rhelnewest.split("/")[4].split("-")[1]
+            if "RHEL-ALT" in rhelnewest:
+                version = rhelnewest.split("/")[4].split("-")[2]
+            else:
+                version = rhelnewest.split("/")[4].split("-")[1]
         if version in release_ver:
             ostree = get_release_ostree(guestos, guestarch)
         else:
@@ -153,9 +159,15 @@ def get_kscfg(rhelnewest, guestos, guestarch, installmethod, logger):
         release_ver = get_value_from_global("other", "release_ver")
         location = utils.get_local_hostname()
         if "pek2" in location:
-            version = rhelnewest.split("/")[6].split("-")[1]
+            if "RHEL-ALT" in rhelnewest:
+                version = rhelnewest.split("/")[6].split("-")[2]
+            else:
+                version = rhelnewest.split("/")[6].split("-")[1]
         else:
-            version = rhelnewest.split("/")[4].split("-")[1]
+            if "RHEL-ALT" in rhelnewest:
+                version = rhelnewest.split("/")[4].split("-")[2]
+            else:
+                version = rhelnewest.split("/")[4].split("-")[1]
         if version in release_ver:
             kscfg = get_value_from_global("guest", os_arch + "_%s_ks" % installmethod)
         else:
