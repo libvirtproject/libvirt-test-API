@@ -249,13 +249,15 @@ def get_rand_str(length=32):
     return chars
 
 
-def get_dom_mac_addr(domname):
+def get_dom_mac_addr(domname, conn_uri=""):
     """Get mac address of a domain
 
        Return mac address on SUCCESS or None on FAILURE
     """
-    cmd = ("virsh dumpxml %s | grep 'mac address' | "
-           "awk -F'=' '{print $2}' | tr -d \"[\'/>]\"" % domname)
+    if conn_uri:
+        conn_uri = "-c " + conn_uri
+    cmd = ("virsh %s dumpxml %s | grep 'mac address' | "
+           "awk -F'=' '{print $2}' | tr -d \"[\'/>]\"" % (conn_uri, domname))
 
     (ret, out) = commands.getstatusoutput(cmd)
     if ret == 0:

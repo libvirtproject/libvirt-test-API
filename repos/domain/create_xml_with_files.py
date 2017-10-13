@@ -152,7 +152,7 @@ def create_xml_with_files(params):
         return 1
 
     logger.info("get the mac address of vm %s" % guestname)
-    mac = utils.get_dom_mac_addr(guestname)
+    mac = utils.get_dom_mac_addr(guestname, "lxc:///")
     logger.info("the mac address of vm %s is %s" % (guestname, mac))
 
     stream = conn.newStream(libvirt.VIR_STREAM_NONBLOCK)
