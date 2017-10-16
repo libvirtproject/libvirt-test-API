@@ -12,7 +12,7 @@ optional_params = {
     "event_type": None,
     "event_detail": None,
     "event_domain": None,
-    "event_timeout": 5,
+    "event_timeout": 10,
     "event_runner_params": {}
 }
 
@@ -40,7 +40,7 @@ def domain_event_any(params):
     event_runner = params.get('event_runner', None)
     event_domain = params.get('event_domain', None)
     event_runner_params = params.get('event_runner_params', {})
-    event_timeout = int(params.get('event_timeout', 5))
+    event_timeout = int(params.get('event_timeout', 10))
 
     if event_domain:
         logger.info("Listening for event on domain %s" % event_domain)
