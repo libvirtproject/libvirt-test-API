@@ -5,7 +5,6 @@
 import os
 import math
 import commands
-from xml.dom import minidom
 
 import libvirt
 from libvirt import libvirtError
@@ -31,8 +30,13 @@ def get_cgroup_setting(guestname):
         cgroup_path = CGROUP_PATH
     else:
         cgroup_path = "/sys/fs%s" % CGROUP_PATH
-
-    cmd = "lscgroup | grep %s | grep memory:" % guestname
+    """Delete underline, since cgroup filepath don't have underline.
+       like the following:
+       guestname is "virtlab_test",but path is "/machine.slice/
+       machine-qemu\x2d37\x2dvirtlabtest.scope
+     """
+    guestname_cgroup = guestname.replace('_', '')
+    cmd = "lscgroup | grep %s | grep memory:" % (guestname_cgroup)
     ret, out = commands.getstatusoutput(cmd)
     if ret:
         logger.error(out)
@@ -106,12 +110,12 @@ def memory_params_live(params):
         ret_pos = domobj.memoryParameters(flags)
         logger.info("%s memory parameters is %s" % (guestname, ret_pos))
 
-        if ret_pos == param_dict:
-            logger.info("memory parameters is as expected")
-        else:
-            logger.error("memory parameters is not as expected")
-            return 1
+        for i in param_dict.keys():
+            if math.fabs(ret_pos[i] - param_dict[i]) > 3:
+                logger.error("%s value is not as expected" % i)
+                return 1
 
+        logger.info("memory parameters is as expected")
         logger.info("check memory parameters in cgroup")
         ret = get_cgroup_setting(guestname)
         if ret == 1:
@@ -119,7 +123,7 @@ def memory_params_live(params):
             return 1
 
         for i in param_dict.keys():
-            if math.fabs(param_dict[i] - ret[i]) > 1:
+            if math.fabs(param_dict[i] - ret[i]) > 3:
                 logger.error("%s value not match with cgroup setting" % i)
                 return 1
 
