@@ -6,7 +6,7 @@ import re
 
 import libvirt
 from libvirt import libvirtError
-
+from utils import utils
 from src import sharedmod
 
 QEMU_IMAGE_FORMAT = "qemu-img info %s |grep format |awk -F': ' '{print $2}'"
@@ -84,7 +84,11 @@ def check_block_data(blockdev, blkdata, logger):
     get_output(cmd_str, logger)
     # End for test
 
-    status, block_size_b = get_output(GET_PHYSICAL % blockdev, logger)
+    if utils.version_compare("libvirt", 2, 5, 0, logger):
+        status, block_size_b = get_output(GET_PHYSICAL % blockdev, logger)
+    else:
+        cmd = "du --block-size=1 %s | awk '{print $1}'" % blockdev
+        status, block_size_b = get_output(cmd, logger)
     format_status, img_format = get_output(QEMU_IMAGE_FORMAT % blockdev, logger)
 
     if not status and not format_status:

@@ -6,7 +6,7 @@ import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
-from utils.utils import parse_flags
+from utils.utils import parse_flags, version_compare
 
 required_params = ('guestname',)
 optional_params = {'flags': None}
@@ -37,10 +37,16 @@ def job_stats(params):
         return 1
 
     if flags == libvirt.VIR_DOMAIN_JOB_STATS_COMPLETED:
-        if info['operation'] == 8:
-            logger.info("PASS: get job stats ok.")
+        if version_compare("libvirt", 2, 5, 0, logger):
+            if info['operation'] == 8:
+                logger.info("PASS: get job stats ok.")
+            else:
+                logger.error("FAIL: get job stats failed.")
         else:
-            logger.error("FAIL: get job stats failed.")
+            if info['type'] == 3:
+                logger.info("PASS: get job stats ok.")
+            else:
+                logger.error("FAIL: get job stats failed.")
     else:
         if info['type'] == 0:
             logger.info("PASS: get job stats ok.")

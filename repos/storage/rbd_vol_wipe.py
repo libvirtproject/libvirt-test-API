@@ -14,7 +14,7 @@ optional_params = {'xml': 'xmls/rbd_disk.xml',}
 def write_img(ip, logger):
     cmd = "mkfs.ext4 /dev/vdb"
     logger.debug("write_img: cmd: %s" % cmd)
-    ret, out = utils.remote_exec_pexpect(ip, "root", "redhat", cmd)
+    ret, out = utils.remote_exec_pexpect(ip, "root", "redhat", cmd, 120)
     if ret:
         logger.error("write img failed: %s" % out)
         return 1

@@ -27,16 +27,15 @@ def domain_event_any(params):
     This test case listen for specified event.
     """
     logger = params['logger']
+    event_detail = parse_flags(params, param_name="event_detail")
 
     if (not version_compare("libvirt-python", 3, 2, 0, logger) and
-            (params['event_detail'] == "VIR_DOMAIN_EVENT_SHUTDOWN_GUEST" or
-             params['event_detail'] == "VIR_DOMAIN_EVENT_SHUTDOWN_HOST")):
-        logger.info("Current libvirt-python don't support %s" % params['event_detail'])
+            (event_detail == 1 or event_detail == 2)):
+        logger.info("Current libvirt-python don't support %s" % event_detail)
         return 0
 
     event_id = parse_flags(params, param_name="event_id")
     event_type = parse_flags(params, param_name="event_type")
-    event_detail = parse_flags(params, param_name="event_detail")
     event_runner = params.get('event_runner', None)
     event_domain = params.get('event_domain', None)
     event_runner_params = params.get('event_runner_params', {})

@@ -2,6 +2,7 @@
 
 import commands
 import json
+import time
 
 import libvirt
 from libvirt import libvirtError
@@ -120,6 +121,28 @@ def check_virtlogd(target_machine, username, password, logger):
     return 0
 
 
+def guest_clean(conn, guestname, logger):
+    running_guests = []
+    ids = conn.listDomainsID()
+    for id in ids:
+        obj = conn.lookupByID(id)
+        running_guests.append(obj.name())
+
+    if guestname in running_guests:
+        logger.info("destroy %s" % guestname)
+        domobj = conn.lookupByName(guestname)
+        domobj.destroy()
+
+    defined_guests = conn.listDefinedDomains()
+
+    if guestname in defined_guests:
+        logger.info("undefine %s" % guestname)
+        domobj = conn.lookupByName(guestname)
+        domobj.undefine()
+
+    return 0
+
+
 def migrate(params):
     """ migrate a guest back and forth between two machines"""
     logger = params['logger']
@@ -139,6 +162,14 @@ def migrate(params):
     auth_tcp = params.get('auth_tcp', '')
     domxml = params.get('xml', None)
     migrate_uri = params.get('migrate_uri', None)
+    if not utils.version_compare("libvirt", 3, 2, 0, logger):
+        if migrate_uri is not None:
+            logger.info("Current libvirt don't support migrate_uri.")
+            conn = libvirt.open(None)
+            time.sleep(10)
+            guest_clean(conn, guestname, logger)
+            return 0
+
     tmp_list = params.get('params_list', None)
     params_list = None
     if tmp_list:
