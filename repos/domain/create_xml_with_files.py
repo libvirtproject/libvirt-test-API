@@ -129,7 +129,7 @@ def create_xml_with_files(params):
         logger.error("fail to create domain %s" % guestname)
         return 1
 
-    if flags == "start_paused":
+    if flags & START_PAUSED:
         state = domobj.info()[0]
         if state == libvirt.VIR_DOMAIN_PAUSED:
             logger.info("guest start with state paused successfully")
@@ -137,7 +137,7 @@ def create_xml_with_files(params):
         else:
             logger.error("guest state error")
             return 1
-    if flags == "start_autodestroy":
+    if flags & START_AUTODESTROY:
         state = domobj.info()[0]
         if state == libvirt.VIR_DOMAIN_AUTODESTROY:
             logger.info("guest start with state autodestroy successfully")
