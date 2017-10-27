@@ -1,7 +1,6 @@
-import libvirt
 import importlib
 from src import sharedmod
-from utils.events import eventListenerThread, virEventLoopPureThread
+from utils.events import eventListenerThread
 from utils.utils import parse_flags, get_rand_str
 
 
@@ -34,10 +33,6 @@ def pool_event_any(params):
         logger.info("Listening for event on pool %s" % poolname)
     else:
         logger.info("Listening for events")
-
-    eventLoop = virEventLoopPureThread(logger)
-    eventLoop.regist(libvirt)
-    eventLoop.start()
 
     #String, use it to verify the integrity of callback's extra param
 
@@ -87,4 +82,3 @@ def pool_event_any(params):
         except Exception as e:
             logger.error("Failed to unregist. %s", e)
         eventListener.stop()
-        eventLoop.stop()

@@ -1,6 +1,6 @@
 import importlib
 import libvirt
-from utils.events import eventListenerThreadThreshold, virEventLoopPureThread
+from utils.events import eventListenerThreadThreshold
 from utils.utils import parse_flags, get_rand_str
 
 required_params = ('event_runner', )
@@ -32,10 +32,6 @@ def threshold_event_any(params):
     logger.info("event_runner_params: %s" % event_runner_params)
     event_runner_params = dict(eval(str(event_runner_params)))
     threshold = event_runner_params['threshold']
-
-    eventLoop = virEventLoopPureThread(logger)
-    eventLoop.regist(libvirt)
-    eventLoop.start()
 
     #String, use it to verify the integrity of callback's extra param
     random_str = get_rand_str()
@@ -79,5 +75,3 @@ def threshold_event_any(params):
         except Exception:
             logger.error("Failed to unregist.")
         eventListener.stop()
-        eventLoop.stop()
-        eventLoop.unregist(libvirt)

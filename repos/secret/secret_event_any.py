@@ -1,7 +1,6 @@
 import libvirt
 import importlib
-from src import sharedmod
-from utils.events import eventListenerThread, virEventLoopPureThread
+from utils.events import eventListenerThread
 from utils.utils import parse_flags, get_rand_str
 
 required_params = ('event_runner',)
@@ -24,10 +23,6 @@ def secret_event_any(params):
     event_runner = params.get('event_runner', None)
     event_runner_params = params.get('event_runner_params', {})
     event_timeout = int(params.get('event_timeout', 5))
-
-    eventLoop = virEventLoopPureThread(logger)
-    eventLoop.regist(libvirt)
-    eventLoop.start()
 
     #String, use it to verify the integrity of callback's extra param
 
@@ -76,4 +71,3 @@ def secret_event_any(params):
         except Exception as e:
             logger.error("Failed to unregist. %s", e)
         eventListener.stop()
-        eventLoop.stop()

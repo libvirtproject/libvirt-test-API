@@ -1,7 +1,6 @@
-import libvirt
 import importlib
 from src import sharedmod
-from utils.events import eventListenerThread, virEventLoopPureThread
+from utils.events import eventListenerThread
 from utils.utils import parse_flags, get_rand_str
 
 required_params = ('event_runner',)
@@ -31,10 +30,6 @@ def nodedev_event_any(params):
         logger.info("Listening for event on %s" % nodedev_name)
     else:
         logger.info("Listening for events")
-
-    eventLoop = virEventLoopPureThread(logger)
-    eventLoop.regist(libvirt)
-    eventLoop.start()
 
     #String, use it to verify the integrity of callback's extra param
 
@@ -83,4 +78,3 @@ def nodedev_event_any(params):
         except Exception as e:
             logger.error("Failed to unregist. %s", e)
         eventListener.stop()
-        eventLoop.stop()

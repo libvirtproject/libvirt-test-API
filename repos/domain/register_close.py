@@ -1,7 +1,6 @@
 import libvirt
 import threading
 
-from utils.events import virEventLoopPureThread
 from utils import utils
 
 required_params = ()
@@ -30,10 +29,6 @@ def restart_libvirtd(conn, logger):
 
 def register_close(params):
     logger = params['logger']
-
-    eventLoop = virEventLoopPureThread(logger)
-    eventLoop.regist(libvirt)
-    eventLoop.start()
 
     conn = libvirt.openReadOnly("qemu:///system")
     conn.registerCloseCallback(connCloseCallback, None)

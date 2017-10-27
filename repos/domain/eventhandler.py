@@ -1,19 +1,11 @@
 #!/usr/bin/env python
 # To test domain events
 
-import os
-import re
-import sys
 import time
-import threading
 
 import libvirt
 from libvirt import libvirtError
 
-from src import sharedmod
-
-LoopThread = None
-looping = True
 STATE = None
 
 required_params = ('guestname',)
@@ -59,36 +51,6 @@ def check_domain_running(conn, guestname, logger):
         return 1
     else:
         return 0
-
-
-def loop_run():
-    global looping
-    while looping:
-        libvirt.virEventRunDefaultImpl()
-
-    return 0
-
-
-def loop_stop(conn):
-    """stop event thread and deregister domain callback function"""
-    global looping
-    global LoopThread
-    looping = False
-    conn.domainEventDeregister(lifecycle_callback)
-    LoopThread.join()
-
-
-def loop_start():
-    """start running default event handler implementation"""
-    global LoopThread
-    libvirt.virEventRegisterDefaultImpl()
-    loop_run_arg = ()
-    LoopThread = threading.Thread(
-        target=loop_run,
-        args=loop_run_arg,
-        name="libvirtEventLoop")
-    LoopThread.setDaemon(True)
-    LoopThread.start()
 
 
 def lifecycle_callback(conn, domain, event, detail, opaque):
@@ -229,8 +191,6 @@ def eventhandler(params):
     guestname = params['guestname']
     logger.info("the guestname is %s" % guestname)
 
-    loop_start()
-
     conn = libvirt.open(None)
 
     if check_domain_running(conn, guestname, logger):
@@ -252,5 +212,6 @@ def eventhandler(params):
     if resume_event(domobj, guestname, timeout, logger):
         logger.warn("resume_event error")
 
-    loop_stop(conn)
+    conn.domainEventDeregister(lifecycle_callback)
+
     return 0

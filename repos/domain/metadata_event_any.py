@@ -1,10 +1,7 @@
-import threading
 import importlib
 import libvirt
-from utils.events import eventListenerThread, virEventLoopPureThread
+from utils.events import eventListenerThread
 from utils.utils import parse_flags, get_rand_str, version_compare
-
-from libvirt import libvirtError
 
 required_params = ('event_runner', )
 optional_params = {
@@ -42,10 +39,6 @@ def metadata_event_any(params):
         logger.info("Listening for event on domain %s" % event_domain)
     else:
         logger.info("Listening for events")
-
-    eventLoop = virEventLoopPureThread(logger)
-    eventLoop.regist(libvirt)
-    eventLoop.start()
 
     #String, use it to verify the integrity of callback's extra param
     random_str = get_rand_str()
@@ -90,5 +83,3 @@ def metadata_event_any(params):
         except Exception:
             logger.error("Failed to unregist.")
         eventListener.stop()
-        eventLoop.stop()
-        eventLoop.unregist(libvirt)
