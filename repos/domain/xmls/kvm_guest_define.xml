@@ -43,5 +43,13 @@
     </video>
     <memballoon model='virtio'>
     </memballoon>
+    <pm>
+        <suspend-to-mem enabled='yes'/>
+        <suspend-to-disk enabled='yes'/>
+    </pm>
+    <channel type='unix'>
+        <target type='virtio' name='org.qemu.guest_agent.0'/>
+        <address type='virtio-serial' controller='0' bus='0' port='1'/>
+    </channel>
   </devices>
 </domain>
