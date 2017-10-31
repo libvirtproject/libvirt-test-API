@@ -9,11 +9,11 @@ from libvirt import libvirtError
 from utils import utils
 from src import sharedmod
 
-QEMU_IMAGE_FORMAT = "qemu-img info %s |grep format |awk -F': ' '{print $2}'"
-QEMU_IMAGE_CLUSTER_SIZE = "qemu-img info %s |grep cluster_size |awk -F': ' '{print $2}'"
-QEMU_IMAGE_CHECK = "qemu-img check %s"
+QEMU_IMAGE_FORMAT = "qemu-img info -U %s |grep format |awk -F': ' '{print $2}'"
+QEMU_IMAGE_CLUSTER_SIZE = "qemu-img info -U %s |grep cluster_size |awk -F': ' '{print $2}'"
+QEMU_IMAGE_CHECK = "qemu-img check -U %s"
 QEMU_IMAGE_CHECK_RE = r"(\d+)/(\d+) = \d+.\d+% allocated, (\d+.\d+)% fragmented,"
-GET_CAPACITY = "qemu-img info %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'"
+GET_CAPACITY = "qemu-img info -U %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'"
 GET_PHYSICAL = "ls -l %s | awk '{print $5}'"
 
 required_params = ('guestname', 'blockdev',)
@@ -80,7 +80,7 @@ def check_block_data(blockdev, blkdata, logger):
     get_output(cmd_str, logger)
     cmd_str = "du --block-size=1 %s | awk '{print $1}'" % blockdev
     get_output(cmd_str, logger)
-    cmd_str = "qemu-img info --output=json %s | grep 'actual-size' | awk '{print $2}' | sed 's/,//g'" % blockdev
+    cmd_str = "qemu-img info -U --output=json %s | grep 'actual-size' | awk '{print $2}' | sed 's/,//g'" % blockdev
     get_output(cmd_str, logger)
     # End for test
 

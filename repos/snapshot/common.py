@@ -2,7 +2,7 @@
 
 from utils import utils
 
-QEMU_IMAGE_FORMAT = "qemu-img info %s |grep format |awk -F': ' '{print $2}'"
+QEMU_IMAGE_FORMAT = "qemu-img info -U %s |grep format |awk -F': ' '{print $2}'"
 
 
 def check_domain_image(domobj, guestname, format_required, logger):

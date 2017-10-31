@@ -13,7 +13,7 @@ optional_params = {}
 
 def check_vol_info(info, vol_path, flags, logger):
     # check capacity
-    cmd = "qemu-img info %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'" % vol_path
+    cmd = "qemu-img info -U %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'" % vol_path
     ret, out = utils.exec_cmd(cmd, shell=True)
     if ret:
         logger.error("cmd: %s" % cmd)
