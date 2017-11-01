@@ -235,6 +235,7 @@ class virEventLoopPureThread(threading.Thread):
         self.nextTimerID = 1
         self.handles = []
         self.timers = []
+        self.cleanup = []
         self.quit = False
         self.logger = logger
 
@@ -306,6 +307,11 @@ class virEventLoopPureThread(threading.Thread):
     def run_once(self):
         sleep = -1
         self.runningPoll = True
+
+        for opaque in self.cleanup:
+            libvirt.virEventInvokeFreeCallback(opaque)
+        self.cleanup = []
+
         try:
             next = self.next_timeout()
             #self.logger.debug("Next timeout due at %d" % next)
@@ -432,6 +438,7 @@ class virEventLoopPureThread(threading.Thread):
         for h in self.handles:
             if h.get_id() == handleID:
                 self.poll.unregister(h.get_fd())
+                self.cleanup.append(h.opaque)
                 #self.logger.debug("Remove handle %d fd %d" %
                 #                  (handleID, h.get_fd()))
             else:
@@ -445,7 +452,9 @@ class virEventLoopPureThread(threading.Thread):
         for h in self.timers:
             if h.get_id() != timerID:
                 timers.append(h)
+            else:
                 #self.logger.debug("Remove timer %d" % timerID)
+                self.cleanup.append(h.opaque)
         self.timers = timers
         self.interrupt()
 
