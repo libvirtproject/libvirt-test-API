@@ -36,6 +36,7 @@ optional_params = {'memory': 1048576,
                    'guestmachine': 'pc',
                    'networksource': 'default',
                    'bootdev': 'hd',
+                   'vncpasswd': '',
                    }
 
 
