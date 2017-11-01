@@ -54,7 +54,6 @@ def set_guest_vcpus(params):
     """
 
     logger = params['logger']
-    params.pop('logger')
     guestname = params['guestname']
     username = params['username']
     password = params['password']
