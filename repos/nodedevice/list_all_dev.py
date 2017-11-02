@@ -4,7 +4,7 @@ import os
 import re
 import libvirt
 from libvirt import libvirtError
-
+from utils import utils
 from src import sharedmod
 
 required_params = ('flags', )
@@ -47,6 +47,8 @@ def parse_flags(logger, params):
             ret = ret | libvirt.VIR_CONNECT_LIST_NODE_DEVICES_CAP_MDEV
         elif flag == 'mdev_type':
             ret = ret | libvirt.VIR_CONNECT_LIST_NODE_DEVICES_CAP_MDEV_TYPES
+        elif flag == 'ccw':
+            ret = ret | libvirt.VIR_CONNECT_LIST_NODE_DEVICES_CAP_CCW_DEV
         else:
             logger.error("flag is illegal.")
             return -1
@@ -110,6 +112,28 @@ def check_mdev_type(devs, logger):
     return 0
 
 
+def check_ccw(devs, logger):
+    ccw_path = "/sys/bus/ccw/devices/"
+    path_list = []
+
+    if len(devs) == 0 and not os.path.exists(ccw_path):
+        logger.info("host don't support ccw.")
+        return 0
+
+    for dev in devs:
+        if "ccw_" in dev.name():
+            tmp = dev.name().strip('ccw_')
+            path_list.append(re.sub("_", ".", tmp, 2))
+    for path in path_list:
+        if os.path.exists(ccw_path + path):
+            logger.info("check ccw %s successful." % path)
+        else:
+            logger.error("check ccw %s failed." % path)
+            return 1
+
+    return 0
+
+
 def list_all_dev(params):
     """Check node deveice list"""
     logger = params['logger']
@@ -131,6 +155,13 @@ def list_all_dev(params):
             return 1
     elif "mdev" in flag:
         if check_mdev(devs, logger):
+            return 1
+    elif "ccw" in flag:
+        if not utils.version_compare("libvirt-python", 3, 8, 0, logger):
+            logger.info("Current libvirt-python don't support ccw dev.")
+            return 0
+
+        if check_ccw(devs, logger):
             return 1
 
     return 0
