@@ -1,7 +1,7 @@
 import importlib
 from src import sharedmod
 from utils.events import eventListenerThread
-from utils.utils import parse_flags, get_rand_str
+from utils.utils import parse_flags, get_rand_str, version_compare
 
 
 required_params = ('event_runner', )
@@ -28,6 +28,14 @@ def pool_event_any(params):
     event_runner = params.get('event_runner', None)
     event_runner_params = params.get('event_runner_params', {})
     event_timeout = int(params.get('event_timeout', 5))
+
+    tmp_event_type = params['event_type']
+    if (tmp_event_type == "VIR_STORAGE_POOL_EVENT_CREATED" or
+        tmp_event_type == "VIR_STORAGE_POOL_EVENT_DELETED"):
+        logger.info("tmp_event_type: %s" % tmp_event_type)
+        if not version_compare("libvirt-python", 3, 8, 0, logger):
+            logger.info("Current libvirt-python don't support %s" % tmp_event_type)
+            return 0
 
     if poolname:
         logger.info("Listening for event on pool %s" % poolname)
