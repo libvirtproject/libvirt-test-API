@@ -1,7 +1,7 @@
 import importlib
 import libvirt
-from utils.events import eventListenerThreadThreshold
-from utils.utils import parse_flags, get_rand_str
+from utils.events import eventListenerThreadThreshold, eventLoopPure
+from utils.utils import parse_flags, get_rand_str, version_compare
 
 required_params = ('event_runner', )
 optional_params = {
@@ -23,6 +23,9 @@ def threshold_event_any(params):
     event_domain = params.get('event_domain', None)
     event_runner_params = params.get('event_runner_params', {})
     event_timeout = int(params.get('event_timeout', 5))
+
+    if not version_compare("libvirt-python", 3, 8, 0, logger):
+        eventLoopPure(logger)
 
     if event_domain:
         logger.info("Listening for event on domain %s" % event_domain)

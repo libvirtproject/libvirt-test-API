@@ -1,6 +1,6 @@
 import importlib
 import libvirt
-from utils.events import eventListenerThread
+from utils.events import eventListenerThread, eventLoopPure
 from utils.utils import parse_flags, get_rand_str, version_compare
 
 required_params = ('event_runner', )
@@ -26,6 +26,9 @@ def metadata_event_any(params):
         logger.info("Current libvirt-python don't support "
                     "VIR_DOMAIN_EVENT_ID_METADATA_CHANGE flag.")
         return 0
+
+    if not version_compare("libvirt-python", 3, 8, 0, logger):
+        eventLoopPure(logger)
 
     event_id = parse_flags(params, param_name="event_id")
     event_type = parse_flags(params, param_name="event_type")

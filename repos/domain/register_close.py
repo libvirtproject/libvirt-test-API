@@ -1,7 +1,8 @@
 import libvirt
 import threading
 
-from utils import utils
+from utils.events import eventLoopPure
+from utils.utils import exec_cmd, version_compare
 
 required_params = ()
 optional_params = {}
@@ -17,7 +18,7 @@ def connCloseCallback(conn, reason, opaque):
 
 def restart_libvirtd(conn, logger):
     cmd = "service libvirtd restart"
-    ret, out = utils.exec_cmd(cmd, shell=True)
+    ret, out = exec_cmd(cmd, shell=True)
     logger.info("cmd: %s" % cmd)
     if ret:
         logger.error("restart libvirtd failed.")
@@ -29,6 +30,9 @@ def restart_libvirtd(conn, logger):
 
 def register_close(params):
     logger = params['logger']
+
+    if not version_compare("libvirt-python", 3, 8, 0, logger):
+        eventLoopPure(logger)
 
     conn = libvirt.openReadOnly("qemu:///system")
     conn.registerCloseCallback(connCloseCallback, None)

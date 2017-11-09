@@ -5,6 +5,7 @@ import select
 import threading
 import libvirt
 
+from utils import version_compare
 
 class eventListenerThread(threading.Thread):
     def __init__(self, event_source, event_id, event_type, event_detail, logger, rand=None):
@@ -235,9 +236,10 @@ class virEventLoopPureThread(threading.Thread):
         self.nextTimerID = 1
         self.handles = []
         self.timers = []
-        self.cleanup = []
         self.quit = False
         self.logger = logger
+        if version_compare("libvirt-python", 3, 7, 0, logger):
+            self.cleanup = []
 
         # The event loop can be used from multiple threads at once.
         # Specifically while the main thread is sleeping in poll()
@@ -308,9 +310,10 @@ class virEventLoopPureThread(threading.Thread):
         sleep = -1
         self.runningPoll = True
 
-        for opaque in self.cleanup:
-            libvirt.virEventInvokeFreeCallback(opaque)
-        self.cleanup = []
+        if version_compare("libvirt-python", 3, 7, 0, self.logger):
+            for opaque in self.cleanup:
+                libvirt.virEventInvokeFreeCallback(opaque)
+            self.cleanup = []
 
         try:
             next = self.next_timeout()
@@ -438,7 +441,8 @@ class virEventLoopPureThread(threading.Thread):
         for h in self.handles:
             if h.get_id() == handleID:
                 self.poll.unregister(h.get_fd())
-                self.cleanup.append(h.opaque)
+                if version_compare("libvirt-python", 3, 7, 0, self.logger):
+                    self.cleanup.append(h.opaque)
                 #self.logger.debug("Remove handle %d fd %d" %
                 #                  (handleID, h.get_fd()))
             else:
@@ -450,11 +454,14 @@ class virEventLoopPureThread(threading.Thread):
     def remove_timer(self, timerID):
         timers = []
         for h in self.timers:
-            if h.get_id() != timerID:
-                timers.append(h)
+            if version_compare("libvirt-python", 3, 7, 0, self.logger):
+                if h.get_id() != timerID:
+                    timers.append(h)
+                else:
+                    self.cleanup.append(h.opaque)
             else:
-                #self.logger.debug("Remove timer %d" % timerID)
-                self.cleanup.append(h.opaque)
+                if h.get_id() != timerID:
+                    timers.append(h)
         self.timers = timers
         self.interrupt()
 
@@ -588,3 +595,11 @@ class virEventLoopNativeThread(threading.Thread):
     def stop(self):
         self.quit = True
         self.interrupt()
+
+
+def eventLoopPure(logger):
+    eventLoop = virEventLoopPureThread(logger)
+    eventLoop.regist(libvirt)
+    eventLoop.start()
+
+    return 0

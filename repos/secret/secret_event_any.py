@@ -1,7 +1,7 @@
 import libvirt
 import importlib
-from utils.events import eventListenerThread
-from utils.utils import parse_flags, get_rand_str
+from utils.events import eventListenerThread, eventLoopPure
+from utils.utils import parse_flags, get_rand_str, version_compare
 
 required_params = ('event_runner',)
 optional_params = {
@@ -23,6 +23,9 @@ def secret_event_any(params):
     event_runner = params.get('event_runner', None)
     event_runner_params = params.get('event_runner_params', {})
     event_timeout = int(params.get('event_timeout', 5))
+
+    if not version_compare("libvirt-python", 3, 8, 0, logger):
+        eventLoopPure(logger)
 
     #String, use it to verify the integrity of callback's extra param
 

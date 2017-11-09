@@ -5,7 +5,7 @@ import libvirt
 
 from libvirt import libvirtError
 from src import sharedmod
-from utils import utils
+from utils.utils import exec_cmd, version_compare
 
 required_params = ('poolname', 'volname', 'flags')
 optional_params = {}
@@ -13,8 +13,12 @@ optional_params = {}
 
 def check_vol_info(info, vol_path, flags, logger):
     # check capacity
-    cmd = "qemu-img info -U %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'" % vol_path
-    ret, out = utils.exec_cmd(cmd, shell=True)
+    if version_compare("libvirt-pyton", 3, 8, 0, logger):
+        cmd = "qemu-img info -U %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'" % vol_path
+    else:
+        cmd = "qemu-img info %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'" % vol_path
+
+    ret, out = exec_cmd(cmd, shell=True)
     if ret:
         logger.error("cmd: %s" % cmd)
         logger.error("ret: %s, out: %s" % (ret, out))
@@ -29,7 +33,7 @@ def check_vol_info(info, vol_path, flags, logger):
     # check physical
     elif flags == "VIR_STORAGE_VOL_GET_PHYSICAL":
         cmd = "ls -al %s | awk '{print $5}'" % vol_path
-    ret, out = utils.exec_cmd(cmd, shell=True)
+    ret, out = exec_cmd(cmd, shell=True)
     if ret:
         logger.error("cmd: %s" % cmd)
         logger.error("ret: %s, out: %s" % (ret, out))
@@ -49,7 +53,7 @@ def vol_info(params):
     volname = params['volname']
     flags = params['flags']
 
-    if not utils.version_compare("libvirt-python", 3, 0, 0, logger):
+    if not version_compare("libvirt-python", 3, 0, 0, logger):
         logger.info("Current libvirt-python don't support infoFlags().")
         return 0
 

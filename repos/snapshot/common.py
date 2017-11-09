@@ -1,18 +1,21 @@
 #!/usr/bin/env python
 
-from utils import utils
-
-QEMU_IMAGE_FORMAT = "qemu-img info -U %s |grep format |awk -F': ' '{print $2}'"
+from utils.utils import get_disk_path, exec_cmd, version_compare
 
 
 def check_domain_image(domobj, guestname, format_required, logger):
     """ Check the format of disk image """
     dom_xml = domobj.XMLDesc(0)
-    disk_path = utils.get_disk_path(dom_xml)
-    (status, output) = utils.exec_cmd(QEMU_IMAGE_FORMAT % disk_path,
+    disk_path = get_disk_path(dom_xml)
+    if version_compare("libvirt-python", 3, 8, 0, logger):
+        qemu_img_format = "qemu-img -U info %s |grep format |awk -F': ' '{print $2}'"
+    else:
+        qemu_img_format = "qemu-img info %s |grep format |awk -F': ' '{print $2}'"
+
+    (status, output) = exec_cmd(qemu_img_format % disk_path,
                                       shell=True)
     if status:
-        logger.error('Executing "' + QEMU_IMAGE_FORMAT % guestname + '" failed"')
+        logger.error('Executing "' + qemu_img_format % guestname + '" failed"')
         logger.error(output)
         return False
     else:

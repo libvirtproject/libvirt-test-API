@@ -12,6 +12,8 @@ import libvirt
 import time
 
 from libvirt import libvirtError
+from utils.events import eventLoopPure
+from utils.utils import version_compare
 
 STATE = None
 
@@ -200,6 +202,9 @@ def pure_eventhandler(params):
     logger = params['logger']
     guestname = params['guestname']
     logger.info("the guestname is %s" % guestname)
+
+    if not version_compare("libvirt-python", 3, 8, 0, logger):
+        eventLoopPure(logger)
 
     conn = libvirt.open(None)
 

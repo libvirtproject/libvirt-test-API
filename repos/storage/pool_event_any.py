@@ -1,6 +1,6 @@
 import importlib
 from src import sharedmod
-from utils.events import eventListenerThread
+from utils.events import eventListenerThread, eventLoopPure
 from utils.utils import parse_flags, get_rand_str, version_compare
 
 
@@ -36,6 +36,9 @@ def pool_event_any(params):
         if not version_compare("libvirt-python", 3, 8, 0, logger):
             logger.info("Current libvirt-python don't support %s" % tmp_event_type)
             return 0
+
+    if not version_compare("libvirt-python", 3, 8, 0, logger):
+        eventLoopPure(logger)
 
     if poolname:
         logger.info("Listening for event on pool %s" % poolname)

@@ -6,15 +6,8 @@ import re
 
 import libvirt
 from libvirt import libvirtError
-from utils import utils
+from utils.utils import version_compare
 from src import sharedmod
-
-QEMU_IMAGE_FORMAT = "qemu-img info -U %s |grep format |awk -F': ' '{print $2}'"
-QEMU_IMAGE_CLUSTER_SIZE = "qemu-img info -U %s |grep cluster_size |awk -F': ' '{print $2}'"
-QEMU_IMAGE_CHECK = "qemu-img check -U %s"
-QEMU_IMAGE_CHECK_RE = r"(\d+)/(\d+) = \d+.\d+% allocated, (\d+.\d+)% fragmented,"
-GET_CAPACITY = "qemu-img info -U %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'"
-GET_PHYSICAL = "ls -l %s | awk '{print $5}'"
 
 required_params = ('guestname', 'blockdev',)
 optional_params = {}
@@ -61,8 +54,22 @@ def check_guest_status(domobj):
 
 
 def check_block_data(blockdev, blkdata, logger):
+    get_physical = "ls -l %s | awk '{print $5}'"
+    qemu_img_check_re = r"(\d+)/(\d+) = \d+.\d+% allocated, (\d+.\d+)% fragmented,"
+
+    if version_compare("libvirt-python", 3, 8, 0, logger):
+        qemu_img_format = "qemu-img info -U %s |grep format |awk -F': ' '{print $2}'"
+        qemu_img_cluster_size = "qemu-img info -U %s |grep cluster_size |awk -F': ' '{print $2}'"
+        qemu_img_check = "qemu-img check -U %s"
+        get_capacity = "qemu-img info -U %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'"
+    else:
+        qemu_img_format = "qemu-img info %s |grep format |awk -F': ' '{print $2}'"
+        qemu_img_cluster_size = "qemu-img info %s |grep cluster_size |awk -F': ' '{print $2}'"
+        qemu_img_check = "qemu-img check %s"
+        get_capacity = "qemu-img info %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'"
+
     """ check data about capacity,allocation,physical """
-    status, apparent_size = get_output(GET_CAPACITY % blockdev, logger)
+    status, apparent_size = get_output(get_capacity % blockdev, logger)
     if not status:
         if apparent_size == str(blkdata[0]):
             logger.info("the capacity of '%s' is %s, checking succeeded"
@@ -80,16 +87,19 @@ def check_block_data(blockdev, blkdata, logger):
     get_output(cmd_str, logger)
     cmd_str = "du --block-size=1 %s | awk '{print $1}'" % blockdev
     get_output(cmd_str, logger)
-    cmd_str = "qemu-img info -U --output=json %s | grep 'actual-size' | awk '{print $2}' | sed 's/,//g'" % blockdev
+    if version_compare("libvirt-python", 3, 8, 0, logger):
+        cmd_str = "qemu-img info -U --output=json %s | grep 'actual-size' | awk '{print $2}' | sed 's/,//g'" % blockdev
+    else:
+        cmd_str = "qemu-img info --output=json %s | grep 'actual-size' | awk '{print $2}' | sed 's/,//g'" % blockdev
     get_output(cmd_str, logger)
     # End for test
 
-    if utils.version_compare("libvirt", 2, 5, 0, logger):
-        status, block_size_b = get_output(GET_PHYSICAL % blockdev, logger)
+    if version_compare("libvirt", 2, 5, 0, logger):
+        status, block_size_b = get_output(get_physical % blockdev, logger)
     else:
         cmd = "du --block-size=1 %s | awk '{print $1}'" % blockdev
         status, block_size_b = get_output(cmd, logger)
-    format_status, img_format = get_output(QEMU_IMAGE_FORMAT % blockdev, logger)
+    format_status, img_format = get_output(qemu_img_format % blockdev, logger)
 
     if not status and not format_status:
         # Temporarily, we only test the default case, assuming
@@ -98,9 +108,9 @@ def check_block_data(blockdev, blkdata, logger):
                     % (blockdev, block_size_b))
         if img_format.strip() == 'qcow2' and int(block_size_b) == blkdata[2]:
             logger.info("Physical value's checking succeeded")
-            status, cluster_size = get_output(QEMU_IMAGE_CLUSTER_SIZE % blockdev, logger)
-            status, alloc_info = get_output(QEMU_IMAGE_CHECK % blockdev, logger)
-            (allocated, total, fragment_rate) = re.findall(QEMU_IMAGE_CHECK_RE, alloc_info)[0]
+            status, cluster_size = get_output(qemu_img_cluster_size % blockdev, logger)
+            status, alloc_info = get_output(qemu_img_check % blockdev, logger)
+            (allocated, total, fragment_rate) = re.findall(qemu_img_check_re, alloc_info)[0]
             fragment_rate = float(fragment_rate)/100
             alloc_size = int(allocated) * int(cluster_size)
             total_size = int(total) * int(cluster_size)
