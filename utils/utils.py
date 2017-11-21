@@ -1226,7 +1226,7 @@ def version_compare(package_name, major, minor, update, logger):
             ret, out = exec_cmd(cmd, shell=True)
             if ret != 0:
                 logger.error("Get %s version failed." % package_name)
-                return 1
+                return False
 
             package = out[0].split('-')
             for item in package:

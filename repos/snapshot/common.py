@@ -7,7 +7,7 @@ def check_domain_image(domobj, guestname, format_required, logger):
     """ Check the format of disk image """
     dom_xml = domobj.XMLDesc(0)
     disk_path = get_disk_path(dom_xml)
-    if version_compare("libvirt-python", 3, 8, 0, logger):
+    if version_compare("qemu-kvm-rhev", 2, 10, 0, logger):
         qemu_img_format = "qemu-img info -U %s |grep format |awk -F': ' '{print $2}'"
     else:
         qemu_img_format = "qemu-img info %s |grep format |awk -F': ' '{print $2}'"

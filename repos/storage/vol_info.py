@@ -13,7 +13,7 @@ optional_params = {}
 
 def check_vol_info(info, vol_path, flags, logger):
     # check capacity
-    if version_compare("libvirt-pyton", 3, 8, 0, logger):
+    if version_compare("qemu-kvm-rhev", 2, 10, 0, logger):
         cmd = "qemu-img info -U %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'" % vol_path
     else:
         cmd = "qemu-img info %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'" % vol_path
