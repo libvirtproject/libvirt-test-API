@@ -29,7 +29,7 @@ def parse_flags(logger, params):
 
 def set_signal_ignore(guestname, logger):
     #make guest process block sigterm signal by stopping this guest qemu process
-    cmd = "ps -ef | grep guest=%s | grep qemu | head \
+    cmd = "ps -ef | grep %s | grep qemu | head \
             -n 1 | awk '{print $2}' " % guestname
     (ret, out) = commands.getstatusoutput(cmd)
     logger.debug("guest qemu process pid is %s" % out)
