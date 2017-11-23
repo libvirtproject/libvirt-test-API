@@ -83,7 +83,7 @@ def set_memory_live(params):
                     (memory, libvirt.VIR_DOMAIN_AFFECT_LIVE))
         domobj.setMemoryFlags(memory, libvirt.VIR_DOMAIN_AFFECT_LIVE)
         logger.info("get domain current memory")
-        time.sleep(3)
+        time.sleep(10)
         dominfo = domobj.info()
         logger.debug("domain info list is: %s" % dominfo)
         logger.info("domain current memory value is: %s KiB" % dominfo[2])
