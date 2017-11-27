@@ -100,6 +100,9 @@ def managedsave_define_xml(params):
         logger.error('The domain state is not as expected, state: %d' % state)
         return 1
 
+    if state == libvirt.VIR_DOMAIN_PAUSED:
+        domobj.resume()
+
     guestxml = domobj.XMLDesc(0)
     logger.debug("New guestxml is \n %s" % guestxml)
 
