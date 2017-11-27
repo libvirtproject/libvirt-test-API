@@ -531,7 +531,7 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
     """ Remote exec function via pexpect """
     user_hostname = "%s@%s" % (username, hostname)
     while True:
-        child = pexpect.spawn("/usr/bin/ssh", [user_hostname, cmd],
+        child = pexpect.spawn("/usr/bin/ssh", [user_hostname, '-q', cmd],
                               timeout=60, maxread=2000, logfile=None)
         while True:
             index = child.expect(['(yes\/no)', 'password:', pexpect.EOF,
@@ -1614,3 +1614,14 @@ def get_xml_value(dom, path):
     dom_xml = dom.XMLDesc(0)
     tree = lxml.etree.fromstring(dom_xml)
     return tree.xpath(path)
+
+
+def get_target_hostname(hostname, username, passwd, logger):
+    cmd = "hostname"
+    ret, out = remote_exec_pexpect(hostname, username, passwd, cmd)
+    if ret:
+        logger.error("get target hostname failed.")
+        return 1
+
+    logger.debug("get_target_hostname: %s" % out)
+    return out

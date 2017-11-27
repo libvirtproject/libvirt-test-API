@@ -6,6 +6,7 @@ import libvirt
 from libvirt import libvirtError
 from src import sharedmod
 from repos.domain import domain_common
+from utils import utils
 
 required_params = ('transport',
                    'target_machine',
@@ -85,8 +86,8 @@ def migrate_tls(params):
         return 1
 
     commands.getstatusoutput("ssh-add")
-
-    dsturi = "qemu+%s://%s/system" % (transport, target_machine)
+    target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
+    dsturi = "qemu+%s://%s/system" % (transport, target_hostname)
 
     # Connect to local hypervisor connection URI
     srcconn = sharedmod.libvirtobj['conn']

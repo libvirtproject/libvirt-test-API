@@ -1,3 +1,4 @@
+import time
 import libvirt
 import threading
 
@@ -36,7 +37,7 @@ def register_close(params):
 
     conn = libvirt.openReadOnly("qemu:///system")
     conn.registerCloseCallback(connCloseCallback, None)
-
+    time.sleep(3)
     t = threading.Thread(target=restart_libvirtd, args=(conn, logger))
 
     t.start()

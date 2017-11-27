@@ -35,7 +35,7 @@ CLIENTKEY = os.path.join(TEMP_TLS_FOLDER, 'client-key.pem')
 CLIENTCERT = os.path.join(TEMP_TLS_FOLDER, 'client-cert.pem')
 
 
-def CA_setting_up(logger):
+def CA_setting_up(target_machine, logger):
     """ setting up a Certificate Authority """
     # Create a private key for CA
     logger.info("generate CA certificates")
@@ -50,9 +50,9 @@ def CA_setting_up(logger):
     # ca.info file
     cainfo = os.path.join(TEMP_TLS_FOLDER, 'ca.info')
     cainfo_fd = open(cainfo, 'w')
-    cainfo_str = ("cn = Libvirt_test_API\n"
+    cainfo_str = ("cn = %s\n"
                   "ca\n"
-                  "cert_signing_key\n")
+                  "cert_signing_key\n" % target_machine)
 
     cainfo_fd.write(cainfo_str)
     cainfo_fd.close()
@@ -383,6 +383,7 @@ def tls_setup_new(params):
     uri = "qemu+ssh://%s/system" % target_machine
 
     local_machine = utils.get_local_hostname()
+    target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
 
     logger.info("the hostname of server is %s" % target_machine)
     logger.info("the hostname of local machine is %s" % local_machine)
@@ -412,10 +413,10 @@ def tls_setup_new(params):
     if iptables_stop(target_machine, username, password, logger):
         return 1
 
-    if CA_setting_up(logger):
+    if CA_setting_up(target_hostname, logger):
         return 1
 
-    if tls_server_cert(target_machine, logger):
+    if tls_server_cert(target_hostname, logger):
         return 1
 
     if tls_client_cert(local_machine, logger):
