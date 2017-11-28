@@ -3,6 +3,9 @@
 import libvirt
 import pexpect
 import string
+import time
+
+from utils import utils
 
 SSH_KEYGEN = "ssh-keygen -t rsa"
 SSH_COPY_ID = "ssh-copy-id"
@@ -77,3 +80,67 @@ def request_credentials(credentials, user_data):
             return -1
 
     return 0
+
+
+def get_flags(params, logger):
+    flags = params['flags']
+    if flags == 'none':
+        return 0
+    ret = 0
+    for flag in flags.split('|'):
+        if flag == 'running':
+            ret |= libvirt.VIR_DOMAIN_SAVE_RUNNING
+        elif flag == 'paused':
+            ret |= libvirt.VIR_DOMAIN_SAVE_PAUSED
+        elif flag == 'bypass-cache':
+            ret |= libvirt.VIR_DOMAIN_SAVE_BYPASS_CACHE
+        else:
+            logger.error("Flags error:illegal flags %s" % flags)
+            return -1
+    return ret
+
+
+def get_fileflags(filepath, fileflags, fdinfo, logger):
+    """Get the file flags of file"""
+    CHECK_CMD = "lsof -w %s | awk '/libvirt_i/{print $2}'" % filepath
+
+    # For dump/save/managedsave, fdinfo is 1
+    # For start/restore, fdinfo is 0
+    GET_CMD = "cat /proc/%s/fdinfo/%s |grep flags|awk '{print $NF}'"
+
+    timeout = 100
+    while True:
+        (status, pid) = utils.exec_cmd(CHECK_CMD, shell=True)
+        if status == 0 and len(pid) == 1:
+            break
+        time.sleep(0.1)
+        timeout -= 0.1
+        if timeout <= 0:
+            logger.error("Timeout waiting for file to show up.")
+            return 1
+
+    (status, output) = utils.exec_cmd(GET_CMD % (pid[0], fdinfo), shell=True)
+    if status == 0 and len(output) == 1:
+        logger.info("The flags of file %s " % output[0])
+        fileflags.append(output[0])
+    else:
+        logger.error("Fail to get the file flags")
+        return 1
+
+
+def check_fileflag(fileflags, expect_flag, logger):
+    """Check the file flags """
+    if fileflags == expect_flag:
+        logger.info("file flags include %s." % expect_flag)
+        return True
+    else:
+        logger.error("file flags doesn't include %s." % expect_flag)
+        return False
+
+
+def check_dom_state(domobj):
+    state = domobj.info()[0]
+    expect_states = [libvirt.VIR_DOMAIN_PAUSED, libvirt.VIR_DOMAIN_RUNNING]
+    if state in expect_states:
+        return state
+    return -1
