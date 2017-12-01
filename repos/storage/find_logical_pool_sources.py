@@ -32,10 +32,10 @@ def check_pool_sources(xmlstr):
 
     logger.debug("pool source info dict is: %s" % source_val)
 
-    cmd = "pvs --noheadings -o pv_name,vg_name | awk -F' ' '{print $1}'"
+    cmd = "pvs -q --noheadings -o pv_name,vg_name | awk -F' ' '{print $1}'"
     ret, path_list = utils.exec_cmd(cmd, shell=True)
 
-    cmd = "pvs --noheadings -o pv_name,vg_name | awk -F' ' '{print $2}'"
+    cmd = "pvs -q --noheadings -o pv_name,vg_name | awk -F' ' '{print $2}'"
     ret, name_list = utils.exec_cmd(cmd, shell=True)
 
     for i in range(len(path_list)):
