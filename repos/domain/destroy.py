@@ -12,7 +12,10 @@ from src import sharedmod
 from utils import utils
 
 required_params = ('guestname',)
-optional_params = {'flags': 'noping', 'bridgename': 'virbr0', }
+optional_params = {'flags': 'noping',
+                   'bridgename': 'virbr0',
+                   'virt_type': 'kvm',
+                   }
 
 
 def destroy(params):
@@ -34,11 +37,15 @@ def destroy(params):
     params.pop('logger')
     guestname = params['guestname']
     br = params.get('bridgename', 'virbr0')
+    virt_type = params.get('virt_type', 'kvm')
     flags = ""
     if 'flags' in params:
         flags = params['flags']
 
-    conn = sharedmod.libvirtobj['conn']
+    if "lxc" in virt_type:
+        conn = libvirt.open("lxc:///")
+    else:
+        conn = sharedmod.libvirtobj['conn']
 
     # Get running domain by name
     guest_names = []
@@ -55,6 +62,9 @@ def destroy(params):
 
     timeout = 60
     logger.info('destroy domain')
+
+    if "lxc" in virt_type:
+        flags = "noping"
 
     if "noping" not in flags:
         # Get domain ip

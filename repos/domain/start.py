@@ -14,8 +14,9 @@ from utils import utils
 required_params = ('guestname',)
 optional_params = {'flags': 'none',
                    'files': None,
-                   'wait_time': 40
-                  }
+                   'wait_time': 40,
+                   'virt_type': 'kvm',
+                   }
 
 test_text = "Test Content - libvirt-test-api"
 noping = False
@@ -102,13 +103,17 @@ def start(params):
     domname = params['guestname']
     logger = params['logger']
     wait_time = params.get('wait_time', 40)
+    virt_type = params.get('virt_type', 'kvm')
     flags = parse_flags(logger, params)
     files = create_files(logger, params)
 
     if flags == -1:
         return 1
-
-    conn = sharedmod.libvirtobj['conn']
+    if "lxc" in virt_type:
+        conn = libvirt.open("lxc:///")
+        noping = True
+    else:
+        conn = sharedmod.libvirtobj['conn']
     domobj = conn.lookupByName(domname)
 
     timeout = 600
@@ -165,7 +170,11 @@ def start(params):
     # Get domain ip and ping ip to check domain's status
     if not (flags & libvirt.VIR_DOMAIN_START_PAUSED or flags &
             libvirt.VIR_DOMAIN_START_VALIDATE) and not noping:
-        mac = utils.get_dom_mac_addr(domname)
+        if "lxc" in virt_type:
+            mac = utils.get_dom_mac_addr(domname, "lxc:///")
+        else:
+            mac = utils.get_dom_mac_addr(domname)
+        logger.info("the mac address of vm %s is %s" % (domname, mac))
         logger.info("get ip by mac address")
         ipaddr = utils.mac_to_ip(mac, 180)
         logger.info("the ip address of vm %s is %s" % (domname, ipaddr))

@@ -53,6 +53,8 @@ def check_define_domain(guestname, virt_type, ip, username,
         path = "/etc/libvirt/qemu/%s.xml" % guestname
     elif "xen" in virt_type:
         path = "/etc/xen/%s" % guestname
+    elif "lxc" in virt_type:
+        path = "/etc/libvirt/lxc/%s.xml" % guestname
     else:
         logger.error("unknown virt type")
 
@@ -98,7 +100,11 @@ def define(params):
     xmlstr = xmlstr.replace('UUID', uuid)
 
     if target_machine == '':
-        conn = sharedmod.libvirtobj['conn']
+        if "lxc" in virt_type:
+            conn = libvirt.open("lxc:///")
+        else:
+            conn = sharedmod.libvirtobj['conn']
+
         uri = conn.getURI()
     else:
         #generate ssh key pair

@@ -10,6 +10,7 @@ from utils import utils
 required_params = ('guestname',)
 optional_params = {'flags': 'none',
                    'xml': 'xmls/nvram.xml',
+                   'virt_type': 'kvm',
                    }
 
 nvram_path = "/var/lib/libvirt/qemu/nvram/test_VARS.fd"
@@ -63,7 +64,7 @@ def check_domain_state(conn, guestname, logger):
     return 0
 
 
-def check_undefine_domain(flags, guestname, logger):
+def check_undefine_domain(flags, guestname, logger, virt_type='kvm'):
     """Check undefine domain result, if undefine domain is successful,
        guestname.xml will don't exist under /etc/libvirt/qemu/
     """
@@ -78,7 +79,11 @@ def check_undefine_domain(flags, guestname, logger):
                     logger.error("for keep_nvram flags, %s don't exist." % nvram_path)
                     return False
 
-    path = "/etc/libvirt/qemu/%s.xml" % guestname
+    if "lxc" in virt_type:
+        path = "/etc/libvirt/lxc/%s.xml" % guestname
+    else:
+        path = "/etc/libvirt/qemu/%s.xml" % guestname
+
     if not os.access(path, os.R_OK):
         return True
     else:
@@ -89,7 +94,11 @@ def undefine(params):
     """Undefine a domain"""
     logger = params['logger']
     guestname = params['guestname']
-    conn = sharedmod.libvirtobj['conn']
+    virt_type = params.get('virt_type', 'kvm')
+    if "lxc" in virt_type:
+        conn = libvirt.open("lxc:///")
+    else:
+        conn = sharedmod.libvirtobj['conn']
     flags = params.get('flags', 'none')
     libvirt_flags = parse_flags(logger, flags)
 
@@ -112,7 +121,7 @@ def undefine(params):
         else:
             domobj.undefineFlags(libvirt_flags)
 
-        if check_undefine_domain(flags, guestname, logger):
+        if check_undefine_domain(flags, guestname, logger, virt_type):
             logger.info("undefine the domain is successful")
         else:
             logger.error("fail to check domain undefine")
