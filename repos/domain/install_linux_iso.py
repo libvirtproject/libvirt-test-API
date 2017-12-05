@@ -17,7 +17,7 @@ from repos.domain import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch')
 optional_params = {
-                   'memory': 1048576,
+                   'memory': 2097152,
                    'vcpu': 1,
                    'disksize': 10,
                    'imageformat': 'qcow2',

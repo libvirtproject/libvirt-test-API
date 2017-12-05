@@ -19,7 +19,7 @@ from utils import utils
 from repos.domain import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch', 'netmethod')
-optional_params = {'memory': 1048576,
+optional_params = {'memory': 2097152,
                    'vcpu': 2,
                    'disksize': 10,
                    'imageformat': 'qcow2',
