@@ -396,6 +396,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, installmethod, lo
     if installtype != 'create':
         domobj.undefine()
         logger.info("undefine %s : \n" % guestname)
+        time.sleep(10)
 
     time.sleep(5)
     try:
@@ -420,6 +421,8 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, installmethod, lo
                      % (e.message, e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
         return 1
+
+    time.sleep(10)
 
     return 0
 
