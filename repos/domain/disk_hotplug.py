@@ -274,7 +274,7 @@ def disk_hotplug(params):
         ret = int(attach_ret) + int(detach_ret)
         out += ret
 
-    if ret:
+    if out:
         return 1
     else:
         return 0
