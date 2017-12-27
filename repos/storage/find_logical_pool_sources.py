@@ -20,15 +20,16 @@ def check_pool_sources(xmlstr):
 
     doc = minidom.parseString(xmlstr)
     for diskTag in doc.getElementsByTagName("source"):
-        device_element = diskTag.getElementsByTagName("device")[0]
-        attr = device_element.getAttributeNode('path')
-        path_val = attr.nodeValue
-
         name_element = diskTag.getElementsByTagName("name")[0]
         textnode = name_element.childNodes[0]
         name_val = textnode.data
 
-        source_val.update({path_val: name_val, })
+        num = len(diskTag.getElementsByTagName("device"))
+        for i in range(0, num):
+            device_element = diskTag.getElementsByTagName("device")[i]
+            attr = device_element.getAttributeNode('path')
+            path_val = attr.nodeValue
+            source_val.update({path_val: name_val, })
 
     logger.debug("pool source info dict is: %s" % source_val)
 
@@ -43,7 +44,7 @@ def check_pool_sources(xmlstr):
 
     logger.debug("pvs command output dict is: %s" % source_cmp)
     for key in source_cmp.copy():
-        if not key.startswith('/dev/'):
+        if not key.startswith('/dev/') and not key.startswith('[unknown]'):
             logger.debug("del %s: %s" % (key, source_cmp[key]))
             del source_cmp[key]
 
