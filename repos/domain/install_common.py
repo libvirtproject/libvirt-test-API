@@ -474,6 +474,52 @@ def wait_install(conn, guestname, xmlstr, installtype, installmethod, logger, ti
     else:
         logger.info("guest is booting up")
 
+    # add to test
+    mac = utils.get_dom_mac_addr(guestname)
+    logger.info("MAC address: %s" % mac)
+    count = 5
+    while count:
+        time.sleep(5)
+        count -= 1
+        ip = utils.mac_to_ip(mac, 180)
+        if not ip:
+            logger.info(str(count) + "s left")
+        else:
+            logger.info("Guest %s start successfully" % guestname)
+            logger.info("IP address: %s" % ip)
+            break
+
+    if count == 0:
+        logger.info("Guest %s start failed, restart guest again." % guestname)
+        conn = libvirt.open()
+        try:
+            dom_list = conn.listAllDomains()
+            dom_flag = 0
+            for dom in dom_list:
+                if dom.name() == guestname:
+                    dom_flag = 1
+                    if dom.isActive() == 1:
+                        logger.debug("guest is active, reboot it.")
+                        dom.reboot()
+                    else:
+                        logger.debug("guest exist but not start, start it.")
+                        dom.create()
+
+                    time.sleep(30)
+
+            if not dom_flag:
+                logger.debug("guest don't exist, define and start it.")
+                dom = conn.defineXML()
+                time.sleep(3)
+                dom.create()
+                time.sleep(20)
+        except libvirtError, e:
+            logger.error("API error message: %s, error code is %s"
+                         % (e.message, e.get_error_code()))
+            logger.error("fail to start domain %s" % guestname)
+            return False
+    # end to test
+
     return True
 
 
