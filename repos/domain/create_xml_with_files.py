@@ -174,7 +174,6 @@ def create_xml_with_files(params):
             logger.info("pass-fd is failed!")
             return 1
 
-    domobj.destroy()
     logger.info("pass-fd is successful")
     logger.info("Guest started successfully")
     logger.info("PASS")
@@ -183,7 +182,14 @@ def create_xml_with_files(params):
 
 def create_xml_with_files_clean(params):
     logger = params['logger']
+    guestname = params['guestname']
 
     for i in range(len(files)):
         ret = utils.del_file("/tmp/libvirt-test-api-create-file-%d" % i, logger)
     ret = utils.del_file("/tmp/libvirt_passfile_check", logger)
+
+    conn = libvirt.open("lxc:///")
+    dom = conn.lookupByName(guestname)
+    if dom.isActive():
+        logger.debug("destroy guest: %s." % guestname)
+        dom.destroy()

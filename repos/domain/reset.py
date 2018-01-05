@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import time
+
 from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
@@ -13,7 +15,8 @@ def get_num_row(domobj, logger, username, password, ip):
     cmd = "last reboot | wc -l"
     ret, output = utils.remote_exec_pexpect(ip, username, password, cmd)
     if ret:
-        logger.error("fail to remote exec cmd")
+        logger.error("fail to remote exec cmd: ret: %s, output: %s"
+                     % (ret, output))
         return None
     logger.debug("the cmd output is %s" % output)
     return int(output)
@@ -42,7 +45,6 @@ def reset(params):
     logger.info("get ip by mac address")
     ip = utils.mac_to_ip(mac, 180)
     logger.info("the ip address of vm %s is %s" % (guestname, ip))
-    logger.info("reset vm %s now" % guestname)
 
     old_times = get_num_row(domobj, logger, username, password, ip)
     if old_times is None:
@@ -50,6 +52,7 @@ def reset(params):
 
     #reset domain
     try:
+        logger.info("reset vm %s now" % guestname)
         domobj.reset(0)
     except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
@@ -57,6 +60,7 @@ def reset(params):
         logger.error("fail to reset domain")
         return 1
 
+    time.sleep(40)
     new_times = get_num_row(domobj, logger, username, password, ip)
     if new_times is None:
         return 1
