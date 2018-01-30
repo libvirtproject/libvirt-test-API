@@ -28,6 +28,8 @@ VM_UNDEFINE = "virsh undefine %s"
 #virtio win disk driver
 VIRTIO_WIN_64 = "/usr/share/virtio-win/virtio-win_amd64.vfd"
 VIRTIO_WIN_32 = "/usr/share/virtio-win/virtio-win_x86.vfd"
+VIRTIO_WIN10_64 = "/usr/share/virtio-win/virtio-win_w10_amd64.vfd"
+VIRTIO_WIN10_32 = "/usr/share/virtio-win/virtio-win_w10_x86.vfd"
 #virtio win net driver
 #VIRTIO_WIN_ISO = "/usr/share/virtio-win/virtio-win.iso"
 
@@ -223,9 +225,15 @@ def install_windows_iso(params):
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
         if guestarch == "x86_64":
-            xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
+            if guestos == "win10":
+                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_64)
+            else:
+                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
         else:
-            xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
+            if guestos == "win10":
+                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_32)
+            else:
+                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
     elif hddriver == 'ide':
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
@@ -233,9 +241,15 @@ def install_windows_iso(params):
     elif hddriver == 'sata':
         xmlstr = xmlstr.replace('DEV', 'sda')
         if guestarch == "x86_64":
-            xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
+            if guestos == "win10":
+                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_64)
+            else:
+                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
         else:
-            xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
+            if guestos == "win10":
+                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_32)
+            else:
+                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
     elif hddriver == 'lun':
         xmlstr = xmlstr.replace("'lun'", "'virtio'")
         xmlstr = xmlstr.replace('DEV', 'vda')
