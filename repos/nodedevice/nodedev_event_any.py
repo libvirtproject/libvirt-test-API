@@ -45,9 +45,9 @@ def nodedev_event_any(params):
         conn = sharedmod.libvirtobj['conn']
 
         nodedevobj = None
-        conn.nodeDeviceEventRegisterAny(nodedevobj, event_id,
-                                        eventListener.callback,
-                                        random_str)
+        id = conn.nodeDeviceEventRegisterAny(nodedevobj, event_id,
+                                             eventListener.callback,
+                                             random_str)
 
         event_runner_entry = event_runner.split(':')[-1]
         event_runner = importlib.import_module(
@@ -77,7 +77,7 @@ def nodedev_event_any(params):
 
     finally:
         try:
-            conn.nodeDeviceEventDeregisterAny(0)
+            conn.nodeDeviceEventDeregisterAny(id)
         except Exception as e:
             logger.error("Failed to unregist. %s", e)
         eventListener.stop()

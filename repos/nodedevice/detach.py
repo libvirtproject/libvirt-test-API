@@ -56,6 +56,9 @@ def detach(params):
     if hypervisor == 'xen':
         pciback = 'pciback'
 
+    if utils.version_compare("libvirt-python", 3, 9, 0, logger):
+        pciback = 'vfio-pci'
+
     if 'el5' in kernel_version:
         vendor_product_get = "lspci -n |grep %s|awk '{print $3}'" % pciaddress
         logger.debug("the vendor:product is %s" % vendor_product_get)
