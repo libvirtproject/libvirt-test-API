@@ -18,6 +18,7 @@ from src import sharedmod
 from src import env_parser
 from utils import utils
 from repos.domain import install_common
+from utils.utils import version_compare
 
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
@@ -224,14 +225,20 @@ def install_windows_iso(params):
     # Hard disk type
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
-        if guestarch == "x86_64":
-            if guestos == "win10":
-                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_64)
+        if version_compare("virtio-win", 1, 9, 4, logger):
+            if guestarch == "x86_64":
+                if guestos == "win10":
+                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_64)
+                else:
+                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
             else:
-                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
+                if guestos == "win10":
+                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_32)
+                else:
+                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
         else:
-            if guestos == "win10":
-                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_32)
+            if guestarch == "x86_64":
+                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
             else:
                 xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
     elif hddriver == 'ide':
@@ -240,14 +247,20 @@ def install_windows_iso(params):
         xmlstr = xmlstr.replace('DEV', 'sda')
     elif hddriver == 'sata':
         xmlstr = xmlstr.replace('DEV', 'sda')
-        if guestarch == "x86_64":
-            if guestos == "win10":
-                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_64)
+        if version_compare("virtio-win", 1, 9, 4, logger):
+            if guestarch == "x86_64":
+                if guestos == "win10":
+                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_64)
+                else:
+                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
             else:
-                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
+                if guestos == "win10":
+                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_32)
+                else:
+                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
         else:
-            if guestos == "win10":
-                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_32)
+            if guestarch == "x86_64":
+                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
             else:
                 xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
     elif hddriver == 'lun':
