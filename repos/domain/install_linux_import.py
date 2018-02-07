@@ -111,12 +111,22 @@ def install_linux_import(params):
     logger.info("using image %s" % imagepath)
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     logger.info("disk image is %s" % diskpath)
-
-    shutil.copyfile(imagepath, diskpath)
-    os.chown(diskpath, 107, 107)
-
     imageformat = params.get('imageformat', 'qcow2')
     xmlstr = xmlstr.replace('IMAGEFORMAT', imageformat)
+
+    backup_img_format = utils.get_image_format(imagepath, logger)
+    if imageformat == "raw" and backup_img_format == "qcow2":
+        new_backup_img = imagepath + '.raw'
+        cmd = "qemu-img convert %s %s" % (imagepath, new_backup_img)
+        ret, out = utils.exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("convert img from qcow2 to raw failed.")
+            return 1
+        shutil.copyfile(new_backup_img, diskpath)
+    else:
+        shutil.copyfile(imagepath, diskpath)
+
+    os.chown(diskpath, 107, 107)
 
     hddriver = params.get('hddriver', 'virtio')
     if hddriver == 'virtio':

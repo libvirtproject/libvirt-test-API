@@ -1625,3 +1625,12 @@ def get_target_hostname(hostname, username, passwd, logger):
 
     logger.debug("get_target_hostname: %s" % out)
     return out
+
+
+def get_image_format(img, logger):
+    cmd = "qemu-img info %s | grep 'file format:'" % img
+    ret, out = exec_cmd(cmd, shell=True)
+    if ret:
+        logger.error("cmd: %s, out: %s" % (cmd, out))
+        return -1
+    return out[0].split(":")[1].strip()
