@@ -144,3 +144,26 @@ def check_dom_state(domobj):
     if state in expect_states:
         return state
     return -1
+
+
+def guest_clean(conn, guestname, logger):
+    running_guests = []
+    ids = conn.listDomainsID()
+    for id in ids:
+        obj = conn.lookupByID(id)
+        running_guests.append(obj.name())
+
+    if guestname in running_guests:
+        logger.info("guest_clean: destroy %s" % guestname)
+        domobj = conn.lookupByName(guestname)
+        domobj.destroy()
+
+    defined_guests = conn.listDefinedDomains()
+
+    if guestname in defined_guests:
+        logger.info("guest_clean: undefine %s" % guestname)
+        domobj = conn.lookupByName(guestname)
+        domobj.undefine()
+
+    return 0
+
