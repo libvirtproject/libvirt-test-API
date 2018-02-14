@@ -2,6 +2,7 @@
 
 import thread
 import time
+import os
 
 import libvirt
 import functools

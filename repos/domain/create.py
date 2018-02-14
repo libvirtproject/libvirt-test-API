@@ -30,6 +30,9 @@ optional_params = {'memory': 1048576,
                    'xml': 'xmls/kvm_guest_define.xml',
                    'guestarch': 'x86_64',
                    'guestmachine': 'pc',
+                   'on_poweroff': 'destroy',
+                   'on_reboot': 'restart',
+                   'on_crash': 'restart',
                    }
 
 
