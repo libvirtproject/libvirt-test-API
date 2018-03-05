@@ -101,7 +101,7 @@ def node_memory(params):
 
         logger.info("get node memory stats succeed")
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

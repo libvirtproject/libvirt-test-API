@@ -39,7 +39,7 @@ def connection_getCPUMap(params):
         result = conn.getCPUMap()
         expect = gen_hostcpu_online_map()
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s" %
                      e.message)
         logger.error("getCPUMap failed")

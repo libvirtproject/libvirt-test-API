@@ -72,7 +72,7 @@ def nwfilter_list(params):
                 logger.error("Failed to get nwfilter's uuid.")
                 return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s" % e.message)
         return 1
 

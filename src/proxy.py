@@ -20,7 +20,7 @@
 # The proxy examines the list of unique test cases, received from the
 # generator and import each test case from appropriate module directory.
 
-import exception
+from . import exception
 
 
 class Proxy(object):

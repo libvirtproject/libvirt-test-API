@@ -124,7 +124,7 @@ def compare_test(conn, host_cpu, logger):
                 logger.error("Compare host cpu with invalid cpu failed, Failed xml:")
                 logger.error(cpu)
                 return 1
-        except Exception,e:
+        except Exception as e:
             continue
     logger.info("Compare host cpu with invalid cpu successful")
     return 0
@@ -148,7 +148,7 @@ def connection_cpu_features(params):
         if compare_test(conn, host_cpu, logger):
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s" %
                      (e.message, e.get_error_code()))
         logger.error("start failed")

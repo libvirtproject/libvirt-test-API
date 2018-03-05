@@ -48,7 +48,7 @@ def destroy(params):
         else:
             logger.error("the %s network is still running" % networkname)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to destroy %s network" % networkname)

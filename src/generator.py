@@ -24,12 +24,13 @@ import sys
 import traceback
 
 from utils import log
-import mapper
-from testcasexml import xml_file_to_str
-import env_parser
-import env_inspect
-import format
 from utils import virtlab
+
+from . import mapper
+from .testcasexml import xml_file_to_str
+from . import env_parser
+from . import env_inspect
+from . import format
 
 # for virtlab
 if virtlab.isvirtlab():
@@ -75,12 +76,12 @@ class FuncGen(object):
                                                  test_procedure)
         self.case_name_list = []
         for case in case_list:
-            mod_case_func = case.keys()[0]
+            mod_case_func = list(case.keys())[0]
             self.case_name_list.append(mod_case_func)
 
         self.case_params_list = []
         for case in case_list:
-            case_params = case.values()[0]
+            case_params = list(case.values())[0]
             self.case_params_list.append(case_params)
 
     def __call__(self):
@@ -125,7 +126,7 @@ class FuncGen(object):
             self.fmt.print_start(mod_case, env_logger)
 
             case_params = {k: v.encode('utf-8')
-                           for k, v in self.case_params_list[i].items()}
+                           for k, v in list(self.case_params_list[i].items())}
             case_params['logger'] = case_logger
 
             if mod_case_func in self.cases_checkfunc_ref_dict:
@@ -167,7 +168,7 @@ class FuncGen(object):
                                 continue
 
                             self.fmt.print_string(21*" " + "Done\n", env_logger)
-                except Exception, e:
+                except Exception as e:
                     case_logger.error(traceback.format_exc())
                     continue
             finally:

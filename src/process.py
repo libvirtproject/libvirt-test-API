@@ -36,7 +36,7 @@ class Process:
             elif 0 < pid:
                 self.pids.append(pid)
             else:
-                print "ERROR: Failed on forking process"
+                print("ERROR: Failed on forking process")
                 sys.exit(1)
 
     def wait(self):

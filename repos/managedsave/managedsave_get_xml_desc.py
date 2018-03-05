@@ -99,7 +99,7 @@ def managedsave_get_xml_desc(params):
 
     try:
         new_guestxml = domobj.managedSaveGetXMLDesc(flags)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.info("Managedsave get xmldesc failed" + str(e))
         return 1
     ret = check_definexml(flags, guestxml, new_guestxml, guestname, logger)

@@ -26,7 +26,7 @@ from xml.dom import minidom
 from xml.dom.minidom import Document
 from xml.parsers.expat import ExpatError
 
-import exception
+from . import exception
 
 
 class LogGenerator(object):
@@ -63,7 +63,7 @@ class LogGenerator(object):
             content = content_file.read()
         try:
             xmldoc = minidom.parseString(content.encode("utf-8"))
-        except ExpatError, e:
+        except ExpatError as e:
             content = illegal_utf.sub("?", content)
             xmldoc = minidom.parseString(content.encode("utf-8"))
 
@@ -73,7 +73,7 @@ class LogGenerator(object):
         """ add testrun info into log xml file"""
         try:
             xmldoc = self.get_xmldoc()
-        except ExpatError, e:
+        except ExpatError as e:
             # Currupted log xml file, gen a new one.
             self.repair_logxml()
             xmldoc = self.get_xmldoc()
@@ -101,13 +101,13 @@ class LogGenerator(object):
         xmldoc = self.get_xmldoc()
 
         procedure = self.doc.createElement('test_procedure')
-        casename = test_procedure.keys()[0]
+        casename = list(test_procedure.keys())[0]
         valuedict = test_procedure[casename]
 
         test_casename = self.doc.createElement('action')
         test_casename.setAttribute('name', casename)
 
-        for arg in valuedict.keys():
+        for arg in list(valuedict.keys()):
             test_arg = self.doc.createElement('arg')
             test_arg.setAttribute("name", arg)
             test_value = self.doc.createTextNode(valuedict[arg])

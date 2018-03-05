@@ -35,12 +35,12 @@ class CaseCfgCheck(object):
             if testcase in passed_testcase:
                 continue
 
-            testcase_name = testcase.keys()[0]
+            testcase_name = list(testcase.keys())[0]
             if testcase_name == 'clean' or \
                testcase_name == 'sleep':
                 continue
 
-            actual_params = testcase.values()[0]
+            actual_params = list(testcase.values())[0]
             required_params, optional_params = self.case_params[testcase_name]
 
             case_number += 1
@@ -48,7 +48,7 @@ class CaseCfgCheck(object):
                 required_params, optional_params, actual_params)
             if ret:
                 error_flag = 1
-                print "the No.%s : %s\n" % (case_number, testcase_name)
+                print("the No.%s : %s\n" % (case_number, testcase_name))
 
             passed_testcase.append(testcase)
 
@@ -58,13 +58,13 @@ class CaseCfgCheck(object):
 
     def _check_params(self, required_params, optional_params, actual_params):
         for p in required_params:
-            if p not in actual_params.keys():
-                print "Parameter %s is required" % p
+            if p not in list(actual_params.keys()):
+                print("Parameter %s is required" % p)
                 return 1
 
-        for p in actual_params.keys():
+        for p in list(actual_params.keys()):
             if p not in required_params and p not in optional_params:
-                print "Unknown parameter '%s'" % p
+                print("Unknown parameter '%s'" % p)
                 return 1
 
         return 0

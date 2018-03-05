@@ -21,7 +21,7 @@ import sys
 import time
 import math
 import random
-import commands
+import subprocess
 import socket
 import fcntl
 import pty
@@ -29,7 +29,6 @@ import signal
 import struct
 import pexpect
 import string
-import subprocess
 import hashlib
 import libvirt
 import math
@@ -37,14 +36,22 @@ import lxml
 import lxml.etree
 
 from xml.dom import minidom
-from urlparse import urlparse
 from src import env_parser
+from six.moves import xrange as range
+from . import process
+
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 subproc_flag = 0
 
 
 def get_hypervisor():
-    if commands.getoutput("lsmod | grep kvm"):
+    cmd = "lsmod | grep kvm"
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status == 0:
         return 'kvm'
     elif os.access("/proc/xen", os.R_OK):
         return 'xen'
@@ -100,8 +107,9 @@ def parse_uri(uri):
 
 def get_host_arch():
     """ get local host arch """
-    ret = commands.getoutput('uname -a')
-    arch = ret.split(" ")[-2]
+    cmd = "uname -a"
+    result = process.run(cmd, shell=True, ignore_status=True)
+    arch = result.stdout.split(" ")[-2]
     return arch
 
 
@@ -112,11 +120,12 @@ def get_local_hostname():
 
 def get_libvirt_version(ver=''):
     """ get Libvirt version """
-    ver = commands.getoutput("rpm -q libvirt|head -1")
-    if ver.split('-')[0] == 'libvirt':
-        return ver
+    cmd = "rpm -q libvirt|head -1"
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.stdout.split('-')[0] == 'libvirt':
+        return result.stdout
     else:
-        print "Missing libvirt package!"
+        print("Missing libvirt package!")
         sys.exit(1)
 
 
@@ -127,27 +136,28 @@ def get_hypervisor_version(ver=''):
     if 'kvm' in hypervisor:
         kernel_ver = get_host_kernel_version()
         if 'el5' in kernel_ver:
-            ver = commands.getoutput("rpm -q kvm")
+            output = process.system_output("rpm -q kvm", shell=True, ignore_status=True)
         elif 'el6' in kernel_ver:
-            ver = commands.getoutput("rpm -q qemu-kvm")
+            output = process.system_output("rpm -q qemu-kvm", shell=True, ignore_status=True)
         elif 'el7' in kernel_ver:
-            ver = commands.getoutput("rpm -q qemu-kvm")
+            output = process.system_output("rpm -q qemu-kvm", shell=True, ignore_status=True)
         else:
-            print "Unsupported kernel type!"
+            print("Unsupported kernel type!")
             sys.exit(1)
     elif 'xen' in hypervisor:
-        ver = commands.getoutput("rpm -q xen")
+        output = process.system_output("rpm -q xen", shell=True, ignore_status=True)
     else:
-        print "Unsupported hypervisor type!"
+        print("Unsupported hypervisor type!")
         sys.exit(1)
 
-    return ver
+    return output
 
 
 def get_host_kernel_version():
     """Get host's kernel version"""
-    kernel_ver = commands.getoutput('uname -r')
-    return kernel_ver
+    cmd = "uname -r"
+    result = process.run(cmd, shell=True, ignore_status=True)
+    return result.stdout
 
 
 def get_ip_address(ifname):
@@ -158,45 +168,45 @@ def get_ip_address(ifname):
 
 def get_host_cpus():
     if not os.access("/proc/cpuinfo", os.R_OK):
-        print "warning:os error"
+        print("warning:os error")
         sys.exit(1)
     else:
         cmd = "cat /proc/cpuinfo | grep '^processor'|wc -l"
-        cpus = int(commands.getoutput(cmd))
+        cpus = int(process.system_output(cmd, shell=True, ignore_status=True))
         if cpus:
             return cpus
         else:
-            print "warnning:don't get system cpu number"
+            print("warnning:don't get system cpu number")
 
 
 def get_host_frequency():
     if not os.access("/proc/cpuinfo", os.R_OK):
-        print "warning:os error"
+        print("warning:os error")
         sys.exit(1)
     else:
         cmd = "cat /proc/cpuinfo | grep 'cpu MHz'|uniq"
-        cpufreq = commands.getoutput(cmd)
-        if cpufreq:
-            freq = cpufreq.split(":")[1].split(" ")[1]
+        output = process.system_output(cmd, shell=True, ignore_status=True)
+        if output:
+            freq = output.split(":")[1].split(" ")[1]
             return freq
         else:
-            print "warnning:don't get system cpu frequency"
+            print("warnning:don't get system cpu frequency")
 
 
 def get_host_memory():
     if not os.access("/proc/meminfo", os.R_OK):
-        print "please check os."
+        print("please check os.")
         sys.exit(1)
     else:
         cmd = "cat /proc/meminfo | egrep 'MemTotal'"
-        ret = commands.getoutput(cmd)
-        str_mem = ret.split(":")[1]
+        output = process.system_output(cmd, shell=True, ignore_status=True)
+        str_mem = output.split(":")[1]
         mem_num = str_mem.split("kB")[0]
         mem_size = int(mem_num.strip())
         if mem_size:
             return mem_size
         else:
-            print "warnning:don't get os memory"
+            print("warnning:don't get os memory")
 
 
 def get_vcpus_list():
@@ -244,7 +254,7 @@ def get_rand_mac():
 def get_rand_str(length=32):
     ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     chars = []
-    for i in xrange(16):
+    for i in range(16):
         chars.append(random.choice(ALPHABET))
     return chars
 
@@ -258,10 +268,9 @@ def get_dom_mac_addr(domname, conn_uri=""):
         conn_uri = "-c " + conn_uri
     cmd = ("virsh %s dumpxml %s | grep 'mac address' | "
            "awk -F'=' '{print $2}' | tr -d \"[\'/>]\"" % (conn_uri, domname))
-
-    (ret, out) = commands.getstatusoutput(cmd)
-    if ret == 0:
-        return out
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status == 0:
+        return result.stdout
     else:
         return None
 
@@ -272,10 +281,9 @@ def get_num_vcpus(domname):
     """
     cmd = ("virsh dumpxml %s | grep 'vcpu' | awk -F'<' '{print $2}'"
            " | awk -F'>' '{print $2}'" % domname)
-
-    (ret, out) = commands.getstatusoutput(cmd)
-    if ret == 0:
-        return out
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status == 0:
+        return result.stdout
     else:
         return None
 
@@ -286,10 +294,9 @@ def get_size_mem(domname):
     """
     cmd = ("virsh dumpxml %s | grep 'currentMemory'|awk -F'<' '{print $2}'"
            "|awk -F'>' '{print $2}'" % domname)
-
-    (ret, out) = commands.getstatusoutput(cmd)
-    if ret == 0:
-        return out
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status == 0:
+        return result.stdout
     else:
         return None
 
@@ -301,7 +308,7 @@ def get_disk_path(dom_xml):
     doc = minidom.parseString(dom_xml)
     disk_list = doc.getElementsByTagName('disk')
     source = disk_list[0].getElementsByTagName('source')[0]
-    attribute = source.attributes.keys()[0]
+    attribute = list(source.attributes.keys())[0]
 
     return source.attributes[attribute].value
 
@@ -310,7 +317,7 @@ def get_capacity_suffix_size(capacity):
     dicts = {}
     change_to_byte = {'K': pow(2, 10), 'M': pow(2, 20), 'G': pow(2, 30),
                       'T': pow(2, 40)}
-    for suffix in change_to_byte.keys():
+    for suffix in list(change_to_byte.keys()):
         if capacity.endswith(suffix):
             dicts['suffix'] = suffix
             dicts['capacity'] = capacity.split(suffix)[0]
@@ -323,31 +330,29 @@ def dev_num(guestname, device):
 
        Return None on FAILURE and the disk or interface number in the guest on SUCCESS
     """
-
     if not guestname or not device:
         return None
-
-    (ret, guestdump) = commands.getstatusoutput('virsh dumpxml %s' % guestname)
-
-    if ret != 0:
-        print "failed to dump the xml description of the domain %s." % guestname
+    cmd = "virsh dumpxml %s" % guestname
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status != 0:
+        print("failed to dump the xml description of the domain %s." % guestname)
         return None
-
+    guestdump = result.stdout
     device = "</%s>" % device
     num = guestdump.count(device)
-
     if num:
         return num
     else:
-        print "no %s in the domain %s, can you image that?" % (device, guestname)
+        print("no %s in the domain %s, can you image that?" % (device, guestname))
         return None
 
 
 def stop_selinux():
-    selinux_value = commands.getoutput("getenforce")
+    cmd = "getenforce"
+    selinux_value = process.system_output(cmd, shell=True, ignore_status=True)
     if selinux_value == "Enforcing":
         os.system("setenforce 0")
-        if commands.getoutput("getenforce") == "Permissive":
+        if process.system_output(cmd, shell=True, ignore_status=True) == "Permissive":
             return "selinux is disabled"
         else:
             return "Failed to stop selinux"
@@ -356,25 +361,26 @@ def stop_selinux():
 
 
 def stop_firewall(ip):
-    stopfire = ""
+    output = ""
     if ip == "127.0.0.1":
-        stopfire = commands.getoutput("service iptables stop")
+        cmd = "service iptables stop"
     else:
-        stopfire = commands.getoutput("ssh %s service iptables stop" % ip)
-    if stopfire.find("stopped"):
-        print "Firewall is stopped."
+        cmd = "ssh %s service iptables stop" % ip
+    output = process.system_output(cmd, shell=True, ignore_status=True)
+    if output.find("stopped"):
+        print("Firewall is stopped.")
     else:
-        print "Failed to stop firewall"
+        print("Failed to stop firewall")
         sys.exit(1)
 
 
 def print_section(title):
-    print "\n%s" % title
-    print "=" * 60
+    print("\n%s" % title)
+    print("=" * 60)
 
 
 def print_entry(key, value):
-    print "%-10s %-10s" % (key, value)
+    print("%-10s %-10s" % (key, value))
 
 
 def print_xml(key, ctx, path):
@@ -389,10 +395,10 @@ def print_xml(key, ctx, path):
 
 def print_title(info, delimiter, num):
     curr_time = get_curr_time()
-    blank = ' ' * (num / 2 - (len(info) + 8 + len(curr_time)) / 2)
-    print delimiter * num
-    print "%s%s\t%s" % (blank, info, curr_time)
-    print delimiter * num
+    blank = ' '*(num/2 - (len(info) + 8 + len(curr_time))/2)
+    print(delimiter * num)
+    print("%s%s\t%s" % (blank, info, curr_time))
+    print(delimiter * num)
 
 
 def file_read(filename):
@@ -402,7 +408,7 @@ def file_read(filename):
         fhandle.close()
         return data
     else:
-        print "The FILE %s doesn't exist." % filename
+        print("The FILE %s doesn't exist." % filename)
 
 
 def parse_xml(filename, element):
@@ -436,10 +442,10 @@ def get_bridge_ip(bridge):
 
        Return None on FAILURE and the ip address on SUCCESS
     """
-    CMD = "ip route"
-    (ret, out) = commands.getstatusoutput(CMD)
+    cmd = "ip route"
+    result = process.run(cmd, shell=True, ignore_status=True)
     ips = re.findall(r'(\d{1,3}(?:\.\d{1,3}){3}/\d{1,3}) dev %s'
-                     % bridge, out, re.IGNORECASE)
+                     % bridge, result.stdout, re.IGNORECASE)
 
     return ips[0] if ips else None
 
@@ -459,21 +465,19 @@ def mac_to_ips(mac, timeout, bridge='virbr0'):
     if timeout < 10:
         timeout = 10
 
-    CMD = "nmap -sP -n %s"
+    cmd = "nmap -sP -n %s" % bridge_ip
     while timeout > 0:
-        (ret, out) = commands.getstatusoutput(CMD % bridge_ip)
-        if ret != 0:
-            print "Failed to run nmap command."
+        result = process.run(cmd, shell=True, ignore_status=True)
+        if result.exit_status != 0:
+            print("Failed to run nmap command.")
             return None
 
         ipaddr = re.findall(r'Nmap scan report for ([0-9\.]*)\n.*?\n.*?%s'
-                            % mac, out, re.IGNORECASE)
-
+                            % mac, result.stdout, re.IGNORECASE)
         if len(ipaddr) > 0:
             break
 
         time.sleep(10)
-
         timeout -= 10
 
     return timeout and ipaddr or None
@@ -492,10 +496,9 @@ def do_ping(ip, timeout):
         timeout = 10
 
     cmd = "ping -c 3 " + str(ip)
-
     while timeout > 0:
-        (ret, out) = commands.getstatusoutput(cmd)
-        if ret == 0:
+        result = process.run(cmd, shell=True, ignore_status=True)
+        if result.exit_status == 0:
             break
         timeout -= 10
 
@@ -582,8 +585,8 @@ def scp_file(hostname, username, password, target_path, filename):
 
 def support_virt(self):
     cmd = "cat /proc/cpuinfo | egrep '(vmx|svm)'"
-    if commands.getoutput(cmd) is None:
-        print 'CPU does not support VT.'
+    if process.system_output(cmd, shell=True, ignore_status=True) is None:
+        print('CPU does not support VT.')
         return False
     else:
         return True
@@ -602,8 +605,8 @@ def remote_exec(hostname, username, password, cmd):
         try:
             os.execv("/usr/bin/ssh", ["/usr/bin/ssh", "-l",
                                       username, hostname, cmd])
-        except OSError, err:
-            print "OSError: " + str(err)
+        except OSError as err:
+            print("OSError: " + str(err))
             return -1
     else:
         signal.signal(signal.SIGCHLD, subproc)
@@ -611,29 +614,25 @@ def remote_exec(hostname, username, password, cmd):
             timeout = 50
             i = 0
             while i <= timeout:
-
                 time.sleep(1)
                 output = os.read(fd, 10240)
-
                 if re.search(r'(yes\/no)', output):
                     os.write(fd, "yes\r")
-
                 elif re.search('password:', output):
                     os.write(fd, password + "\r")
-
                 elif subproc_flag == 1:
                     ret = string.strip(output)
                     break
                 elif i == timeout:
-                    print "TIMEOUT!!!!"
+                    print("TIMEOUT!!!!")
                     return -1
 
                 i = i + 1
 
             subproc_flag = 0
             return ret
-        except Exception, err:
-            print err
+        except Exception as err:
+            print(err)
             subproc_flag = 0
             return -1
 
@@ -692,7 +691,7 @@ def install_package(package=''):
     """Install specified package"""
     if package:
         cmd = "rpm -qa " + package
-        output = commands.getoutput(cmd)
+        output = process.system_output(cmd, shell=True, ignore_status=True)
         pkg = output.split('\n')[0]
         if pkg:
             os.system("yum -y -q update " + package)
@@ -700,7 +699,7 @@ def install_package(package=''):
         else:
             ret = os.system("yum -y -q install " + package)
             if ret == 0:
-                output = commands.getoutput(cmd)
+                output = process.system_output(cmd, shell=True, ignore_status=True)
                 pkg = output.split('\n')[0]
                 if pkg:
                     return pkg
@@ -712,8 +711,8 @@ def install_package(package=''):
 
 def libvirt_version(latest_ver=''):
     """Get libvirt version info"""
-    query_virt_ver = 'rpm -qa|grep libvirt'
-    ret = commands.getoutput(query_virt_ver)
+    cmd = 'rpm -qa|grep libvirt'
+    ret = process.system_output(cmd, shell=True, ignore_status=True)
     if ret:
         mas_ver = ret.split('-')[-2]
         sec_ver = (ret.split('-')[-1])
@@ -740,10 +739,10 @@ def create_dir(hostname, username, password):
         if check_str == "/tmp/test":
             return 0
         else:
-            print "check_str = ", check_str
+            print("check_str = ", check_str)
             return 1
     else:
-        print "mkdir_ret = ", mkdir_ret
+        print("mkdir_ret = ", mkdir_ret)
         return 1
 
 
@@ -760,10 +759,10 @@ def write_file(hostname, username, password):
         if check_str == test_string:
             return 0
         else:
-            print "check_str = ", check_str
+            print("check_str = ", check_str)
             return 1
     else:
-        print "write_file_ret = ", write_file_ret
+        print("write_file_ret = ", write_file_ret)
         return 1
 
 
@@ -778,10 +777,10 @@ def run_mount_app(hostname, username, password,
         if check_str != '':
             return 0
         else:
-            print "mount check fail"
+            print("mount check fail")
             return 1
     else:
-        print "mount fail"
+        print("mount fail")
         return 1
 
 
@@ -807,7 +806,7 @@ def format_parammap(paramlist, map_test, length):
             if not len(param) == 2:
                 return False
             if not int(param[1]) < length:
-                print "paramlist: out of max range"
+                print("paramlist: out of max range")
                 return False
             if int(param[1]) < int(param[0]):
                 return False
@@ -826,8 +825,8 @@ def format_parammap(paramlist, map_test, length):
                     parammap += (map_test[i],)
 
         return parammap
-    except ValueError, err:
-        print "ValueError: " + str(err)
+    except ValueError as err:
+        print("ValueError: " + str(err))
         return False
 
 
@@ -933,32 +932,36 @@ def validate_remote_nic_type(hostname, username,
     if lspci_cmd_ret != "" and lsmod_cmd_ret != "":
         cmd1 = """echo "%s" | grep '%s'""" % (lspci_cmd_ret, nic_name)
         cmd2 = """echo "%s" | grep '%s'""" % (lsmod_cmd_ret, nic_driver)
-        status1, output1 = commands.getstatusoutput(cmd1)
-        status2, output2 = commands.getstatusoutput(cmd2)
+        ret1 = process.run(cmd1, shell=True, ignore_status=True)
+        status1 = ret1.exit_status
+        output1 = ret1.stdout
+        ret2 = process.run(cmd2, shell=True, ignore_status=True)
+        status2 = ret2.exit_status
+        output2 = ret2.stdout
         if status1 == 0 and status2 == 0:
             # other nic should not be seen in guest
             nic_type_to_name_dict.pop(nic_type)
-            for key in nic_type_to_name_dict.keys():
+            for key in list(nic_type_to_name_dict.keys()):
                 logger.info("now try to grep other nic type \
                             in lspci output: %s" % key)
                 other_name_cmd = """echo '%s' | grep '%s'""" % \
                                  (lspci_cmd_ret, nic_type_to_name_dict[key])
-                ret, out = commands.getstatusoutput(other_name_cmd)
-                if ret == 0:
+                name_result = process.run(other_name_cmd, shell=True, ignore_status=True)
+                if name_result.exit_status == 0:
                     logger.info("unspecified nic name is seen in \
-                               guest's lspci command: \n %s \n" % out)
+                               guest's lspci command: \n %s \n" % name_result.stdout)
                     return 1
 
             nic_type_to_driver_dict.pop(nic_type)
-            for key in nic_type_to_driver_dict.keys():
+            for key in list(nic_type_to_driver_dict.keys()):
                 logger.info("now try to grep other nic type \
                           in lsmod output: %s" % key)
                 other_driver_cmd = ("""echo '%s' | grep '%s'""" %
                                     (lsmod_cmd_ret, nic_type_to_driver_dict[key]))
-                ret1, out1 = commands.getstatusoutput(other_driver_cmd)
-                if ret1 == 0:
+                driver_result = process.run(other_driver_cmd, shell=True, ignore_status=True)
+                if driver_restult.exit_status == 0:
                     logger.info("unspecified nic driver is seen \
-                               in guest's lsmod command: %s" % out)
+                               in guest's lsmod command: %s" % driver_result.stdout)
                     return 1
 
             logger.info("lspci ouput about nic is: \n %s; \n"
@@ -998,8 +1001,12 @@ def validate_remote_blk_type(hostname, username, password,
                         (blk_name, blk_driver))
             cmd1 = """echo "%s" | grep '%s'""" % (lspci_cmd_ret, blk_name)
             cmd2 = """echo "%s" | grep '%s'""" % (lsmod_cmd_ret, blk_driver)
-            status1, output1 = commands.getstatusoutput(cmd1)
-            status2, output2 = commands.getstatusoutput(cmd2)
+            ret1 = process.run(cmd1, shell=True, ignore_status=True)
+            status1 = ret1.exit_status
+            output1 = ret1.stdout
+            ret2 = process.run(cmd2, shell=True, ignore_status=True)
+            status2 = ret2.exit_status
+            output2 = ret2.stdout
             if status1 == 0 and status2 == 0:
                 logger.info("block device type is virtio")
                 return 0
@@ -1010,28 +1017,28 @@ def validate_remote_blk_type(hostname, username, password,
         if blk_type == "ide":
             # virtio block device should not be seen in guest
             blk_type_to_name_dict.pop(blk_type)
-            for key in blk_type_to_name_dict.keys():
+            for key in list(blk_type_to_name_dict.keys()):
                 logger.info(
                     "now try to grep other blk type in lspci output: %s" %
                     key)
                 other_name_cmd = """echo "%s" | grep '%s'""" % \
                                  (lspci_cmd_ret, blk_type_to_name_dict[key])
-                ret, out = commands.getstatusoutput(other_name_cmd)
-                if ret == 0:
+                name_result = process.run(other_name_cmd, shell=True, ignore_status=True)
+                if name_result.exit_status == 0:
                     logger.info("unspecified blk name is seen in guest's \
-                                lspci command: \n %s \n" % out)
+                                lspci command: \n %s \n" % name_result.stdout)
                     return 1
             blk_type_to_driver_dict.pop(blk_type)
-            for key in blk_type_to_driver_dict.keys():
+            for key in list(blk_type_to_driver_dict.keys()):
                 logger.info(
                     "now try to grep other blk type in lsmod output: %s" %
                     key)
                 other_driver_cmd = ("""echo '%s' | grep '%s'""" %
                                     (lsmod_cmd_ret, blk_type_to_driver_dict[key]))
-                ret1, out1 = commands.getstatusoutput(other_driver_cmd)
-                if ret1 == 0:
+                driver_result = process.run(other_driver_cmd, shell=True, ignore_status=True)
+                if driver_restult.exit_status == 0:
                     logger.info("unspecified blk driver is seen \
-                                in guest's lsmod command: \n %s \n" % out)
+                                in guest's lsmod command: \n %s \n" % driver_result.stdout)
                     return 1
             logger.info("block device type is ide")
             return 0
@@ -1179,11 +1186,9 @@ def parse_flags(params, default=0, param_name="flags"):
             else:
                 logger.error("Flag: 'None' must not be used with other flags!")
                 return -1
-
         elif flag == '0':
             # '0' for API with not used flag
             flag = 0
-
         else:
             try:
                 flag = getattr(libvirt, flag)
@@ -1191,7 +1196,6 @@ def parse_flags(params, default=0, param_name="flags"):
                 logger.error("Flag:'%s' is illegal or not supported"
                              "by this version of libvirt" % flag)
                 return -1
-
         try:
             flag_bit = flag_bit | flag
         except TypeError:
@@ -1228,15 +1232,15 @@ def version_compare(package_name, major, minor, update, logger):
                 logger.error("Get %s version failed." % package_name)
                 return False
 
-            package = out[0].split('-')
+            package = out[0].decode().split('-')
             for item in package:
                 if not item.isalnum() and ".x86_64" not in item:
                     ver = item.split('.')
                     package_ver = int(ver[0]) * 1000000 + \
                         int(ver[1]) * 1000 + int(ver[2])
                     break
-        except (ValueError, TypeError, AttributeError):
-            logger.error("Error determining libvirt version")
+        except (ValueError, TypeError, AttributeError) as err:
+            logger.error("Error determining libvirt version: %s" % err)
             return False
 
     compare_version = major * 1000000 + minor * 1000 + update
@@ -1248,28 +1252,28 @@ def version_compare(package_name, major, minor, update, logger):
 
 def gluster_status(logger):
     cmd = "service glusterd status"
-    ret, out = commands.getstatusoutput(cmd)
-    if not ret:
-        if "active" not in out or "running" not in out:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if not result.exit_status:
+        if "active" not in result.stdout or "running" not in result.stdout:
             cmd = "service glusterd start"
             logger.info("Starting glusterd ...")
-            ret, out = commands.getstatusoutput(cmd)
-            if ret:
+            result = process.run(cmd, shell=True, ignore_status=True)
+            if result.exit_status:
                 logger.error("cmd failed: %s" % cmd)
-                logger.error("ret: %s, out: %s" % (ret, out))
+                logger.error("out: %s" % result.stdout)
                 return False
 
     else:
         logger.error("cmd failed: %s." % cmd)
-        logger.error("ret: %s, out: %s." % (ret, out))
+        logger.error("out: %s." % result.stdout)
         return False
     return True
 
 
 def is_gluster_vol_started(vol_name, logger):
     cmd = "gluster volume info %s" % vol_name
-    ret, out = commands.getstatusoutput(cmd)
-    vol_status = re.findall(r'Status: (\S+)', out)
+    result = process.run(cmd, shell=True, ignore_status=True)
+    vol_status = re.findall(r'Status: (\S+)', result.stdout)
     if 'Started' in vol_status:
         return True
     else:
@@ -1279,10 +1283,10 @@ def is_gluster_vol_started(vol_name, logger):
 def gluster_vol_start(vol_name, logger):
     if not is_gluster_vol_started(vol_name, logger):
         cmd = "gluster volume start %s" % vol_name
-        ret, out = commands.getstatusoutput(cmd)
-        if ret:
+        result = process.run(cmd, shell=True, ignore_status=True)
+        if result.exit_status:
             logger.error("cmd failed: %s" % cmd)
-            logger.error("ret: %s, out: %s" % (ret, out))
+            logger.error("out: %s" % result.stdout)
             return False
 
     return True
@@ -1294,10 +1298,10 @@ def gluster_vol_stop(vol_name, logger, force=False):
             cmd = "echo 'y' | gluster volume stop %s force" % vol_name
         else:
             cmd = "echo 'y' | gluster volume stop %s" % vol_name
-        ret, out = commands.getstatusoutput(cmd)
-        if ret:
+        result = process.run(cmd, shell=True, ignore_status=True)
+        if result.exit_status:
             logger.error("cmd failed: %s" % cmd)
-            logger.error("ret: %s, out: %s" % (ret, out))
+            logger.error("out: %s" % result.stdout)
             return False
     return True
 
@@ -1305,10 +1309,10 @@ def gluster_vol_stop(vol_name, logger, force=False):
 def gluster_vol_delete(vol_name, logger):
     if not is_gluster_vol_started(vol_name, logger):
         cmd = "echo 'y' | gluster volume delete %s" % vol_name
-        ret, out = commands.getstatusoutput(cmd)
-        if ret:
+        result = process.run(cmd, shell=True, ignore_status=True)
+        if result.exit_status:
             logger.error("cmd failed: %s" % cmd)
-            logger.error("ret: %s, out: %s" % (ret, out))
+            logger.error("out: %s" % result.stdout)
             return False
         return True
     else:
@@ -1317,8 +1321,8 @@ def gluster_vol_delete(vol_name, logger):
 
 def is_gluster_vol_avail(vol_name, logger):
     cmd = "gluster volume info"
-    ret, out = commands.getstatusoutput(cmd)
-    volume_name = re.findall(r'Volume Name: (%s)\n' % vol_name, out)
+    result = process.run(cmd, shell=True, ignore_status=True)
+    volume_name = re.findall(r'Volume Name: (%s)\n' % vol_name, result.stdout)
     if volume_name:
         return gluster_vol_start(vol_name, logger)
 
@@ -1335,10 +1339,10 @@ def gluster_vol_create(vol_name, ip, brick_path, logger, force=False):
 
     cmd = "gluster volume create %s %s:/%s %s" % (vol_name, ip,
                                                   brick_path, force_opt)
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
         return False
 
     return is_gluster_vol_avail(vol_name, logger)
@@ -1346,19 +1350,19 @@ def gluster_vol_create(vol_name, ip, brick_path, logger, force=False):
 
 def gluster_allow_insecure(vol_name, logger):
     cmd = "gluster volume set %s server.allow-insecure on" % vol_name
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
         return 1
 
     cmd = "gluster volume info"
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
         return 1
-    match = re.findall(r'server.allow-inscure: on', out)
+    match = re.findall(r'server.allow-inscure: on', result.stdout)
     if not match:
         return 1
     else:
@@ -1367,10 +1371,10 @@ def gluster_allow_insecure(vol_name, logger):
 
 def set_fusefs(logger):
     cmd = "setsebool virt_use_fusefs on"
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
         return 1
     return 0
 
@@ -1397,20 +1401,20 @@ def cleanup_gluster(vol_name, logger):
 
 def mount_gluster(vol_name, ip, path, logger):
     cmd = "mount -t glusterfs %s:%s %s" % (ip, vol_name, path)
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
         return 1
     return 0
 
 
 def umount_gluster(path, logger):
     cmd = "umount %s" % path
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
         return 1
     return 0
 
@@ -1421,20 +1425,20 @@ def setup_nfs(ip, nfspath, mountpath, logger):
         return 1
 
     cmd = "mount -t nfs %s:%s %s" % (ip, nfspath, mountpath)
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
         return 1
     return 0
 
 
 def cleanup_nfs(path, logger):
     cmd = "umount %s" % path
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
         return 1
     return 0
 
@@ -1442,11 +1446,11 @@ def cleanup_nfs(path, logger):
 def iscsi_login(target, portal, logger):
     cmd = "iscsiadm --mode node --login --targetname %s" % target
     cmd += " --portal %s" % portal
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
-    if "successful" in out:
+        logger.error("out: %s" % result.stdout)
+    if "successful" in result.stdout:
         return True
     else:
         return False
@@ -1457,11 +1461,11 @@ def iscsi_logout(logger, target=None):
         cmd = "iscsiadm --mode node --logout -T %s" % target
     else:
         cmd = "iscsiadm --mode node --logout all"
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
-    if "successful" in out:
+        logger.error("out: %s" % result.stdout)
+    if "successful" in result.stdout:
         return True
     else:
         return False
@@ -1469,20 +1473,20 @@ def iscsi_logout(logger, target=None):
 
 def iscsi_discover(portal, logger):
     cmd = "iscsiadm -m discovery -t sendtargets -p %s" % portal
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
         return False
     return True
 
 
 def iscsi_get_sessions(logger):
     cmd = "iscsiadm --mode session"
-    ret, out = commands.getstatusoutput(cmd)
+    result = process.run(cmd, shell=True, ignore_status=True)
     sessions = []
-    if "No active sessions" not in out:
-        for session in out.splitlines():
+    if "No active sessions" not in result.stdout:
+        for session in result.stdout.splitlines():
             ip = session.split()[2].split(',')[0]
             target = session.split()[3]
             sessions.append((ip, target))
@@ -1492,7 +1496,7 @@ def iscsi_get_sessions(logger):
 def is_login(target, logger):
     sessions = iscsi_get_sessions(logger)
     login = False
-    if target in map(lambda x: x[1], sessions):
+    if target in [x[1] for x in sessions]:
         login = True
     return login
 
@@ -1500,16 +1504,16 @@ def is_login(target, logger):
 def get_device_name(target, logger):
     if is_login(target, logger):
         cmd = "iscsiadm -m session -P 3"
-        ret, out = commands.getstatusoutput(cmd)
-        if ret:
+        result = process.run(cmd, shell=True, ignore_status=True)
+        if result.exit_status:
             logger.error("cmd failed: %s" % cmd)
-            logger.error("ret: %s, out: %s" % (ret, out))
+            logger.error("out: %s" % result.stdout)
         pattern = r"Target:\s+%s.*?disk\s(\w+)\s+\S+\srunning" % target
-        device_name = re.findall(pattern, out, re.S)
+        device_name = re.findall(pattern, result.stdout, re.S)
         try:
             device_name = "/dev/%s" % device_name[0]
-        except IndexError:
-            logger.error("Can not find target '%s'." % target)
+        except IndexError as err:
+            logger.error("Can not find target '%s': %s." % (target, err))
     else:
         logger.error("Session is not logged in yet.")
     return device_name
@@ -1518,23 +1522,23 @@ def get_device_name(target, logger):
 def create_partition(device, logger):
     timeout = 10
     cmd = "echo -e 'o\\nn\\np\\n1\\n\\n\\nw\\n' | fdisk %s" % device
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
     while timeout > 0:
         if os.path.exists(device):
             cmd = "dd if=/dev/zero of=%s bs=512 count=10000; sync" % device
-            ret, out = commands.getstatusoutput(cmd)
-            if ret:
+            result = process.run(cmd, shell=True, ignore_status=True)
+            if result.exit_status:
                 logger.error("cmd failed: %s" % cmd)
-                logger.error("ret: %s, out: %s" % (ret, out))
+                logger.error("out: %s" % result.stdout)
             return True
         cmd = "partprobe %s" % device
-        ret, out = commands.getstatusoutput(cmd)
-        if ret:
+        result = process.run(cmd, shell=True, ignore_status=True)
+        if result.exit_status:
             logger.error("cmd failed: %s" % cmd)
-            logger.error("ret: %s, out: %s" % (ret, out))
+            logger.error("out: %s" % result.stdout)
         time.sleep(1)
         timeout = timeout - 1
     return False
@@ -1542,30 +1546,30 @@ def create_partition(device, logger):
 
 def create_fs(device, logger):
     cmd = "mkfs.ext3 -F %s" % device
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
         return False
     return True
 
 
 def mount_iscsi(device, mountpath, logger):
     cmd = "mount %s %s" % (device, mountpath)
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
         return 1
     return 0
 
 
 def umount_iscsi(mountpath, logger):
     cmd = "umount %s" % mountpath
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("ret: %s, out: %s" % (ret, out))
+        logger.error("out: %s" % result.stdout)
         return 1
     return 0
 

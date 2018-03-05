@@ -158,7 +158,7 @@ def iface_list(params):
         if not check_number_of_interfaces(conn, len(iface_list), flag, logger):
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s" % e.message)
         return 1
 

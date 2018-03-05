@@ -34,8 +34,8 @@ from src.casecfgcheck import CaseCfgCheck
 
 
 def usage():
-    print "Usage: libvirt-test-api <OPTIONS> <ARGUMENTS>"
-    print "\noptions: -h, --help : Display usage information \
+    print("Usage: libvirt-test-api <OPTIONS> <ARGUMENTS>")
+    print("\noptions: -h, --help : Display usage information \
            \n         -c, --casefile: Specify configuration file \
            \n         -t, --template: Print testcase config file template \
            \n         -f, --logxml: Specify log file with type xml,\
@@ -43,9 +43,9 @@ def usage():
            \n         -l, --log-level: 0 or 1 currently \
            \n         -d, --delete-log: Delete log items \
            \n         -m, --merge: Merge two log xmlfiles \
-           \n         -r, --rerun: Rerun one or more test"
+           \n         -r, --rerun: Rerun one or more test")
 
-    print "example: \
+    print("example: \
            \n         libvirt-test-api -l 0|1 -c TEST.CONF    \
            \n         libvirt-test-api -c TEST.CONF -f TEST.XML \
            \n         libvirt-test-api -t repos/domain/start.py ... \
@@ -54,7 +54,7 @@ def usage():
            \n         libvirt-test-api -d TEST.XML TESTRUNID \
            \n         libvirt-test-api -d TEST.XML all \
            \n         libvirt-test-api -f TEST.XML \
--r TESTRUNID TESTID ..."
+-r TESTRUNID TESTID ...")
 
 
 def append_path():
@@ -148,7 +148,7 @@ class Main(object):
             logname = log.Log.get_log_name()
             testid = logname[-3:]
             log_xml_parser.add_test_xml(testrunid, testid)
-            if os.environ.has_key('AUTODIR'):
+            if "AUTODIR" in os.environ:
                 autotest_testdir = os.path.join(os.environ['AUTODIR'], 'tests/libvirt_test_API')
                 logfile = os.path.join('%s/src/log/%s' % (autotest_testdir, testrunid), logname)
             else:
@@ -174,7 +174,7 @@ class Main(object):
         # will call the module process to run the testcases
         # which stored in the list of procs, if disable,
         # will call them one by one
-        if options_list[0]['options'].has_key("multiprocess"):
+        if "multiprocess" in options_list[0]['options']:
             if options_list[0]['options']["multiprocess"] == "enable":
                 proc = process.Process(procs)
                 proc.fork()
@@ -211,19 +211,14 @@ class Main(object):
 
         if "cleanup" in options_list[0]['options']:
             if options_list[0]['options']["cleanup"] == "enable":
-                print "Clean up Testing Environment..."
-                cases_clearfunc_ref_dict = proxy_obj.get_optionalfunc_call_dict(
-                    'clean')
+                print("Clean up Testing Environment...")
+                cases_clearfunc_ref_dict = proxy_obj.get_optionalfunc_call_dict('clean')
                 log.Log.counter = 0
                 for activity in activities_list:
                     logname = log.Log.get_log_name()
                     logfile = os.path.join('log/%s' % testrunid, logname)
-                    env_clear.EnvClear(
-                        cases_clearfunc_ref_dict,
-                        activity,
-                        logfile,
-                        self.loglevel)()
-                print "Done"
+                    env_clear.EnvClear(cases_clearfunc_ref_dict, activity, logfile, self.loglevel)()
+                print("Done")
             elif options_list[0]['options']["cleanup"] == "disable":
                 pass
             else:
@@ -238,7 +233,7 @@ class Main(object):
         modcasename = []
         for case in testcases:
             if not os.path.isfile(case) or not case.endswith('.py'):
-                print "testcase %s couldn't be recognized" % case
+                print("testcase %s couldn't be recognized" % case)
                 return 1
 
             paths = case.split('/')
@@ -265,7 +260,7 @@ class Main(object):
 
             string += "\n"
 
-        print string
+        print(string)
         return 0
 
     def remove_log(self, testrunid, testid=None):
@@ -274,30 +269,30 @@ class Main(object):
 
         # remove a test in a testrun
         if testrunid and testid:
-            print "testrunid is %s" % testrunid
-            print "testid is %s" % testid
+            print("testrunid is %s" % testrunid)
+            print("testid is %s" % testid)
             log_xml_parser.remove_test_xml(testrunid, testid)
             os.remove("log/%s/libvirt_test%s" % (testrunid, testid))
-            print "Item testid %s in testrunid %s deleted successfully" % \
-                  (testid, testrunid)
+            print("Item testid %s in testrunid %s deleted successfully" % \
+                  (testid, testrunid))
 
         # delete all of records in a log xmlfile
         elif testrunid == "all" and not testid:
             testrunids = log_xml_parser.remove_alltestrun_xml()
             for testrunid in testrunids:
                 shutil.rmtree("log/%s" % testrunid)
-            print "All testruns deleted successfully"
+            print("All testruns deleted successfully")
 
         # delete record of a whole testrun
         elif testrunid.startswith("2") and not testid:
-            print "testrunid is %s" % testrunid
+            print("testrunid is %s" % testrunid)
             log_xml_parser.remove_testrun_xml(testrunid)
             shutil.rmtree("log/%s" % testrunid)
-            print "Testrun with testrunid %s deleted successfully" % testrunid
+            print("Testrun with testrunid %s deleted successfully" % testrunid)
 
         # report error if arguments given wrong
         else:
-            print "Arguments error"
+            print("Arguments error")
             usage()
             sys.exit(0)
 
@@ -305,8 +300,8 @@ class Main(object):
         """ to merge two log xml files of log into one"""
         log_xml_parser = LogGenerator(self.logxml)
         log_xml_parser.merge_xmlfiles(logxml_two)
-        print "Merge the second log xml file %s to %s successfully " % \
-              (logxml_two, self.logxml)
+        print("Merge the second log xml file %s to %s successfully " %
+              (logxml_two, self.logxml))
 
     def rerun(self, testrunid, testid_list):
         """ rerun a specific test or a set of tests """
@@ -329,8 +324,8 @@ if __name__ == "__main__":
         opts, args = getopt.getopt(sys.argv[1:], "hc:tl:dmr",
                                    ["help", "casefile=", "template", "logxml=",
                                     "delete-log=", "merge=", "rerun="])
-    except getopt.GetoptError, err:
-        print str(err)
+    except getopt.GetoptError as err:
+        print(str(err))
         usage()
         sys.exit(2)
 

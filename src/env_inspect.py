@@ -17,57 +17,60 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import commands
-import sharedmod
+from . import sharedmod
+
 from utils import utils
+from utils import process
 
 
 def check_libvirt(logger):
     virsh = 'virsh -v'
-    status, output = commands.getstatusoutput(virsh)
-    if status:
-        logger.error(output)
+    result = process.run(virsh, shell=True, ignore_status=True)
+    if result.exit_status:
+        logger.error(result.stdout)
         return 1
     else:
-        logger.info("    Virsh command line tool of libvirt: %s" % output)
+        logger.info("    Virsh command line tool of libvirt: %s" % result.stdout)
 
     libvirtd = 'libvirtd --version'
-    status, output = commands.getstatusoutput(libvirtd)
-    logger.info("    %s" % output)
-    if status:
-        return 1
-
-    default_uri = 'virsh uri'
-    status, output = commands.getstatusoutput(default_uri)
-    if status:
-        logger.error(output)
+    result = process.run(libvirtd, shell=True, ignore_status=True)
+    if result.exit_status:
+        logger.error(result.stdout)
         return 1
     else:
-        logger.info("    Default URI: %s" % output.strip())
+        logger.info("    %s" % result.stdout)
 
-    if 'qemu' in output:
+    default_uri = 'virsh uri'
+    result = process.run(default_uri, shell=True, ignore_status=True)
+    if result.exit_status:
+        logger.error(result.stdout)
+        return 1
+    else:
+        logger.info("    Default URI: %s" % result.stdout.strip())
+
+    if 'qemu' in result.stdout:
         for qemu in ['/usr/bin/qemu-kvm', '/usr/libexec/qemu-kvm', 'kvm']:
-            QEMU = '%s --version' % qemu
-            status, output = commands.getstatusoutput(QEMU)
-            if not status:
-                logger.info("    %s" % output)
+            cmd = '%s --version' % qemu
+            result = process.run(cmd, shell=True, ignore_status=True)
+            if not result.exit_status:
+                logger.info("    %s" % result.stdout)
                 break
-        if status:
+        if result.exit_status:
             logger.error("    no qemu-kvm found")
             return 1
-    elif 'xen' in output:
-        # TODO need to get xen hypervisor info here
+    elif 'xen' in result.stdout:
+        #TODO need to get xen hypervisor info here
         pass
 
     return 0
 
 
 def hostinfo(logger):
-    command = 'uname -a'
-    status, output = commands.getstatusoutput(command)
-    logger.info("    %s" % output)
-    if status:
+    cmd = 'uname -a'
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status:
         return 1
+    logger.info("    %s" % result.stdout)
     return 0
 
 

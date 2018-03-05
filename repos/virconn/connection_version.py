@@ -8,7 +8,7 @@ from src import sharedmod
 from utils import utils
 
 required_params = ()
-optional_params = {'conn': ''}
+optional_params = {'uri': None}
 
 
 def produce_ver_num(major, minor, release):
@@ -57,7 +57,7 @@ def check_hypervisor_ver_num(conn, logger):
             if status != 0:
                 logger.error("Could not be aware of qemu")
                 return False
-        hyper_version = output[0]
+        hyper_version = output[0].decode()
         ver = hyper_version.split('-')[ver_num_pos]
         x = int(ver.split('.')[0])
         y = int(ver.split('.')[1])
@@ -68,7 +68,7 @@ def check_hypervisor_ver_num(conn, logger):
         if status != 0:
             logger.error("Exec_cmd failed: %s" % cmds)
             return False
-        hyper_version = output[0]
+        hyper_version = output[0].decode()
         ver = hyper_version.split('-')[0]
         x = int(ver.split('.')[0])
         y = int(ver.split('.')[1])
@@ -91,12 +91,13 @@ def connection_version(params):
     """test libvirt connection version
     """
     logger = params['logger']
+    uri = params.get("uri", None).decode()
 
     try:
         # get connection firstly.
-        # If conn is not specified, use conn from sharedmod
-        if 'conn' in params:
-            conn = libvirt.open(params['conn'])
+        # If uri is not specified, use conn from sharedmod
+        if 'uri' in params:
+            conn = libvirt.open(uri)
         else:
             conn = sharedmod.libvirtobj['conn']
 

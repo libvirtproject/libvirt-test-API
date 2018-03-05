@@ -144,7 +144,7 @@ def list_all_dev(params):
     try:
         conn = sharedmod.libvirtobj['conn']
         devs = conn.listAllDevices(flags)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

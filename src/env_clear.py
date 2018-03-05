@@ -19,7 +19,8 @@
 # to the corresponding testcase's argument in the order of testcase running
 
 from utils import log
-import mapper
+
+from . import mapper
 
 
 class EnvClear(object):
@@ -38,12 +39,12 @@ class EnvClear(object):
 
         self.case_name_list = []
         for case in mod_casename_func:
-            mod_case_func = case.keys()[0]
+            mod_case_func = list(case.keys())[0]
             self.case_name_list.append(mod_case_func)
 
         self.case_params_list = []
         for case in mod_casename_func:
-            case_params = case.values()[0]
+            case_params = list(case.values())[0]
             self.case_params_list.append(case_params)
 
     def __call__(self):

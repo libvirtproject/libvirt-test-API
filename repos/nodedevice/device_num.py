@@ -85,11 +85,11 @@ def check_negative(conn, logger, negative_cap):
             conn.numOfDevices()
         else:
             conn.numOfDevices(negative_cap)
-    except TypeError, e:
+    except TypeError as e:
         return True
-    except libvirtError, e:
+    except libvirtError as e:
         return True
-    except Exception, e:
+    except Exception as e:
         logger.error("Unexpected Exceptoin type " + str(e))
         return False
     logger.error("negative test failed with " + str(negative_cap))
@@ -116,7 +116,7 @@ def device_num(params):
                 return 1
             if not check_num_virsh(num, logger, cap):
                 return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

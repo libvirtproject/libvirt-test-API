@@ -359,7 +359,7 @@ class virEventLoopPureThread(threading.Thread):
                     t.set_last_fired(now)
                     t.dispatch()
 
-        except (os.error, select.error), e:
+        except (os.error, select.error) as e:
             if e.args[0] != errno.EINTR:
                 raise
         finally:

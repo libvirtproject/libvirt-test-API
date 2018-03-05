@@ -80,7 +80,7 @@ def free_pages(params):
 
     conn = sharedmod.libvirtobj['conn']
 
-    page_list = parse_page_list(params['pagesize'])
+    page_list = parse_page_list(params['pagesize'].decode())
     if page_list is None:
         logger.error("pagesize could not be recognized")
         return 1

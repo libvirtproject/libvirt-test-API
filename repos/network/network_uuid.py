@@ -117,7 +117,7 @@ networkLookupByUUID" % (UUIDString2, nw_name2))
         else:
             logger.error(VIRSH_NETUUID + " test failed.")
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

@@ -75,7 +75,7 @@ def node_mem_param(params):
             logger.error("check with tuning detail under %s failed" % KSM_PATH)
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

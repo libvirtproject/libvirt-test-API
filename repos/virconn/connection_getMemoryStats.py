@@ -4,7 +4,7 @@ from libvirt import libvirtError
 from utils import utils
 
 required_params = ()
-optional_params = {'conn': ''}
+optional_params = {'uri': None}
 
 NODE_ONLINE = '/sys/devices/system/node/online'
 MEMINFO = '/proc/meminfo'
@@ -23,6 +23,7 @@ def connection_getMemoryStats(params):
        test API for getMemoryStats in class virConnect
     """
     logger = params['logger']
+    uri = params.get("uri", None).decode()
     fail = 0
 
     nodeset = utils.file_read(NODE_ONLINE)
@@ -34,7 +35,7 @@ def connection_getMemoryStats(params):
         return 1
 
     try:
-        conn = libvirt.open(params['conn'])
+        conn = libvirt.open(uri)
 
         logger.info("get connection cells memory status")
         for n in range(len(node_tuple)):
@@ -53,7 +54,7 @@ def connection_getMemoryStats(params):
 
             a1 = ['/sys/devices/system/node/node%d/meminfo' % n, 0, 3]
             a2 = [conn, n, 'total']
-            if long(getsysmem(a1)) != long(virtgetmem(a2)):
+            if int(getsysmem(a1)) != int(virtgetmem(a2)):
                 fail = 1
                 logger.info("FAIL: Total memory in node %d is not right" % n)
 
@@ -87,7 +88,7 @@ def connection_getMemoryStats(params):
             logger.info("FAIL: Standard Deviation is too big \
                          (biger than %d) for host free memory" % 177 * 5)
 
-        if long(getsysmem([MEMINFO, 0, 1])) != long(virtgetmem([conn, -1, 'total'])):
+        if int(getsysmem([MEMINFO, 0, 1])) != int(virtgetmem([conn, -1, 'total'])):
             fail = 1
             logger.info("FAIL: Total memory for host is not right" % n)
 

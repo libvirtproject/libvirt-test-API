@@ -8,7 +8,7 @@ from src import sharedmod
 from utils import utils
 
 required_params = ()
-optional_params = {'conn': ''}
+optional_params = {'uri': ''}
 
 
 def get_security_driver(logger):
@@ -53,15 +53,15 @@ def connection_security_model(params):
     """test API for getSecurityModel"""
 
     logger = params['logger']
+    uri = params.get("uri", None).decode()
 
-    if 'conn' in params:
-        conn = libvirt.open(params['conn'])
+    if 'uri' in params:
+        conn = libvirt.open(uri)
     else:
         conn = sharedmod.libvirtobj['conn']
 
     try:
         model = conn.getSecurityModel()
-
         logger.info("model : %s" % model)
         driver = get_security_driver(logger)
         if driver == model[0]:
@@ -71,6 +71,6 @@ def connection_security_model(params):
             logger.error("Fail : get security model failed.")
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s" % e.message)
         return 1

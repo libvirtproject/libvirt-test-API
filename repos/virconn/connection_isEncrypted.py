@@ -22,7 +22,7 @@ def connection_isEncrypted(params):
     logger.info('Test if the connection to the hypervisor is encrypted')
     try:
         conn.isEncrypted()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

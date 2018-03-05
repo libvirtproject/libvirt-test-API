@@ -92,7 +92,7 @@ def numa_param_live(params):
             logger.error("numa parameters is not as expected")
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

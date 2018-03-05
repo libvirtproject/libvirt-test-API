@@ -83,7 +83,7 @@ def change_transaction(params):
 
         try:
             test()
-        except libvirtError, e:
+        except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             if negative == 'yes':
@@ -99,7 +99,7 @@ def change_transaction(params):
         interfaces_after_xml = get_interface_xml(conn)
         logger.debug("interfaces after transaction %s", interfaces_after_xml)
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

@@ -8,7 +8,7 @@ from src import sharedmod
 from utils import utils
 
 required_params = ()
-optional_params = {'conn': ''}
+optional_params = {'uri': None}
 
 
 def get_model(logger):
@@ -121,13 +121,14 @@ def check_conn_nodeinfo(conn_nodeinfo, logger):
 def connection_nodeinfo(params):
     """test libvirt connection node infomation
     """
-    logger = params['logger']
+    logger = params["logger"]
+    uri = params.get("uri", None).decode()
 
     try:
         # get connection firstly.
-        # If conn is not specified, use conn from sharedmod
-        if 'conn' in params:
-            conn = libvirt.open(params['conn'])
+        # If uri is not specified, use conn from sharedmod
+        if 'uri' in params:
+            conn = libvirt.open(uri)
         else:
             conn = sharedmod.libvirtobj['conn']
 

@@ -8,7 +8,7 @@ from src import sharedmod
 from utils import utils
 
 required_params = ()
-optional_params = {'conn': ''}
+optional_params = {'uri': None}
 
 
 def check_conn_type(conn, logger):
@@ -49,12 +49,13 @@ def connection_attributes(params):
     """test libvirt connection attributes
     """
     logger = params['logger']
+    uri = params.get("uri", None).decode()
 
     try:
         # get connection firstly.
-        # If conn is not specified, use conn from sharedmod
-        if 'conn' in params:
-            conn = libvirt.open(params['conn'])
+        # If uri is not specified, use conn from sharedmod
+        if 'uri' in params:
+            conn = libvirt.open(uri)
         else:
             conn = sharedmod.libvirtobj['conn']
 

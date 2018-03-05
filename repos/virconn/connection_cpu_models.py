@@ -46,7 +46,7 @@ def connection_cpu_models(params):
        test API for getCPUModelNames in class virConnect
     """
     logger = params['logger']
-    arch_value = params['arch']
+    arch_value = params['arch'].decode()
     try:
         logger.info("get cpu archs from cpu_map.xml")
         if not os.path.exists(CPU_MAP_FILE):

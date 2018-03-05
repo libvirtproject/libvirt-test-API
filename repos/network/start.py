@@ -58,7 +58,7 @@ def start(params):
     try:
         logger.info("begin to activate virtual network %s" % networkname)
         netobj.create()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to destroy domain")

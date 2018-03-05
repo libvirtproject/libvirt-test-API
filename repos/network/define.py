@@ -70,7 +70,7 @@ def define(params):
         else:
             logger.error("%s network is undefined" % networkname)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("define a network from xml: \n%s" % xmlstr)

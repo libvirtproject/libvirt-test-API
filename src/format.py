@@ -42,10 +42,10 @@ class Format(object):
     def print_start(self, msg, env_logger):
         """When test case starting,this function is called"""
         console = "    %s" % msg
-        num = (128 - len(msg)) / 2 - 2
+        num = int((128 - len(msg))/2 - 2)
         tpl = Template("\n$sep   $str  $sep\n")
         msgs = tpl.substitute(sep='-'*num, str=msg)
-        if os.environ.has_key('AUTODIR'):
+        if "AUTODIR" in os.environ:
             env_logger.info(msg)
         else:
             env_logger.info(console)
@@ -66,13 +66,13 @@ class Format(object):
 
         console = "            Result: %s\n" % console_result
         msg = msg + ' ' + result
-        num = (128 - len(msg)) / 2 - 2
+        num = int((128 - len(msg))/2 - 2)
         tpl = Template("$sep   $str  $sep")
         msgs = tpl.substitute(sep='-'*num, str=msg)
-        if os.environ.has_key('AUTODIR'):
+        if "AUTODIR" in os.environ:
             env_logger.info(result)
         else:
-            print console
+            print(console)
         self.write_log(msgs)
         separator = '\n' + '-' * 128 + '\n'
         self.write_log(separator)

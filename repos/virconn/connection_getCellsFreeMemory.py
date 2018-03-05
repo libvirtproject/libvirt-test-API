@@ -4,7 +4,7 @@ from libvirt import libvirtError
 from utils import utils
 
 required_params = ()
-optional_params = {'conn': ''}
+optional_params = {'uri': None}
 
 NODE_ONLINE = '/sys/devices/system/node/online'
 
@@ -22,6 +22,7 @@ def connection_getCellsFreeMemory(params):
        test API for getCellsFreeMemory in class virConnect
     """
     logger = params['logger']
+    uri = params.get("uri", None).decode()
     fail = 0
 
     nodeset = utils.file_read(NODE_ONLINE)
@@ -33,7 +34,7 @@ def connection_getCellsFreeMemory(params):
         return 1
 
     try:
-        conn = libvirt.open(params['conn'])
+        conn = libvirt.open(uri)
 
         logger.info("get connection cells free memory")
         for n in range(len(node_tuple)):

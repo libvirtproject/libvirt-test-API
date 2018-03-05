@@ -1,7 +1,8 @@
-
+#!/usr/bin/env python
 
 import os
-import exception
+
+from . import exception
 
 
 def xml_file_to_str(proxy_obj, mod_case, case_params):
@@ -10,9 +11,9 @@ def xml_file_to_str(proxy_obj, mod_case, case_params):
     """
     optional_params = proxy_obj.get_testcase_params(mod_case)[1]
 
-    if 'xml' in case_params:
+    if "xml" in case_params:
         file_name = case_params.pop('xml')
-    elif optional_params.has_key('xml'):
+    elif "xml" in optional_params:
         if optional_params['xml'] is None:
             return None
         else:
@@ -40,8 +41,7 @@ def xml_file_to_str(proxy_obj, mod_case, case_params):
             file_path)
 
     # replace the params that in testcase.conf first
-    for (key, value) in case_params.items():
-
+    for (key, value) in list(case_params.items()):
         if key == 'logger':
             continue
 
@@ -49,8 +49,7 @@ def xml_file_to_str(proxy_obj, mod_case, case_params):
         text = text.replace(key, value)
 
     # relace the optional params that defined in testcase.py
-    for (key, value) in optional_params.items():
-
+    for (key, value) in list(optional_params.items()):
         if key == 'xml':
             continue
 

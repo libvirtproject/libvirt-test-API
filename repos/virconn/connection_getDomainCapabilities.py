@@ -58,7 +58,7 @@ def get_hypervisor_ver(emulatorbin, logger):
     else:
         logger.debug("The package is %s" % package)
         return 0
-    package = package[0].split('-')
+    package = package[0].decode().split('-')
     version = ""
     for item in package:
         if not item.isalnum():
@@ -107,7 +107,7 @@ def generate_hash(emulatorbin, logger):
     """
     global QEMU_CAPS
     QEMU_CAPS = "/var/cache/libvirt/qemu/capabilities/"
-    file_name = hashlib.sha256(emulatorbin).hexdigest()
+    file_name = hashlib.sha256(emulatorbin.encode()).hexdigest()
     QEMU_CAPS = QEMU_CAPS + file_name + ".xml"
     logger.debug("Cache file is %s" % QEMU_CAPS)
 
@@ -423,10 +423,10 @@ def connection_getDomainCapabilities(params):
     test API for getDomainCapabilities in class virConnect
     """
     logger = params['logger']
-    emulatorbin = params['emulatorbin']
-    arch = params['arch']
-    machine = params['machine']
-    virttype = params['virttype']
+    emulatorbin = params['emulatorbin'].decode()
+    arch = params['arch'].decode()
+    machine = params['machine'].decode()
+    virttype = params['virttype'].decode()
 
     try:
         logger.info("The specified emulatorbin is %s" % emulatorbin)

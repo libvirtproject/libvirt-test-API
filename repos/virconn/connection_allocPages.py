@@ -6,7 +6,7 @@ import lxml
 import lxml.etree
 
 required_params = ()
-optional_params = {'conn': '', 'flags': ''}
+optional_params = {'uri': None, 'flags': None}
 
 HOST_HUGEPAGE = '/sys/devices/system/node/node%d/hugepages/hugepages-%dkB/nr_hugepages'
 
@@ -34,22 +34,24 @@ def connection_allocPages(params):
        test API for allocPages in class virConnect
     """
     logger = params['logger']
+    uri = params.get("uri", None).decode()
     fail = 0
 
     if 'flags' in params:
-        if params['flags'] == 'pageset':
-            flags = libvirt.VIR_NODE_ALLOC_PAGES_SET
+        flags = params.get("flags", None).decode()
+        if flags == 'pageset':
+            libvirt_flags = libvirt.VIR_NODE_ALLOC_PAGES_SET
         else:
-            logger.error("Unknown flags name: %s" % params['flags'])
+            logger.error("Unknown flags name: %s" % flags)
             return 1
     else:
-        flags = 0
+        libvirt_flags = 0
 
     try:
-        if 'conn' in params:
-            conn = libvirt.open(params['conn'])
+        if 'uri' in params:
+            conn = libvirt.open(uri)
         else:
-            conn = libvirt.open(optional_params['conn'])
+            conn = sharedmod.libvirtobj['conn']
         logger.info("get connection to libvirtd")
         list1 = get_host_pagesize(conn)
 
@@ -66,10 +68,10 @@ def connection_allocPages(params):
 
         try:
             cur_count = get_host_pagecount(i)
-            if flags == libvirt.VIR_NODE_ALLOC_PAGES_SET:
-                conn.allocPages({i: cur_count + 1}, 0, 1, flags)
+            if libvirt_flags == libvirt.VIR_NODE_ALLOC_PAGES_SET:
+                conn.allocPages({i: cur_count + 1}, 0, 1, libvirt_flags)
             else:
-                conn.allocPages({i: 1}, 0, 1, flags)
+                conn.allocPages({i: 1}, 0, 1, libvirt_flags)
             if get_host_pagecount(i) != cur_count + 1:
                 logger.error(
                     "libvirt set a wrong page count to %dKiB hugepage" %
@@ -78,7 +80,6 @@ def connection_allocPages(params):
         except libvirtError as e:
             if "Allocated only" in e.message:
                 tmp_count = int(e.message.split()[-1])
-
                 if tmp_count != get_host_pagecount(i):
                     logger.error(
                         "libvirt output %dKiB hugepage count is not right" %

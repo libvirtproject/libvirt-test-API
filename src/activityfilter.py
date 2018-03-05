@@ -24,7 +24,7 @@ class Filter(object):
         self.testcase_keys = []
         for activity in activities_list:
             for testcase in activity:
-                testcases_key = testcase.keys()
+                testcases_key = list(testcase.keys())
                 self.testcase_keys += testcases_key
 
     def unique_testcase_cleansuffix(self):

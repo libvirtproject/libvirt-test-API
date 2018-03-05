@@ -8,9 +8,9 @@
 
 import os
 import re
-import commands
 
-import utils
+from . import utils
+from . import process
 
 guest = {}
 guest['rhel3u9'] = 'RHEL-3.9'
@@ -52,7 +52,7 @@ def result_log(mod_case_func, case_params, ret, case_start_time, case_end_time):
         status = 'FAIL'
 
     line = '-' * 120 + "\nSTART\t[%s][][libvirt_version=%s][hypervisor_version=%s][kernel_version=%s]" % (testcase, libvirt_ver, hypervisor_ver, kernel_ver)
-    for key in case_params.keys():
+    for key in list(case_params.keys()):
         if key != "xml":
             line += "[%s=%s]" % (key, case_params[key])
     line += "\t%s\n%s\nEND\t%s" % (case_start_time, status, case_end_time)
@@ -64,7 +64,7 @@ def result_log(mod_case_func, case_params, ret, case_start_time, case_end_time):
             fp.writelines(line)
             fp.close()
         except:
-            print "ERROR: error writing to file '" + logfile + "'!"
+            print("ERROR: error writing to file '" + logfile + "'!")
             return False
     else:
         try:
@@ -77,7 +77,7 @@ def result_log(mod_case_func, case_params, ret, case_start_time, case_end_time):
             fp.writelines(line)
             fp.close()
         except:
-            print "ERROR: error writing to file '" + logfile + "'!"
+            print("ERROR: error writing to file '" + logfile + "'!")
             return False
     return True
 
@@ -94,8 +94,8 @@ def case_spawn(filename, str1, str2):
 
 def isvirtlab():
     cmd = "ps aux | grep STAFProc |grep -v grep"
-    stat, ret = commands.getstatusoutput(cmd)
-    if stat == 0 and ret != '':
+    result = process.run(cmd, shell=True, ignore_status=True)
+    if result.exit_status == 0:
         return True
     else:
         return False

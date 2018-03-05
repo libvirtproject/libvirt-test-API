@@ -37,7 +37,7 @@ def nwfilter_undefine(params):
             logger.error("Failed to undefine the nwfilter %s" % nwfiltername)
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s" % e.message)
         return 1
 

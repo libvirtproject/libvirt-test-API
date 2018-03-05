@@ -81,9 +81,8 @@ class CaseLog(Log):
         if int(self.loglevel) != 1:
             self.console.setLevel(logging.INFO)
 
-            if 'AUTODIR' in os.environ:
-                console_formatter = logging.Formatter(
-                    fmt['autotest_formatter'], datefmt)
+            if "AUTODIR" in os.environ:
+                console_formatter = logging.Formatter(fmt['autotest_formatter'], datefmt)
             else:
                 console_formatter = logging.Formatter(
                     fmt['console_formatter'], datefmt)

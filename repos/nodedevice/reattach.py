@@ -91,7 +91,7 @@ def reattach(params):
         else:
             logger.info("the node %s device reattach is failed" % device_name)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

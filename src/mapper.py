@@ -33,7 +33,7 @@ class Mapper(object):
 
         for testcase in self.testcases_list:
             case = {}
-            mod_case = testcase.keys()[0]
+            mod_case = list(testcase.keys())[0]
             if ":" in mod_case:
                 casename = mod_case.split(":")[1]
                 func = casename
@@ -47,12 +47,12 @@ class Mapper(object):
                     return None
 
                 previous_case = new_case_list.pop()
-                key = previous_case.keys()[0] + ':clean'
-                case[key] = previous_case.values()[0]
+                key = list(previous_case.keys())[0] + ':clean'
+                case[key] = list(previous_case.values())[0]
                 new_case_list.append(case)
                 continue
 
-            cases_params = testcase.values()[0]
+            cases_params = list(testcase.values())[0]
             case[mod_case + ":" + func] = cases_params
             new_case_list.append(case)
 
@@ -65,14 +65,14 @@ class Mapper(object):
         new_case_list = []
         for testcase in self.testcases_list:
             case = {}
-            mod_case = testcase.keys()[0]
+            mod_case = list(testcase.keys())[0]
 
             if mod_case == 'sleep' or mod_case == 'clean':
                 continue
 
             func = mod_case.split(":")[1]
 
-            cases_params = testcase.values()[0]
+            cases_params = list(testcase.values())[0]
             case[mod_case + ":" + func] = cases_params
             new_case_list.append(case)
 

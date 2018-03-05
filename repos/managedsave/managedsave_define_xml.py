@@ -85,7 +85,7 @@ def managedsave_define_xml(params):
 
     try:
         domobj.managedSaveDefineXML(guestxml, flags)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.info("Save definexml failed" + str(e))
         return 1
 

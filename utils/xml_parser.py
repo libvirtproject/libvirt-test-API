@@ -19,7 +19,11 @@
 
 import os
 from xml.dom import minidom
-import StringIO
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 
 class xml_parser(object):
@@ -57,10 +61,10 @@ class xml_parser(object):
         if isinstance(arg, file):
             out = self.parsefile(arg)
         elif os.path.exists(arg):
-            print "file: %s " % arg
+            print("file: %s " % arg)
             out = self.parsefile(arg)
         else:
-            streamstr = StringIO.StringIO(arg)
+            streamstr = StringIO(arg)
             out = self.parsefile(streamstr)
         if out is not None:
             return out
@@ -91,7 +95,7 @@ class xml_parser(object):
                     if thenode.attributes is not None:
                         tmpattr = dict()
                         if thenode.attributes.length > 0:
-                            for attrkey in thenode.attributes.keys():
+                            for attrkey in list(thenode.attributes.keys()):
                                 tmpattr.update(
                                     {attrkey: thenode.attributes.get(attrkey).nodeValue})
                             attrdic = {"attr": tmpattr}
@@ -145,7 +149,7 @@ class xml_parser(object):
         if thenode.attributes is not None:
             tmpattr = dict()
             if thenode.attributes.length > 0:
-                for key in thenode.attributes.keys():
+                for key in list(thenode.attributes.keys()):
                     tmpattr.update(
                         {key: thenode.attributes.get(key).nodeValue})
                 attrdic = {"attr": tmpattr}
@@ -156,7 +160,7 @@ class xml_parser(object):
                 valdic = {"value": value}
                 newval.update(valdic)
                 newval.update(attrdic)
-        for key in thedict.keys():
+        for key in list(thedict.keys()):
             if key == thekey:
                 if isinstance(thedict[key], dict):
                     if newvalkey in thedict[key]:

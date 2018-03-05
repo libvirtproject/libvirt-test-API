@@ -68,7 +68,7 @@ def create(params):
             logger.error("the %s network is inactive" % networkname)
             logger.error("fail to create network from :\n%s" % xmlstr)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("create a network from xml: \n%s" % xmlstr)

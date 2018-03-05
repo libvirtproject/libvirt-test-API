@@ -146,7 +146,7 @@ def managedsave(params):
             thread.start_new_thread(get_fileflags, ())
 
             # Guarantee get_fileflags shell has run before managed save
-            time.sleep(5)
+            time.sleep(30)
             domobj.managedSave(flagn)
 
             if check_fileflag(fileflags):
@@ -166,7 +166,7 @@ def managedsave(params):
             logger.error("Fail to managedsave domain")
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Fail to managedsave %s domain" % guestname)

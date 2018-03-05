@@ -23,8 +23,10 @@ import sys
 import copy
 import string
 
-import exception
-import env_parser
+from . import exception
+from . import env_parser
+
+from six.moves import xrange as range
 
 
 class CaseFileParser(object):
@@ -124,7 +126,7 @@ class CaseFileParser(object):
     def add_option_value(self, caselist, casename, option, value):
         """ Add option to the data list. """
         dictionary = caselist[-1]
-        testkey = dictionary.keys()[0]
+        testkey = list(dictionary.keys())[0]
         if casename == testkey:
             if option not in dictionary[testkey]:
                 dictionary[testkey][option] = value
@@ -136,7 +138,7 @@ class CaseFileParser(object):
                 str = "%-50s ---> %s" % (str1, str2)
             else:
                 str = str1
-            print str
+            print(str)
 
     def variables_lookup(self, values):
         res = []
@@ -191,12 +193,12 @@ class CaseFileParser(object):
                         value += next_char
                     elif next_char == 'x':
                         u_prefix = "\\x"
-                        for i in xrange(2):
+                        for i in range(2):
                             u_prefix += next(string)
                         value += u_prefix.decode('unicode-escape')
                     elif next_char == 'u':
                         u_prefix = "\\u"
-                        for i in xrange(4):
+                        for i in range(4):
                             u_prefix += next(string)
                         value += u_prefix.decode('unicode-escape')
                 except StopIteration:
@@ -311,7 +313,7 @@ class CaseFileParser(object):
 
                             if re.findall(tripped_valuename.encode('unicode-escape'),
                                           str(caselist)):
-                                temp_list = [case for case in caselist if case.has_key(casename)]
+                                temp_list = [case for case in caselist if casename in case]
                         elif (tripped_valuelist[1] == "no" and
                               len(tripped_valuelist) == 3):
                             filterters = tripped_valuelist[2].split("|")
@@ -471,11 +473,11 @@ if __name__ == "__main__":
     if len(sys.argv) >= 2:
         casefile = sys.argv[1]
     else:
-        print "No config file is given, use the default case.conf\n"
+        print("No config file is given, use the default case.conf\n")
         casefile = os.path.join(os.path.dirname(sys.argv[0]), "case.conf")
     try:
         list = CaseFileParser(casefile, debug=True).get_list()
-        print "The number of generated list is %s" % len(list)
-        print list
+        print("The number of generated list is %s" % len(list))
+        print(list)
     except Exception as e:
-        print e
+        print(e)
