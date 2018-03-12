@@ -959,7 +959,7 @@ def validate_remote_nic_type(hostname, username,
                 other_driver_cmd = ("""echo '%s' | grep '%s'""" %
                                     (lsmod_cmd_ret, nic_type_to_driver_dict[key]))
                 driver_result = process.run(other_driver_cmd, shell=True, ignore_status=True)
-                if driver_restult.exit_status == 0:
+                if driver_result.exit_status == 0:
                     logger.info("unspecified nic driver is seen \
                                in guest's lsmod command: %s" % driver_result.stdout)
                     return 1
@@ -1036,7 +1036,7 @@ def validate_remote_blk_type(hostname, username, password,
                 other_driver_cmd = ("""echo '%s' | grep '%s'""" %
                                     (lsmod_cmd_ret, blk_type_to_driver_dict[key]))
                 driver_result = process.run(other_driver_cmd, shell=True, ignore_status=True)
-                if driver_restult.exit_status == 0:
+                if driver_result.exit_status == 0:
                     logger.info("unspecified blk driver is seen \
                                 in guest's lsmod command: \n %s \n" % driver_result.stdout)
                     return 1
