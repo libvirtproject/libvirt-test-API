@@ -4,12 +4,12 @@
 #    storagePoolLookupByUUID
 #    storagePoolLookupByUUIDString
 
-import commands
 import binascii
 
 from xml.dom import minidom
 from libvirt import libvirtError
 from src import sharedmod
+from utils import process
 
 required_params = ('poolname',)
 optional_params = {}
@@ -20,13 +20,14 @@ POOLPATH = "/etc/libvirt/storage/"
 
 def check_pool_uuid(poolname, UUIDString, logger):
     """ check UUID String of a pool """
-    status, ret = commands.getstatusoutput(VIRSH_POOLUUID + ' %s' % poolname)
-    if status:
+    cmd = VIRSH_POOLUUID + ' %s' % poolname
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("executing " + "\"" + VIRSH_POOLUUID + ' %s' % poolname + "\"" + " failed")
-        logger.error(ret)
+        logger.error(ret.stdout)
         return False
     else:
-        UUIDString_virsh = ret[:-1]
+        UUIDString_virsh = ret.stdout
         logger.debug("UUIDString from API is %s" % UUIDString)
         logger.debug(
             "UUIDString from " +
@@ -110,7 +111,7 @@ storagePoolLookupByUUID" % (UUIDString2, pool_name2))
         else:
             logger.error(VIRSH_POOLUUID + " test failed.")
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

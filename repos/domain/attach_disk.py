@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # Attach a disk device to domain
 
-import commands
 
 from libvirt import libvirtError
-
 from src import sharedmod
-from utils import utils
+from utils import utils, process
 
 required_params = ('guestname', 'hddriver')
 optional_params = {'imagesize': 1,
@@ -29,21 +27,20 @@ def create_image(disk, xmlstr, seeksize, imageformat, qcow2version):
         qcow2_options = "-o compat=1.1"
         if qcow2version.endswith('lazy_refcounts'):
             qcow2_options = qcow2_options + " -o lazy_refcounts=on"
-    disk_create = "qemu-img create -f %s %s %s %sG" % \
-        (imageformat, qcow2_options, disk, seeksize)
-    logger.debug("the command line of creating disk images is '%s'" %
-                 disk_create)
-    (status, message) = commands.getstatusoutput(disk_create)
-    if status != 0:
-        logger.debug(message)
+    cmd = ("qemu-img create -f %s %s %s %sG" %
+           (imageformat, qcow2_options, disk, seeksize))
+    logger.debug("cmd: %s" % cmd)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        logger.debug(ret.stdout)
         return 1
 
     if "readonly" in xmlstr:
-        make_fs = "mkfs.ext3 -F " + disk
-        logger.debug("the command line of make file system is '%s'" % make_fs)
-        (status, message) = commands.getstatusoutput(make_fs)
-        if status != 0:
-            logger.debug(message)
+        cmd = "mkfs.ext3 -F " + disk
+        logger.debug("cmd: %s" % cmd)
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        if ret.exit_status != 0:
+            logger.debug(ret.stdout)
             return 1
     return 0
 
@@ -143,14 +140,12 @@ def attach_disk(params):
         if "readonly" in xmlstr:
             # Check the disk in guest
             username = params.get('username', 'root')
-            print username
             password = params.get('password', 'redhat')
-            print password
             if check_disk_permission(guestname, devname, username, password):
                 return 0
             else:
                 return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("attach %s disk to guest %s" % (volumepath, guestname))

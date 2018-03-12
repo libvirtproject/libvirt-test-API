@@ -41,8 +41,9 @@ def create_files(logger, params):
     default_filenum = 3
 
     if files == 'auto':
-        files = map(lambda x: "/tmp/libvirt-test-api-create-file-%d" % x,
-                    range(default_filenum))
+        #files = map(lambda x: "/tmp/libvirt-test-api-create-file-%d" % x,
+        #            range(default_filenum))
+        files = ["/tmp/libvirt-test-api-create-file-%d" % x for x in range(default_filenum)]
         for i in files:
             variable = variable + 1
             with open(i, 'w') as tmp_file:
@@ -123,7 +124,7 @@ def create_xml_with_files(params):
     # Create domain from xml
     try:
         domobj = conn.createXMLWithFiles(xmlstr, files, flags)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to create domain %s" % guestname)

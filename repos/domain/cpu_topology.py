@@ -66,7 +66,7 @@ def guest_undefine(domobj, logger):
         logger.info("undefine guest")
         domobj.undefine()
         logger.info("undefine the domain is successful")
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to undefine domain")
@@ -82,7 +82,7 @@ def guest_define(domobj, domxml, logger):
         conn = domobj._conn
         conn.defineXML(domxml)
         logger.info("success to define new domain xml description")
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to define domain")
@@ -100,7 +100,7 @@ def guest_start(domobj, guestname, logger):
     try:
         logger.info("start guest")
         domobj.create()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to start domain")

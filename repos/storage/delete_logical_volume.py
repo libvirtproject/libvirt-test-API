@@ -2,10 +2,10 @@
 # Delete a logical type storage volume
 
 import os
-import commands
 
 from libvirt import libvirtError
 from src import sharedmod
+from utils import process
 
 required_params = ('poolname', 'volname',)
 optional_params = {}
@@ -19,9 +19,9 @@ def display_volume_info(poolobj):
 
 def display_physical_volume():
     """Display current physical storage volume information"""
-    stat, ret = commands.getstatusoutput("lvdisplay")
-    logger.debug("lvdisplay command execute return value: %d" % stat)
-    logger.debug("lvdisplay command execute return result: %s" % ret)
+    ret = process.run("lvdisplay", shell=True, ignore_status=True)
+    logger.debug("lvdisplay return value: %d" % ret.exit_status)
+    logger.debug("lvdisplay output: %s" % ret.stdout)
 
 
 def get_storage_volume_number(poolobj):
@@ -42,12 +42,11 @@ def check_volume_delete(poolname, volkey):
         logger.debug("execute grep lvremove %s command" % path)
         cmd = "grep 'lvremove' %s" % (path)
         logger.debug(cmd)
-        stat, ret = commands.getstatusoutput(cmd)
-        if stat == 0:
-            logger.debug(ret)
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        logger.debug(ret.stdout)
+        if ret.exit_status == 0:
             return True
         else:
-            logger.debug(ret)
             return False
     else:
         logger.debug("%s file don't exist" % path)
@@ -95,7 +94,7 @@ def delete_logical_volume(params):
         else:
             logger.error("fail to delete %s storage volume" % volname)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

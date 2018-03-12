@@ -111,7 +111,7 @@ def set_vcpus_flags(params):
     try:
         dom = conn.lookupByName(guestname)
         dom.setVcpusFlags(vcpu, libvirt_flags)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

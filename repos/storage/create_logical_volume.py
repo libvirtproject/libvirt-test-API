@@ -2,10 +2,11 @@
 # Create a logical type storage volume
 
 import os
-import commands
+
 from xml.dom import minidom
 from libvirt import libvirtError
 from src import sharedmod
+from utils import utils, process
 
 required_params = ('poolname', 'volname', 'capacity',)
 optional_params = {'xml': 'xmls/logical_volume.xml',
@@ -32,9 +33,9 @@ def display_volume_info(poolobj):
 
 def display_physical_volume():
     """Display current physical volume information"""
-    stat, ret = commands.getstatusoutput("lvdisplay")
-    logger.debug("lvdisplay command execute return value: %d" % stat)
-    logger.debug("lvdisplay command execute return result: %s" % ret)
+    ret = process.run("lvdisplay", shell=True, ignore_status=True)
+    logger.debug("lvdisplay return value: %d" % ret.exit_status)
+    logger.debug("lvdisplay output: %s" % ret.stdout)
 
 
 def get_storage_volume_number(poolobj):
@@ -53,14 +54,13 @@ def check_volume_create(poolobj, poolname, volname, size):
     logger.debug("%s file path: %s" % (poolname, path))
     if os.access(path, os.R_OK):
         logger.debug("execute grep lvcreate %s command" % path)
-        stat, ret = commands.getstatusoutput(
-            "grep 'lvcreate --name %s -L %sK .*%s' %s"
-            % (volname, size, poolname, path))
-        if stat == 0 and volname in poolobj.listVolumes():
-            logger.debug(ret)
+        cmd = ("grep 'lvcreate --name %s -L %sK .*%s' %s" %
+               (volname, size, poolname, path))
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        logger.debug(ret.stdout)
+        if ret.exit_status == 0 and volname in poolobj.listVolumes():
             return True
         else:
-            logger.debug(ret)
             return False
     else:
         logger.debug("%s file don't exist" % path)
@@ -114,7 +114,7 @@ def create_logical_volume(params):
         else:
             logger.error("fail to crearte %s storage volume" % volname)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

@@ -44,7 +44,7 @@ def set_block_threshold(params):
         dom = conn.lookupByName(guestname)
         dom.attachDevice(disk_xml)
         dom.setBlockThreshold('vdb', int(threshold), flags)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code: %s" %
                      (e.message, e.get_error_code()))
         return 1

@@ -54,6 +54,6 @@ def setSecret(params):
                         "is private" % secretUUID)
             return 0
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1

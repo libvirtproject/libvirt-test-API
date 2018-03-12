@@ -103,7 +103,7 @@ def get_guest_vcpus(params):
             logger.info("PASS: get guest vcpus successful.")
             return 0
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

@@ -20,7 +20,7 @@ def inject_nmi(params):
         domobj = conn.lookupByName(guestname)
         logger.info('inject NMI to domain.')
         domobj.injectNMI()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("inject NMI failed.")

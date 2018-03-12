@@ -47,7 +47,7 @@ def reboot(params):
     # Reboot domain
     try:
         domobj = reboot(0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to reboot domain")

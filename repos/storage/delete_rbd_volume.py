@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
-import commands
 import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
-from utils import utils
+from utils import utils, process
 
 required_params = ('poolname',
                    'volname',
@@ -18,10 +17,10 @@ optional_params = {'snapshotname': ''}
 def prepare_snapshot(cephserver, cephserverpool, volname, sn, logger):
     cmd = "rbd -m %s snap create %s/%s@%s" % (cephserver, cephserverpool, volname, sn)
     logger.debug("prepare_snapshot: cmd: %s" % cmd)
-    stat, ret = commands.getstatusoutput(cmd)
-    if stat == 1:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status == 1:
         logger.error("prepare_snapshot: create snapshot failed")
-        logger.error("ret: %s" % ret)
+        logger.error("out: %s" % ret.stdout)
         return 1
 
     return 0
@@ -30,10 +29,10 @@ def prepare_snapshot(cephserver, cephserverpool, volname, sn, logger):
 def check_volume(cephserver, cephserverpool, volname, logger):
     cmd = "rbd -m %s -p %s ls | grep %s" % (cephserver, cephserverpool, volname)
     logger.debug("check_volume: cmd: %s" % cmd)
-    stat, ret = commands.getstatusoutput(cmd)
-    if stat == 0:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status == 0:
         logger.error("check_volume: delete failed, volume still exists.")
-        logger.error("ret: %s" % ret)
+        logger.error("out: %s" % ret.stdout)
         return 1
 
     return 0
@@ -71,7 +70,7 @@ def delete_rbd_volume(params):
         if check_volume(cephserver, cephserverpool, volname, logger):
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # Create volume for storage pool of partition type
 
-import commands
-
 from libvirt import libvirtError
 from src import sharedmod
+from utils import process
 
 required_params = ('poolname', 'volname', 'volformat', 'capacity',)
 optional_params = {}
@@ -23,10 +22,8 @@ def partition_volume_check(poolobj, volname):
     shell_cmd = "grep %s /proc/partitions" % partition_name
     logger.debug("excute the shell command %s to \
                   check the newly created partition" % shell_cmd)
-
-    stat, ret = commands.getstatusoutput(shell_cmd)
-
-    if stat == 0 and volname in poolobj.listVolumes():
+    ret = process.run(shell_cmd, shell=True, ignore_status=True)
+    if ret.exit_status == 0 and volname in poolobj.listVolumes():
         return 0
     else:
         return 1
@@ -36,8 +33,8 @@ def virsh_vol_list(poolname):
     """using virsh command list the volume information"""
 
     shell_cmd = "virsh vol-list %s" % poolname
-    (status, text) = commands.getstatusoutput(shell_cmd)
-    logger.debug(text)
+    ret = process.run(shell_cmd, shell=True, ignore_status=True)
+    logger.debug(ret.stdout)
 
 
 def create_partition_volume(params):
@@ -80,7 +77,7 @@ def create_partition_volume(params):
     try:
         logger.info("create %s volume" % volname)
         poolobj.createXML(xmlstr, 0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

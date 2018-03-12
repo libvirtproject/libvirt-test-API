@@ -27,7 +27,7 @@ def disk_errors(params):
         domobj.create()
         time.sleep(10)
         error_list = domobj.diskErrors()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

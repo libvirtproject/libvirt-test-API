@@ -44,7 +44,7 @@ def define_mpath_pool(params):
             logger.error("%s storage pool was not defined successfully" %
                          poolname)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

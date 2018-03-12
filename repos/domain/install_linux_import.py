@@ -44,7 +44,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     try:
         conn = domobj._conn
         domobj = conn.defineXML(xmlstr)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to define domain %s" % guestname)
@@ -58,7 +58,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
 
     try:
         domobj.create()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
@@ -149,7 +149,7 @@ def install_linux_import(params):
         logger.info('define guest from xml description')
         try:
             domobj = conn.defineXML(xmlstr)
-        except libvirtError, e:
+        except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
@@ -162,7 +162,7 @@ def install_linux_import(params):
         logger.info('create guest from xml description')
         try:
             domobj = conn.createXML(xmlstr, 0)
-        except libvirtError, e:
+        except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)

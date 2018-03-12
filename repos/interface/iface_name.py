@@ -3,7 +3,8 @@
 import os
 import sys
 import re
-import commands
+
+from utils import process
 
 required_params = ()
 optional_params = {'macaddr': ''}
@@ -16,11 +17,11 @@ VIRSH_IFACE_NAME = "virsh iface-name %s"
 def get_output(command, logger):
     """execute shell command
     """
-    status, ret = commands.getstatusoutput(command)
-    if status:
+    ret = process.run(command, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("executing " + "\"" + command + "\"" + " failed")
         logger.error(ret)
-    return status, ret
+    return ret.exit_status, ret.stdout
 
 
 def get_mac_list(params):

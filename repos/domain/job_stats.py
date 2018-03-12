@@ -3,14 +3,12 @@
 import os
 import threading
 import time
-import commands
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
 from utils.utils import parse_flags, version_compare, wait_for
-from utils import utils
+from utils import utils, process
 from repos.domain import domain_common
 
 required_params = ('guestname',)
@@ -31,7 +29,7 @@ def domain_dump(dom, logger):
     logger.info("start to dump job.")
     try:
         dom.coreDump(DUMP_PATH, 0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("info: %s, code: %s" % (e.message, e.get_error_code()))
 
     return
@@ -44,7 +42,7 @@ def domain_save(dom, logger):
     logger.info("start to save job.")
     try:
         dom.save(SAVE_PATH)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("info: %s, code: %s" % (e.message, e.get_error_code()))
 
     return
@@ -79,14 +77,18 @@ def domain_migrate(dom, target, username, passwd, logger):
         logger.error("faild to setup ssh tunnel with target %s" % target)
         return 1
 
-    commands.getstatusoutput("ssh-add")
+    ret = process.run("ssh-add", shell=True, ignore_status=True)
+    if ret.exit_status:
+        logger.error("ssh-add failed: %s" % ret.stdout)
+        return 1
+
     dsturi = "qemu+ssh://%s/system" % target
 
     logger.info("start to migrate.")
     try:
         dstconn = libvirt.open(dsturi)
         dom.migrate(dstconn, libvirt.VIR_MIGRATE_LIVE, None, None, 0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("info: %s, code: %s" % (e.message, e.get_error_code()))
         return 1
 
@@ -149,7 +151,7 @@ def job_stats(params):
 
         info = domobj.jobStats(flags)
         logger.info("job stats: %s" % info)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

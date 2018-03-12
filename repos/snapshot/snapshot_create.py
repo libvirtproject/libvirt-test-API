@@ -37,7 +37,7 @@ def check_current_snapshot(domobj):
             else:
                 logger.error("Failed to get current snapshot")
                 return False
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s" % e.message)
         return 1
 
@@ -116,7 +116,7 @@ def snapshot_create(params):
     snapshotname = ""
 
     #if snapshotname isn't given in test suit, use current time as snapshotname
-    if not params.has_key('snapshotname'):
+    if "snapshotname" not in params:
         snapshotname = str(int(time.time()))
         xmlstr = xmlstr.replace('SNAPSHOTNAME', snapshotname)
     else:
@@ -127,19 +127,19 @@ def snapshot_create(params):
         logger.error("Checking failed")
         return 1
 
-    if params.has_key('snapshotmem'):
+    if "snapshotmem" in params:
         snapshotmem = params.get('snapshotmem')
         xmlstr = xmlstr.replace('SNAPSHOTMEM', snapshotmem)
 
-    if params.has_key('snapshotdisk'):
+    if "snapshotdisk" in params:
         snapshotdisk = params.get('snapshotdisk')
         xmlstr = xmlstr.replace('SNAPSHOTDISK', snapshotdisk)
 
-    if params.has_key('memorytype'):
+    if "memorytype" in params:
         memorytype = params.get('memorytype')
         xmlstr = xmlstr.replace('MEMORYTYPE', memorytype)
 
-    if params.has_key('disktype'):
+    if "disktype" in params:
         disktype = params.get('disktype')
         xmlstr = xmlstr.replace('DISKTYPE', disktype)
 
@@ -167,7 +167,7 @@ def snapshot_create(params):
             logger.error("Failed to create snapshot")
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s" % e.message)
         return 1
 

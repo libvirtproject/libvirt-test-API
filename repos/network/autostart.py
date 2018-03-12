@@ -3,7 +3,6 @@
 
 import time
 import os
-import commands
 
 from libvirt import libvirtError
 
@@ -20,8 +19,8 @@ def check_network_autostart(*args):
     """
     (networkname, hypervisor, flag, logger) = args
 
-    netxml = "/etc/libvirt/%s/networks/autostart/%s.xml" % \
-        (hypervisor, networkname)
+    netxml = ("/etc/libvirt/%s/networks/autostart/%s.xml" %
+              (hypervisor, networkname))
     logger.debug("virtual network xml file is: %s" % netxml)
 
     if flag == 1:
@@ -38,12 +37,16 @@ def check_network_autostart(*args):
         return False
 
 
+def print_network_list(network_list, logger):
+    network_name = []
+    for network in network_list:
+        network_name.append(network.name())
+    logger.debug("network list: %s" % network_name)
+
+
 def autostart(params):
     """Set virtual network autostart capability"""
-
-    global logger
     logger = params['logger']
-    params.pop('logger')
     networkname = params['networkname']
     autostart = params['autostart']
 
@@ -56,20 +59,16 @@ def autostart(params):
         logger.error("Error: autostart value is invalid")
         return 1
 
-    conn = sharedmod.libvirtobj['conn']
-    netobj = conn.networkLookupByName(networkname)
-
-    logger.debug("before setting autostart to virtual network, check status:")
-    shell_cmd = "virsh net-list --all"
-    (status, text) = commands.getstatusoutput(shell_cmd)
-    logger.debug("the output of 'virsh net-list --all' is %s" % text)
-
     try:
+        conn = sharedmod.libvirtobj['conn']
+        netobj = conn.networkLookupByName(networkname)
+
+        logger.debug("before setting autostart to virtual network, check status:")
+        network_list = conn.listAllNetworks()
+        print_network_list(network_list, logger)
+
         netobj.setAutostart(flag)
-        if check_network_autostart(networkname,
-                                   "qemu",
-                                   flag,
-                                   logger):
+        if check_network_autostart(networkname, "qemu", flag, logger):
             logger.info("current virtual network %s autostart: %s" %
                         (networkname, netobj.autostart()))
             logger.info("executing autostart operation is successful")
@@ -85,8 +84,7 @@ def autostart(params):
         return 1
 
     logger.debug("After setting autostart to virtual network, check status:")
-    shell_cmd = "virsh net-list --all"
-    (status, text) = commands.getstatusoutput(shell_cmd)
-    logger.debug("the output of 'virsh net-list --all' is %s" % text)
+    network_list = conn.listAllNetworks()
+    print_network_list(network_list, logger)
     time.sleep(3)
     return 0

@@ -82,7 +82,7 @@ def guest_power_on(domobj, domname, mac):
 
     try:
         domobj.create()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to power on guest %s" % domname)
@@ -117,7 +117,7 @@ def guest_power_off(domobj, domname):
     logger.debug("current guest status: %s" % state)
     try:
         domobj.destroy()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to power off guest %s" % domname)
@@ -186,7 +186,7 @@ def balloon_memory(params):
     logger.info("undefine the original guest")
     try:
         domobj.undefine()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to undefine guest %s" % domname)
@@ -195,7 +195,7 @@ def balloon_memory(params):
     logger.info("define guest with new xml")
     try:
         conn.defineXML(newguestxml)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to define guest %s" % domname)
@@ -217,7 +217,7 @@ def balloon_memory(params):
 
     try:
         domobj.setMemory(minmem)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to set memory size")
@@ -249,7 +249,7 @@ def balloon_memory(params):
 
     try:
         domobj.setMemory(maxmem)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to set memory size")

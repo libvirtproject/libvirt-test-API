@@ -47,7 +47,7 @@ def convert_flags(flags, flag_dict, logger):
 
     # Convert the flags in conf file to readable flag
     for flag_key in flaglist:
-        if flag_dict.has_key(int(flag_key)):
+        if int(flag_key) in flag_dict:
             flagstr += flag_dict.get(int(flag_key))
     logger.info("Converted flags:" + flagstr if flagstr != "" else "no flag")
 

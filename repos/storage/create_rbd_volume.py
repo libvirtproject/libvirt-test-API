@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # Creat volume for storage pool of 'rbd' type
 
-import commands
-
 from libvirt import libvirtError
 from src import sharedmod
+from utils import process
 
 required_params = ('poolname', 'volname', 'cephserver', 'cephserverpool',)
 optional_params = {'xml': 'xmls/rbd_volume.xml',
@@ -16,14 +15,14 @@ optional_params = {'xml': 'xmls/rbd_volume.xml',
 
 def check_volume_from_server(poolname, volname, cephserver, cephserverpool, logger):
     cmd = "rbd -m %s -p %s ls | grep %s" % (cephserver, cephserverpool, volname)
-    (stat, ret) = commands.getstatusoutput(cmd)
-    if not stat:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if not ret.exit_status:
         logger.info("%s already exist in ceph server, remove it." % volname)
         cmd = "rbd -m %s -p %s rm %s" % (cephserver, cephserverpool, volname)
-        (stat, ret) = commands.getstatusoutput(cmd)
-        if stat:
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        if ret.exit_status:
             logger.info("Remove %s failed." % volname)
-            logger.debug(ret)
+            logger.debug(ret.stdout)
             return 1
 
     return 0
@@ -69,7 +68,7 @@ def create_rbd_volume(params):
         logger.debug("volume xml:\n%s" % xmlstr)
         logger.info("create %s volume" % volname)
         poolobj.createXML(xmlstr, 0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1
@@ -100,6 +99,6 @@ def create_rbd_volume_clean(params):
             volobj.delete(0)
 
     cmd = "rbd -m %s -p %s rm %s" % (cephserver, cephserverpool, volname)
-    (stat, ret) = commands.getstatusoutput(cmd)
-    if stat:
-        logger.debug(ret)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
+        logger.debug(ret.stdout)

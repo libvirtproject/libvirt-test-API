@@ -37,7 +37,7 @@ def setGuestVcpus_state(domobj, logger, vcpu, username, password, cpumap, ip, st
     try:
         domobj.setGuestVcpus(cpumap, state, 0)
         logger.info("set guest cpu %s state to %s" % (cpumap, state))
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

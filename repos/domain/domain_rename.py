@@ -30,7 +30,7 @@ def domain_rename(params):
         domobj.rename(newname, 0)
         time.sleep(3)
 
-    except libvirtError, e:
+    except libvirtError as e:
         if negative == 'no':
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))

@@ -106,7 +106,7 @@ def logical_vol_download(params):
             logger.error("file digests not match, download failed")
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

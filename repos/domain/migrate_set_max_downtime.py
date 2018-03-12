@@ -95,7 +95,7 @@ def migrate_set_max_downtime(params):
         dom.migrateSetMaxDowntime(int(downtime), 0)
         if check_downtime(dom, downtime, logger):
             test_result = True
-    except libvirtError, e:
+    except libvirtError as e:
         test_result = True
         logger.error("API error message: %s, error code: %s" %
                      (e.message, e.get_error_code()))

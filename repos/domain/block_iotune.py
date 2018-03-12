@@ -75,7 +75,7 @@ def prepare_block_iotune(params, logger):
 def check_iotune(expected_param, result_param):
     """check block iotune configuration
     """
-    for k in expected_param.keys():
+    for k in list(expected_param.keys()):
         if expected_param[k] != result_param[k]:
             return 1
     return 0
@@ -124,7 +124,7 @@ def block_iotune(params):
             logger.error("fails to set")
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

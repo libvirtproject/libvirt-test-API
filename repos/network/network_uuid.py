@@ -4,12 +4,12 @@
 #      networkLookupByUUIDString
 #      networkLookupByUUID
 
-import commands
 import binascii
 
 from libvirt import libvirtError
 from xml.dom import minidom
 from src import sharedmod
+from utils import process
 
 required_params = ('networkname',)
 optional_params = {}
@@ -32,12 +32,11 @@ def check_network_exists(conn, networkname, logger):
 
 def check_network_uuid(networkname, UUIDString, logger):
     """ check UUID String of a network """
-    status, ret = commands.getstatusoutput(VIRSH_NETUUID + ' %s'
-                                           % networkname)
-    if status:
+    ret = process.run(VIRSH_NETUUID + ' %s' % networkname, shell=True, ignore_status=True)    
+    if ret.exit_status:
         logger.error("executing " + "\"" + VIRSH_NETUUID + ' %s' % networkname +
                      "\"" + " failed")
-        logger.error(ret)
+        logger.error(ret.stdout)
         return False
     else:
         UUIDString_virsh = ret[:-1]

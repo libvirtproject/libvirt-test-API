@@ -70,7 +70,7 @@ def shutdown_event(domobj, guestname, timeout, logger):
     logger.info("power off %s" % guestname)
     try:
         domobj.shutdown()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Error: fail to power off %s" % guestname)
@@ -100,7 +100,7 @@ def bootup_event(domobj, guestname, timeout, logger):
     logger.info("boot up guest %s" % guestname)
     try:
         domobj.create()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Error: fail to bootup %s " % guestname)
@@ -130,7 +130,7 @@ def suspend_event(domobj, guestname, timeout, logger):
     logger.info("suspend guest %s" % guestname)
     try:
         domobj.suspend()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Error: fail to suspend %s" % guestname)
@@ -160,7 +160,7 @@ def resume_event(domobj, guestname, timeout, logger):
     logger.info("resume guest %s" % guestname)
     try:
         domobj.resume()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Error: fail to resume %s" % guestname)

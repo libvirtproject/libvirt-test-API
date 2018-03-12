@@ -67,7 +67,7 @@ def block_pull(params):
             img = get_xml_value(domobj, "/domain/devices/disk/source/@file")
             del_file(img[0], logger)
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

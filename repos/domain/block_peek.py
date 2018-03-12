@@ -72,7 +72,7 @@ def block_peek(params):
             logger.error("please make sure the guest is bootable")
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

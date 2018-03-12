@@ -4,12 +4,15 @@
 import time
 import os
 import socket
-import thread
 import select
-
 import libvirt
-from libvirt import libvirtError
 
+try:
+    import thread
+except ImportError:
+    import _thread as thread
+
+from libvirt import libvirtError
 from src import sharedmod
 
 required_params = ('guestname',)
@@ -61,7 +64,7 @@ def open_graphics(params):
                         logger.info("Got data: %s" % data)
                         shared['success'] = True
                         return
-                except socket.error, e:
+                except socket.error as e:
                     logger.info("No data yet")
                 try:
                     # Send some data...
@@ -71,7 +74,7 @@ def open_graphics(params):
                     client.send('?\r')
                     client.send('\r')
                     time.sleep(1)
-                except socket.error, e:
+                except socket.error as e:
                     logger.info("Socket closed by server")
                     shared['success'] = True
                     return
@@ -91,7 +94,7 @@ def open_graphics(params):
                     logger.error('Socket not responding')
                     return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

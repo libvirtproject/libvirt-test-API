@@ -24,7 +24,7 @@ def get_snapshot_list_virsh(*args):
     flagstr = ""
     # Convert the flags that be passed to API to VIRSH flags
     for flag_key in flaglist:
-        if FLAGDICT.has_key(int(flag_key)):
+        if int(flag_key) in FLAGDICT:
             flagstr += FLAGDICT.get(int(flag_key))
             guestname_flags = guestname + flagstr
     logger.info("Execute virsh snapshot-list" + flagstr)
@@ -150,7 +150,7 @@ def snapshot_list(params):
                 logger.error("Failed to get snapshot name list through API")
                 return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s" % e.message)
         return 1
 

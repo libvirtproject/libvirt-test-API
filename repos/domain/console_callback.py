@@ -221,7 +221,7 @@ def console_callback(params):
         libvirt.virEventRemoveTimeout(timer)
         stream.eventRemoveCallback()
         libvirt.virEventRemoveHandle(watch)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("Libvirt call failed: " + str(e))
         return 1
 

@@ -59,7 +59,7 @@ def threshold_event_any(params):
             if getattr(event_runner, event_runner_entry)(event_runner_params):
                 logger.error("Event trigger returned with error.")
                 return 1
-        except Exception, e:
+        except Exception as e:
             logger.error(str(e))
             logger.error("Something went wrong, exiting...")
             return 1

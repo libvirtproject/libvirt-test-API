@@ -95,7 +95,7 @@ def create_netfs_pool(params):
             logger.info("creating %s storage pool is \
                          UNSUCCESSFUL in libvirt!!!" % poolname)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

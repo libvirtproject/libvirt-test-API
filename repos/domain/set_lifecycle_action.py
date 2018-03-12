@@ -7,8 +7,7 @@ it is successful
 
 from libvirt import libvirtError
 import libvirt
-from utils import utils
-import commands
+from utils import utils, process
 import time
 from src import sharedmod
 from lxml import etree as ET
@@ -58,10 +57,9 @@ def get_params(domobj, logger, params, params_value, guestname):
     flags = params.get('flags', 'none')
 
     cmd = "ps -ef | grep %s | grep qemu | head -n 1 | grep 'no-reboot'" % guestname
-    (ret, out) = commands.getstatusoutput(cmd)
-    logger.debug("ret is %s" % ret)
-    logger.debug("out is %s" % out)
-    if not ret:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    logger.debug("out is %s" % ret.stdout)
+    if not ret.exit_status:
         logger.info("notice:QEMU was started with -no-reboot option")
         return 2
 
@@ -74,7 +72,7 @@ def get_params(domobj, logger, params, params_value, guestname):
         logger.info("lifecycle event type %s doesn't support %s action " % (on_type, action))
         return 2
 
-    if not LIFECYCLE_TYPE_DESC.has_key(on_type):
+    if on_type not in LIFECYCLE_TYPE_DESC:
         logger.error("lifecycle type value is invalid")
         return 1
 
@@ -83,7 +81,7 @@ def get_params(domobj, logger, params, params_value, guestname):
             params_value[0] = LIFECYCLE_TYPE_DESC[key]
             break
 
-    if not LIFECYCLE_ACTION_DESC.has_key(action):
+    if action not in LIFECYCLE_ACTION_DESC:
         logger.error("lifecycle action value is invalid")
         return 1
 
@@ -144,7 +142,8 @@ def check_action_result(domobj, guestname, logger, on_type, action):
 
     #action coredump-destroy or coredump-restart or other when on_type is crash
     if on_type == 2:
-        (ret, out) = commands.getstatusoutput("ls /%s.core" % guestname)
+        cmd = "ls /%s.core" % guestname
+        ret = process.system(cmd, shell=True, ignore_status=True)
         if ret:
             return 1
 
@@ -155,7 +154,6 @@ def check_result(domobj, guestname, logger, on_type, action, flags):
     #check xml
     if flags & libvirt.VIR_DOMAIN_AFFECT_CONFIG:
         lifecycle_list = get_xml_text(domobj, 2)
-
     else:
         lifecycle_list = get_xml_text(domobj, 0)
 
@@ -211,7 +209,7 @@ def set_lifecycle_action(params):
 
     try:
         domobj.setLifecycleAction(on_type, action, flags)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.info("set lifecycle action failed" + str(e))
         return 1
     ret = check_result(domobj, guestname, logger, on_type, action, flags)

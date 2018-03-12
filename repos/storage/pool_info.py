@@ -17,7 +17,7 @@ def get_elem(pool_xml, elem_list, state):
     for i in range(len(NAME_LIST)):
         for elem in tree.iter(tag=NAME_LIST[i]):
             if i > 0:
-                elem_list[i] = long(elem.text)
+                elem_list[i] = int(elem.text)
             break
     elem_list[0] = state
 
@@ -59,7 +59,7 @@ def pool_info(params):
         ret = check_info(elem_list, info_list)
         if ret:
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

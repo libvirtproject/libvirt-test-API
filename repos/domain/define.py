@@ -3,7 +3,6 @@
 import os
 import re
 import sys
-import commands
 import string
 import pexpect
 import shutil
@@ -160,7 +159,7 @@ def define(params):
         else:
             logger.error("fail to check define domain")
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

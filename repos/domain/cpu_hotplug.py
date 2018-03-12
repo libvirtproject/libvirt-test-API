@@ -3,7 +3,6 @@
 # to min
 
 import time
-import commands
 from xml.dom import minidom
 
 import libvirt
@@ -95,7 +94,7 @@ def set_vcpus(domobj, guestname, vcpu, username, password):
 
     try:
         domobj.destroy()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to destroy domain")
@@ -107,7 +106,7 @@ def set_vcpus(domobj, guestname, vcpu, username, password):
     logger.info("undefine the original guest")
     try:
         domobj.undefine()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to undefine guest %s" % guestname)
@@ -117,7 +116,7 @@ def set_vcpus(domobj, guestname, vcpu, username, password):
     try:
         conn = domobj._conn
         conn.defineXML(newguestxml)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to define guest %s" % guestname)
@@ -126,7 +125,7 @@ def set_vcpus(domobj, guestname, vcpu, username, password):
     try:
         logger.info('boot guest up ...')
         domobj.create()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
@@ -232,7 +231,7 @@ def cpu_hotplug(params):
             try:
                 domobj.setVcpus(i)
                 logger.info("set vcpus to %s" % i)
-            except libvirtError, e:
+            except libvirtError as e:
                 logger.error("libvirt call failed: " + str(e))
                 return 1
 
@@ -247,13 +246,13 @@ def cpu_hotplug(params):
 
     if 'hot_remove' in features:
         logger.info("loop decreasing domain %s vcpu count to min" % guestname)
-        for i in reversed(range(max)):
+        for i in reversed(list(range(max))):
             if i == 0:
                 break
             logger.info("set vcpus to %s" % i)
             try:
                 max = domobj.setVcpus(i)
-            except libvirtError, e:
+            except libvirtError as e:
                 logger.error("libvirt call failed: " + str(e))
                 return 1
 

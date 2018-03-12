@@ -46,7 +46,7 @@ def ifstats(params):
         try:
             logger.info("%s is not running , power on it" % guestname)
             domobj.create()
-        except libvirtError, e:
+        except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
             logger.error("start failed")

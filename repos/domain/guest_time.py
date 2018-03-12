@@ -88,12 +88,12 @@ def guest_time(params):
         t1 = utils.remote_exec(ipaddr, username, userpassword, GET_TIME)
 
         t2 = domobj.getTime()['seconds']
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1
 
-    if check_guest_time(long(t1), t2):
+    if check_guest_time(int(t1), t2):
         logger.info("checking guest time: %s" % t2)
     else:
         logger.error("checking guest time: failed")

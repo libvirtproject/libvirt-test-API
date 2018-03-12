@@ -49,7 +49,7 @@ def managedsave_start(params):
     logger = params['logger']
     flags = params.get('flags', '')
     # Get given flags of managedsave
-    if 'flagsave' in sharedmod.data:
+    if "flagsave" in sharedmod.data:
         flagsave = sharedmod.data.get('flagsave')
     else:
         logger.error("Failed to get flags from managedsave")

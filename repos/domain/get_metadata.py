@@ -103,10 +103,10 @@ def get_metadata(params):
         if flag & libvirt.VIR_DOMAIN_AFFECT_LIVE or flag == 0:
             check_metadata(0, metadata_type, info)
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
-    except RuntimeError, e:
+    except RuntimeError as e:
         logger.error("Test failed with: " + str(e))
         return 1
 

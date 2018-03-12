@@ -2,11 +2,11 @@
 # Define storage pool of 'dir' type
 
 import os
-import commands
 
 from libvirt import libvirtError
 from src import sharedmod
 from repos.storage import storage_common
+from utils import process
 
 VIRSH_POOLLIST = "virsh --quiet pool-list --all|awk '{print $1}'|grep \"^%s$\""
 POOL_STAT = "virsh --quiet pool-list --all|grep \"^%s\\b\" |grep \"inactive\""
@@ -52,7 +52,7 @@ def define_dir_pool(params):
         else:
             logger.error("%s storage pool is undefined" % poolname)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1
@@ -63,22 +63,23 @@ def define_dir_pool(params):
 def define_dir_pool_clean(params):
     logger = params['logger']
     poolname = params['poolname']
-    (status, output) = commands.getstatusoutput(VIRSH_POOLLIST % poolname)
-    if not status:
+
+    ret = process.run(VIRSH_POOLLIST % poolname, shell=True, ignore_status=True)
+    if not ret.exit_status:
         logger.info("remove storage pool %s" % poolname)
-        (status, output) = commands.getstatusoutput(POOL_STAT % poolname)
-        if status:
-            (status, output) = commands.getstatusoutput(POOL_DESTROY % poolname)
-            if status:
+        ret = process.run(POOL_STAT % poolname, shell=True, ignore_status=True)
+        if ret.exit_status:
+            ret = process.run(POOL_DESTROY % poolname, shell=True, ignore_status=True)
+            if ret.exit_status:
                 logger.error("failed to destroy storage pool %s" % poolname)
-                logger.error("%s" % output)
+                logger.error("%s" % ret.stdout)
             else:
-                (status, output) = commands.getstatusoutput(POOL_UNDEFINE % poolname)
-                if status:
+                ret = process.run(POOL_UNDEFINE % poolname, shell=True, ignore_status=True)
+                if ret.exit_status:
                     logger.error("failed to undefine storage pool %s" % poolname)
-                    logger.error("%s" % output)
+                    logger.error("%s" % ret.stdout)
         else:
-            (status, output) = commands.getstatusoutput(POOL_UNDEFINE % poolname)
-            if status:
+            ret = process.run(POOL_UNDEFINE % poolname, shell=True, ignore_status=True)
+            if ret.exit_status:
                 logger.error("failed to undefine storage pool %s" % poolname)
-                logger.error("%s" % output)
+                logger.error("%s" % ret.stdout)

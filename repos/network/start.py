@@ -2,7 +2,6 @@
 # Start a network
 
 import time
-import commands
 
 from libvirt import libvirtError
 from src import sharedmod
@@ -72,9 +71,11 @@ def start(params):
             networkname)
         return 1
     else:
-        shell_cmd = "virsh net-list --all"
-        (status, text) = commands.getstatusoutput(shell_cmd)
-        logger.debug("the output of 'virsh net-list --all' is %s" % text)
+        network_list = conn.listAllNetworks()
+        network_name = []
+        for network in network_list:
+            network_name.append(network.name())
+        logger.debug("network list: %s" % network_name)
 
     logger.info("activate the virtual network successfully.")
     time.sleep(3)

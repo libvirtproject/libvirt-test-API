@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # Creat volume for storage pool of 'netfs' type
 
-import commands
-
 from xml.dom import minidom
 from libvirt import libvirtError
 from src import sharedmod
+from utils import process
 
 required_params = ('poolname', 'volname', 'volformat', 'capacity',)
 optional_params = {'xml': 'xmls/dir_volume.xml',
@@ -30,8 +29,8 @@ def virsh_vol_list(poolname):
     """using virsh command list the volume information"""
 
     shell_cmd = "virsh vol-list %s" % poolname
-    (status, text) = commands.getstatusoutput(shell_cmd)
-    logger.debug(text)
+    ret = process.run(shell_cmd, shell=True, ignore_status=True)
+    logger.debug(ret.stdout)
 
 
 def create_netfs_volume(params):
@@ -78,7 +77,7 @@ def create_netfs_volume(params):
     try:
         logger.info("create %s volume" % volname)
         poolobj.createXML(xmlstr, 0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

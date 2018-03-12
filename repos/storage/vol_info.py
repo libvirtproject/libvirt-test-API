@@ -81,7 +81,7 @@ def vol_info(params):
             logger.error("Fail to get volume info with flag.")
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

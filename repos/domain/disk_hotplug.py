@@ -6,13 +6,12 @@ import os
 import re
 import sys
 import time
-import commands
 
 import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
-from utils import utils
+from utils import utils, process
 
 from repos.domain.start import start
 
@@ -28,14 +27,11 @@ optional_params = {'diskpath': '/var/lib/libvirt/images/attacheddisk',
 
 def create_image(diskpath, seeksize, imageformat, logger):
     """Create a image file"""
-    disk_create = "qemu-img create -f %s %s %sG" % \
-        (imageformat, diskpath, seeksize)
-    logger.debug("the command line of creating disk images is '%s'" %
-                 disk_create)
-
-    (status, message) = commands.getstatusoutput(disk_create)
-    if status != 0:
-        logger.debug(message)
+    cmd = "qemu-img create -f %s %s %sG" % (imageformat, diskpath, seeksize)
+    logger.debug("cmd: %s" % cmd)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        logger.debug(ret.stdout)
         return 1
 
     return 0
@@ -76,7 +72,7 @@ def detach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
                 domobj.detachDeviceFlags(xmlstr, int(flags))
                 logger.error("this should fail")
                 return 1
-            except libvirtError, e:
+            except libvirtError as e:
                 logger.error("libvirt call failed: " + str(e))
                 logger.info("live detach fail on shutoff domain is expected")
                 return 0
@@ -91,14 +87,14 @@ def detach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
                 else:
                     logger.error("check config xml failed")
                     return 1
-            except libvirtError, e:
+            except libvirtError as e:
                 logger.info("libvirt call failed: " + str(e))
                 return 1
 
     elif state == libvirt.VIR_DOMAIN_RUNNING:
         try:
             domobj.detachDeviceFlags(xmlstr, int(flags))
-        except libvirtError, e:
+        except libvirtError as e:
             logger.error("libvirt call failed: " + str(e))
             return 1
 
@@ -152,7 +148,7 @@ def attach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
                 domobj.attachDeviceFlags(xmlstr, int(flags))
                 logger.error("this should fail")
                 return 1
-            except libvirtError, e:
+            except libvirtError as e:
                 logger.error("libvirt call failed: " + str(e))
                 logger.info("live attach fail on shutoff domain is expected")
                 return 0
@@ -169,14 +165,14 @@ def attach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
                 else:
                     logger.error("check current xml failed")
                     return 1
-            except libvirtError, e:
+            except libvirtError as e:
                 logger.info("libvirt call failed: " + str(e))
                 return 1
 
     elif state == libvirt.VIR_DOMAIN_RUNNING:
         try:
             domobj.attachDeviceFlags(xmlstr, int(flags))
-        except libvirtError, e:
+        except libvirtError as e:
             logger.error("libvirt call failed: " + str(e))
             return 1
 
@@ -264,7 +260,7 @@ def disk_hotplug(params):
     disk_num1 = utils.dev_num(guestname, "disk")
     logger.debug("original disk number: %s" % disk_num1)
 
-    for i in reversed(range(4)):
+    for i in reversed(list(range(4))):
         attach_ret = attach_disk(domobj, guestname, state, xmlstr, i, target,
                                  disk_num1, logger)
         time.sleep(5)

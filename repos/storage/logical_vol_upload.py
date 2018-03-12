@@ -132,7 +132,7 @@ def logical_vol_upload(params):
             logger.error("file post region digests not match")
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

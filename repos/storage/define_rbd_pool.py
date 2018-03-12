@@ -2,7 +2,6 @@
 # Define storage pool of 'rbd' type
 
 import os
-import commands
 
 from libvirt import libvirtError
 from src import sharedmod
@@ -43,7 +42,7 @@ def define_rbd_pool(params):
         else:
             logger.error("%s storage pool is undefined" % poolname)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

@@ -64,7 +64,7 @@ def snapshot_child(params):
 
         children = snapobj.listAllChildren(flagn)
 
-        dom_children_name = map(lambda snap: snap.getName(), children)
+        dom_children_name = [snap.getName() for snap in children]
 
         logger.info("Expect children list:" + str(children_name))
         logger.info("Got children list:" + str(dom_children_name))
@@ -84,7 +84,7 @@ def snapshot_child(params):
             if not check_get_parent(child, snapobj, logger):
                 return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s" % e.message)
         return 1
 

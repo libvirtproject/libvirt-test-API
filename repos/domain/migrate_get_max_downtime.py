@@ -15,7 +15,7 @@ def get_downtime_from_qemu(dom, logger):
     ret = libvirt_qemu.qemuMonitorCommand(dom, '{ "execute": "query-migrate-parameters" }', 0)
     out = json.loads(ret)
 
-    if "downtime-limit" in out["return"].keys():
+    if "downtime-limit" in list(out["return"].keys()):
         return out['return']['downtime-limit']
     else:
         logger.error("cannot find downtime-limit in query-migrate-parameters.")
@@ -39,7 +39,7 @@ def migrate_get_max_downtime(params):
 
         downtime = dom.migrateGetMaxDowntime(0)
         logger.info("get downtime from migrateGetMaxDowntime: %s" % downtime)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code: %s" %
                      (e.message, e.get_error_code()))
         return 1

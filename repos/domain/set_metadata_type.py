@@ -123,10 +123,10 @@ def set_metadata_type(params):
             domobj.setMetadata(libvirt.VIR_DOMAIN_METADATA_ELEMENT,
                                None, None, nsuri, flag)
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
-    except RuntimeError, e:
+    except RuntimeError as e:
         logger.error("Test failed with: " + str(e))
         return 1
 

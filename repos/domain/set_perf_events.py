@@ -60,7 +60,7 @@ def check_events(events, event_list, guestname, flags, domstate, dom, logger):
 
     logger.info("values: %s" % values)
     for i in event_list:
-        if i in values.keys() and i in events.keys():
+        if i in list(values.keys()) and i in list(events.keys()):
             if values[i] != events[i]:
                 return 1
 
@@ -129,7 +129,7 @@ def set_perf_events(params):
         dom = conn.lookupByName(guestname)
         domstate = dom.state(0)[0]
         dom.setPerfEvents(events, flags)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code: %s" %
                      (e.message, e.get_error_code()))
         # For REHL 7.4

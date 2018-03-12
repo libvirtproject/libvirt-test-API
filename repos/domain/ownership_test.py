@@ -203,7 +203,7 @@ def ownership_test(params):
     try:
         domobj.save(SAVE_FILE)
         logger.info("Success save domain %s to %s" % (guestname, SAVE_FILE))
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1
@@ -239,7 +239,7 @@ def ownership_test(params):
         conn.restore(SAVE_FILE)
         logger.info("Success restore domain %s from %s" %
                     (guestname, SAVE_FILE))
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Error: fail to restore domain %s from %s" %

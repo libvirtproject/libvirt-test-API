@@ -5,13 +5,11 @@ import os
 import re
 import sys
 import time
-import commands
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
-from utils import utils
+from utils import utils, process
 
 required_params = ('guestname', 'file',)
 optional_params = {}
@@ -69,36 +67,38 @@ def check_dump(*args):
     req_pkgs = ""
     for pkg in pkgs:
         req_pkgs = req_pkgs + pkg + ".rpm "
-        status, output = commands.getstatusoutput("rpm -q %s" % pkg)
+        cmd = "rpm -q %s" % pkg
+        ret = process.run(cmd, shell=True, ignore_status=True)
         down = "wget \
                 http://download.devel.redhat.com/brewroot/packages/kernel\
                 /%s/%s.%s/%s/%s.rpm" % (big, small[0], small[1], arch, pkg)
-        if status != 0:
+        if ret.exit_status != 0:
             logger.info("Please waiting for some time,downloading...")
-            stat, ret = commands.getstatusoutput(down)
-            if stat != 0:
-                logger.error("download failed: %s" % ret)
+            ret = process.run(down, shell=True, ignore_status=True)
+            if ret.exit_status != 0:
+                logger.error("download failed: %s" % ret.stdout)
             else:
-                logger.info(ret)
+                logger.info(ret.stdout)
         else:
-            logger.debug(output)
+            logger.debug(ret.stdout)
 
-    st, res = commands.getstatusoutput("rpm -ivh %s" % req_pkgs)
-    if st != 0:
+    cmd = "rpm -ivh %s" % req_pkgs
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
         logger.error("fail to install %s" % req_pkgs)
     else:
-        logger.info(res)
+        logger.info(ret.stdout)
 
     if file:
         cmd = "crash /usr/lib/debug/lib/modules/%s/vmlinux %s" % \
               (kernel, file)
         logger.info("crash cmd line: %s" % cmd)
-        status, output = commands.getstatusoutput(cmd)
-        if status == 0:
-            logger.info("crash executes result: %d" % status)
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        if ret.exit_status == 0:
+            logger.info("crash executes result: %d" % ret.exit_status)
             return 0
         else:
-            logger.info("screen output information: %s" % output)
+            logger.info("screen output information: %s" % ret.stdout)
             return 1
     else:
         logger.debug("file argument is required")
@@ -146,7 +146,7 @@ def dump(params):
         else:
             logger.error("check core dump: %d\n" % retval)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Error: fail to core dump %s domain" % guestname)

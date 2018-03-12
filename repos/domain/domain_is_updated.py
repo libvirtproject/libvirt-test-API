@@ -3,11 +3,9 @@
 # If the guest should not be updated when this test
 # was performed set parameter 'updated' to 0
 
-import commands
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
 
 required_params = ('guestname',)
@@ -30,7 +28,7 @@ def domain_is_updated(params):
         logger.info("Checking if domain is updated...")
         is_updated = domobj.isUpdated()
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

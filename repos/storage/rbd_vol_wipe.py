@@ -2,10 +2,10 @@
 # volume wipe testing
 
 import os
-import commands
+
 from src import sharedmod
 from libvirt import libvirtError
-from utils import utils
+from utils import utils, process
 
 required_params = ('guestname', 'cephserver', 'cephserverpool', 'poolname', 'volname', 'alg',)
 optional_params = {'xml': 'xmls/rbd_disk.xml',}
@@ -52,19 +52,21 @@ def get_size(cephserver, cephserverpool, poolname, volname, logger):
     cmd = ("rbd -m %s -p %s du %s | grep %s" %
            (cephserver, cephserverpool, volname, volname))
     logger.debug("get_size: cmd: %s" % cmd)
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("get_size: failed.")
-        logger.error("out: %s" % out)
+        logger.error("out: %s" % ret.stdout)
         return
 
     warn_str = ("warning: fast-diff map is not enabled for %s. operation "
                 "may be slow.\n" % volname)
     image_size = ''
-    if warn_str in out:
-        image_size = filter(None, out.strip(warn_str).split(' '))[1]
+    if warn_str in ret.stdout:
+        #image_size = filter(None, out.strip(warn_str).split(' '))[1]
+        image_size = [_f for _f in ret.stdout.strip(warn_str).split(' ') if _f][1]
     else:
-        image_size = filter(None, out.split(' '))[2]
+        #image_size = filter(None, out.split(' '))[2]
+        image_size = [_f for _f in ret.stdout.split(' ') if _f][2]
     return image_size
 
 
@@ -114,7 +116,7 @@ def rbd_vol_wipe(params):
 
         logger.info("rbd vol wipe succeed")
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 
@@ -131,7 +133,7 @@ def rbd_vol_wipe_clean(params):
     # rbd -m 10.73.75.52 -p libvirt-pool rm rbd_vol.img
     cmd = "rbd -m %s -p %s rm %s" % (cephserver, cephserverpool, volname)
     logger.debug("rbd_vol_wipe_clean: cmd: %s" % cmd)
-    stat, ret = commands.getstatusoutput(cmd)
-    if stat:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("rbd_vol_wipe_clean: rm volume failed.")
-        logger.error("ret: %s" % ret)
+        logger.error("ret: %s" % ret.stdout)

@@ -5,7 +5,6 @@ import re
 import sys
 import pexpect
 import string
-import commands
 import shutil
 import time
 
@@ -389,7 +388,7 @@ def hypervisor_connecting_test(uri, auth_tls, username,
             auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_PASSPHRASE], request_credentials, user_data]
             logger.debug("call libvirt.openAuth()")
             conn = libvirt.openAuth(uri, auth, 0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         ret = 1
@@ -422,7 +421,7 @@ def tls_setup(params):
     auth_tls = params['auth_tls']
 
     pkipath = ""
-    if 'pkipath' in params:
+    if "pkipath" in params:
         pkipath = params['pkipath']
         if os.path.exists(pkipath):
             shutil.rmtree(pkipath)

@@ -40,7 +40,7 @@ def os_type(params):
         else:
             logger.info("PASS: get os type %s successful." % os_type)
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s" % (e.message, e.get_error_code()))
         return 1
 

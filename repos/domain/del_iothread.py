@@ -58,7 +58,7 @@ def del_iothread(params):
                     return 1
 
         logger.info("PASS: delete iothread successful.")
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s" % e.message)
         return 1
     return 0

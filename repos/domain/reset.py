@@ -54,7 +54,7 @@ def reset(params):
     try:
         logger.info("reset vm %s now" % guestname)
         domobj.reset(0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("fail to reset domain")

@@ -73,7 +73,7 @@ def detach_disk(params):
         else:
             logger.error("fail to detach a disk to guest: %s\n" % disk_num2)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("detach %s disk from guest %s" % (xmlstr, guestname))

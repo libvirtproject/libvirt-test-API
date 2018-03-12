@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import commands
 import threading
 import time
 
 import libvirt
 from libvirt import libvirtError
 from repos.domain import domain_common
+from utils import process
 
 required_params = ('target_machine',
                    'username',
@@ -45,7 +45,7 @@ def migrate(srcc, srcd, dstc, guestname, logger):
         flags = libvirt.VIR_MIGRATE_LIVE | libvirt.VIR_MIGRATE_POSTCOPY
         logger.info("use migrate() to migrate")
         srcd.migrate(dstc, flags, None, None, 0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         env_clean(srcc, dstc, guestname, logger)
@@ -58,7 +58,7 @@ def postcopy(srcc, srcd, dstc, guestname, logger):
     try:
         logger.info("start postcopy migration.")
         srcd.migrateStartPostCopy(0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         env_clean(srcc, dstc, guestname, logger)
@@ -87,8 +87,10 @@ def migrate_postcopy(params):
         logger.error("faild to setup ssh tunnel with target machine %s" % target_machine)
         return 1
 
-    commands.getstatusoutput("ssh-add")
-
+    ret = process.run("ssh-add", shell=True, ignore_status=True)
+    if ret.exit_status:
+        logger.error("ssh-add failed: %s" % ret.stdout)
+        return 1
     dsturi = "qemu+ssh://%s/system" % target_machine
     dstc = libvirt.open(dsturi)
 
@@ -124,7 +126,7 @@ def migrate_postcopy(params):
             test_result = True
             logger.error("Dst VM wrong state %s, should be running", dstdom.info()[0])
 
-    except libvirtError, e:
+    except libvirtError as e:
         test_result = True
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))

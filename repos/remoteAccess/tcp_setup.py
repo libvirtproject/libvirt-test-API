@@ -129,7 +129,7 @@ def hypervisor_connecting_test(uri, auth_tcp, username,
 
         ret = 0
         conn.close()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         ret = 1

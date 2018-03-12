@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 import os
-import commands
 
 from libvirt import libvirtError
 from src import sharedmod
+from utils import process
 
 required_params = ('poolname',)
 optional_params = {}
@@ -20,17 +20,17 @@ def display_pool_info(conn):
 
 def display_physical_volume():
     """Display volume group and physical volume information"""
-    stat1, ret1 = commands.getstatusoutput("pvdisplay")
-    if stat1 == 0:
+    ret1 = process.run("pvdisplay", shell=True, ignore_status=True)
+    if ret1.exit_status == 0:
         logger.debug("pvdisplay command executes successfully")
-        logger.debug(ret1)
+        logger.debug(ret1.stdout)
     else:
         logger.error("fail to execute pvdisplay command")
 
-    stat2, ret2 = commands.getstatusoutput("vgdisplay")
-    if stat2 == 0:
+    ret2 = process.run("vgdisplay", shell=True, ignore_status=True)
+    if ret2.exit_status == 0:
         logger.debug("vgdisplay command executes successfully")
-        logger.debug(ret2)
+        logger.debug(ret2.stdout)
     else:
         logger.error("fail to execute pvdisplay command")
 
@@ -43,12 +43,11 @@ def check_build_pool(poolname):
     logger.debug("%s xml file path: %s" % (poolname, path))
     if os.access(path, os.R_OK):
         logger.debug("execute grep vgcreate %s command" % path)
-        stat, ret = commands.getstatusoutput("grep vgcreate %s" % path)
-        if stat == 0:
-            logger.debug(ret)
+        ret = process.run("grep vgcreate %s" % path, shell=True, ignore_status=True)
+        logger.debug(ret.stdout)
+        if ret.exit_status == 0:
             return True
         else:
-            logger.debug(ret)
             return False
     else:
         logger.debug("%s file don't exist" % path)
@@ -81,7 +80,7 @@ def build_logical_pool(params):
         else:
             logger.error("fail to build %s storage pool" % poolname)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

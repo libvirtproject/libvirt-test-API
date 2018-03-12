@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # To test netfs type storage pool defining
 
-import commands
-
 from libvirt import libvirtError
 from src import sharedmod
 from repos.storage import storage_common
+from utils import process
 
 required_params = ('poolname', 'sourcehost', 'sourcepath',)
 optional_params = {'targetpath': '/tmp/netfs_test',
@@ -15,8 +14,8 @@ optional_params = {'targetpath': '/tmp/netfs_test',
 
 def set_virt_use_nfs(logger):
     cmd = 'setsebool virt_use_nfs on'
-    (ret, msg) = commands.getstatusoutput(cmd)
-    if ret != 0:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
         logger.error("cmd failed: %s" % cmd)
 
     return 0
@@ -53,7 +52,7 @@ def define_netfs_pool(params):
         else:
             logger.error("%s storage pool is undefined" % poolname)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

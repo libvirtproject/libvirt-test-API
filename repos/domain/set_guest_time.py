@@ -68,8 +68,8 @@ def set_guest_time(params):
     guestname = params['guestname']
     username = params['username']
     userpassword = params['userpassword']
-    seconds = long(params['seconds'])
-    nseconds = long(params.get('nseconds', 0))
+    seconds = int(params['seconds'])
+    nseconds = int(params.get('nseconds', 0))
     f = params.get('flags', 0)
     flags = parse_flags(f)
 
@@ -106,9 +106,9 @@ def set_guest_time(params):
     try:
         domobj.setTime({'seconds': seconds, 'nseconds': nseconds}, flags)
 
-        sec = long(utils.remote_exec(ipaddr, username, userpassword, GET_TIME))
+        sec = int(utils.remote_exec(ipaddr, username, userpassword, GET_TIME))
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

@@ -84,7 +84,7 @@ def save_image_define_xml(params):
 
     try:
         conn.saveImageDefineXML('/tmp/%s.save' % guestname, guestxml, flags)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.info("Save image definexml failed" + str(e))
         return 1
 

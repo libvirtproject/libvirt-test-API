@@ -2,8 +2,12 @@
 
 import os
 import math
-import thread
 import time
+
+try:
+    import thread
+except ImportError:
+    import _thread as thread
 
 import libvirt
 from libvirt import libvirtError

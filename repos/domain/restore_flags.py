@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
-import thread
 import time
 import os
-
 import libvirt
 import functools
 
@@ -13,6 +11,11 @@ from utils import utils
 from xml.dom import minidom
 from repos.domain.domain_common import get_flags, get_fileflags
 from repos.domain.domain_common import check_fileflag, check_dom_state
+
+try:
+    import thread
+except ImportError:
+    import _thread as thread
 
 required_params = ('guestname', 'flags',)
 optional_params = {'dxml': 'alter',}
@@ -74,7 +77,7 @@ def restore_flags(params):
 
     try:
         conn.restoreFlags(save_path, dxml, flags)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.info("restore domain failed" + str(e))
         return 1
 

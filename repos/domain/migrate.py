@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-import commands
 import json
 import time
 
 import libvirt
 from libvirt import libvirtError
-from utils import utils
+from utils import utils, process
 from src import sharedmod
 from repos.domain import domain_common
 
@@ -52,11 +51,11 @@ def get_state(state):
 def exec_command(logger, command, flag):
     """execute shell command
     """
-    status, ret = commands.getstatusoutput(command)
-    if not flag and status:
+    ret = process.run(command, shell=True, ignore_status=True)
+    if not flag and ret.exit_status:
         logger.error("executing " + "\"" + command + "\"" + " failed")
-        logger.error(ret)
-    return status, ret
+        logger.error(ret.stdout)
+    return ret.exit_status, ret.stdout
 
 
 def env_clean(srcconn, dstconn, target_machine, guestname, logger):
@@ -211,8 +210,10 @@ def migrate(params):
             target_machine)
         return 1
 
-    commands.getstatusoutput("ssh-add")
-
+    ret = process.run("ssh-add", shell=True, ignore_status=True)
+    if ret.exit_status:
+        logger.error("ssh-add failed: %s" % ret.stdout)
+        return 1
     check_virtlogd(target_machine, username, password, logger)
 
     dsturi = "qemu+%s://%s/system" % (transport, target_machine)
@@ -262,7 +263,7 @@ def migrate(params):
         else:
             logger.info("use migrate() to migrate")
             srcdom.migrate(dstconn, migflags, None, None, 0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Migration Failed")

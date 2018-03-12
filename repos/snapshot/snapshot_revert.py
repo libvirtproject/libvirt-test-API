@@ -72,7 +72,7 @@ def snapshot_revert(params):
         # Guarantee revert is complete before check domain state
         time.sleep(10)
         check_domain_state(flagn, domobj, snapshot)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s" % e.message)
         return 1
 

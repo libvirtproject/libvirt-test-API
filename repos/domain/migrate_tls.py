@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-import commands
-
 import libvirt
+
 from libvirt import libvirtError
 from src import sharedmod
 from repos.domain import domain_common
-from utils import utils
+from utils import utils, process
 
 required_params = ('transport',
                    'target_machine',
@@ -85,7 +84,10 @@ def migrate_tls(params):
         logger.error("faild to setup ssh tunnel with target machine %s" % target_machine)
         return 1
 
-    commands.getstatusoutput("ssh-add")
+    ret = process.run("ssh-add", shell=True, ignore_status=True)
+    if ret.exit_status:
+        logger.error("ssh-add failed: %s" % ret.stdout)
+        return 1
     target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
     dsturi = "qemu+%s://%s/system" % (transport, target_hostname)
 
@@ -97,7 +99,7 @@ def migrate_tls(params):
     try:
         logger.info("use migrate() to migrate")
         srcdom.migrate(dstconn, libvirt.VIR_MIGRATE_TLS, None, None, 0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("Migration Failed")

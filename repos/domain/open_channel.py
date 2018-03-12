@@ -85,7 +85,7 @@ def open_channel(params):
             try:
                 logger.info("Trying to open an unavaliable channel")
                 domobj.openChannel(channel, stream)
-            except libvirtError, e:
+            except libvirtError as e:
                 logger.info("Failed as expected")
                 success = True
 
@@ -96,7 +96,7 @@ def open_channel(params):
         stream.eventRemoveCallback()
         stream.finish()
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("Libvirt call failed: " + str(e))
         return 1
 

@@ -3,8 +3,12 @@
 
 import os
 import libvirt
-import thread
 import time
+
+try:
+    import thread
+except ImportError:
+    import _thread as thread
 
 from libvirt import libvirtError
 from src import sharedmod

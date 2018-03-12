@@ -52,7 +52,7 @@ def destroy_pool(params):
             return 1
         else:
             logger.info("%s is destroyed!!!" % poolname)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

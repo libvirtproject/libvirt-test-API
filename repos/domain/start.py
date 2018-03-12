@@ -63,8 +63,9 @@ def create_files(logger, params):
     default_filenum = 3
 
     if files == 'auto':
-        files = map(lambda x: "/tmp/libvirt-test-api-start-file-%d" % x,
-                    range(default_filenum))
+        #files = map(lambda x: "/tmp/libvirt-test-api-start-file-%d" % x,
+        #            range(default_filenum))
+        files = ["/tmp/libvirt-test-api-start-file-%d" % x for x in range(default_filenum)]
         for i in files:
             with open(i, 'w') as tmp_file:
                 tmp_file.write(test_text)
@@ -133,7 +134,7 @@ def start(params):
             else:
                 domobj.createWithFiles(files, flags)
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.error("start failed")

@@ -215,6 +215,6 @@ def sched_params_flag(params):
                                       domstate, flags_value)
 
         return ret
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1

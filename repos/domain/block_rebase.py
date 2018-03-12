@@ -194,7 +194,7 @@ def block_rebase(params):
             else:
                 logger.info("check job type successful.")
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

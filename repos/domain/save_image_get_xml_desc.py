@@ -83,7 +83,7 @@ def save_image_get_xml_desc(params):
 
     try:
         new_guestxml = conn.saveImageGetXMLDesc("/tmp/%s.save" % guestname, flags)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.info("saveimage get xmldesc failed" + str(e))
         return 1
 

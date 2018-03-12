@@ -4,7 +4,8 @@
 import os
 import sys
 import re
-import commands
+
+from utils import process
 
 required_params = ()
 optional_params = {}
@@ -17,11 +18,11 @@ VIRSH_DOMS = "virsh --quiet list |awk '{print $2}'"
 def get_output(logger, command):
     """execute shell command
     """
-    status, ret = commands.getstatusoutput(command)
-    if status:
+    ret = process.run(command, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("executing " + "\"" + command + "\"" + " failed")
-        logger.error(ret)
-    return status, ret
+        logger.error(ret.stdout)
+    return ret.exit_status, ret.stdout
 
 
 def domain_name(params):

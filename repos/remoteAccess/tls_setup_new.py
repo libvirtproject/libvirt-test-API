@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 
 import os
-import commands
 import shutil
 import time
 
 import libvirt
 from libvirt import libvirtError
 
-from utils import utils
+from utils import utils, process
 from repos.domain.domain_common import ssh_keygen, ssh_tunnel, request_credentials
 
 required_params = ('listen_tls',
@@ -348,7 +347,7 @@ def hypervisor_connecting_test(uri, auth_tls, username,
             auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_PASSPHRASE], request_credentials, user_data]
             logger.debug("call libvirt.openAuth()")
             conn = libvirt.openAuth(uri, auth, 0)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         ret = 1
@@ -408,7 +407,10 @@ def tls_setup_new(params):
         logger.error("failed to setup ssh tunnel with target machine %s" % target_machine)
         return 1
 
-    commands.getstatusoutput("ssh-add")
+    ret = process.system("ssh-add", shell=True, ignore_status=True)
+    if ret:
+        logger.error("ssh-add failed: %s" % ret)
+        return 1
 
     if iptables_stop(target_machine, username, password, logger):
         return 1

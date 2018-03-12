@@ -19,7 +19,7 @@ def control_info(params):
         domobj = conn.lookupByName(guestname)
         info = domobj.controlInfo()
         logger.info("control info: %s" % info)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

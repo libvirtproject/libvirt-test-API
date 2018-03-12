@@ -51,7 +51,7 @@ def blkstats(params):
         devs = cont.xpathEval("/domain/devices/disk/target/@dev")
         path = devs[0].content
         blkstats = domobj.blockStats(path)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

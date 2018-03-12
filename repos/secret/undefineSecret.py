@@ -44,7 +44,7 @@ def undefineSecret(params):
             logger.error("fail to check secret undefine")
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

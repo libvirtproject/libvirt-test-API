@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # To test domain's blockkinfo API
 
-import commands
 import re
 
 import libvirt
 from libvirt import libvirtError
 from utils.utils import version_compare
 from src import sharedmod
+from utils import process
 
 required_params = ('guestname', 'blockdev',)
 optional_params = {}
@@ -16,13 +16,13 @@ optional_params = {}
 def get_output(command, logger):
     """execute shell command
     """
-    status, ret = commands.getstatusoutput(command)
+    ret = process.run(command, shell=True, ignore_status=True)
     logger.debug("cmd: %s" % command)
     logger.debug("ret: %s" % ret)
-    if status:
+    if ret.exit_status:
         logger.error("executing " + "\"" + command + "\"" + " failed")
-        logger.error(ret)
-    return status, ret
+        logger.error(ret.stdout)
+    return ret.exit_status, ret.stdout
 
 
 def check_domain_exists(conn, guestname, logger):
@@ -167,7 +167,7 @@ def domain_blkinfo(params):
         logger.info("Allocation: %d " % block_info[1])
         logger.info("Physical  : %d " % block_info[2])
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

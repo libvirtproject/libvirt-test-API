@@ -50,7 +50,7 @@ def check_defineSecret(secret_params, secretobj):
         logger.error("unexpected secret usage type: %s" % usage_type)
         return 1
 
-    for i in secret_xml.keys():
+    for i in list(secret_xml.keys()):
         if secret_xml[i] != secret_params[i]:
             return 1
 
@@ -104,7 +104,7 @@ def defineSecret(params):
             logger.error("fail to check define secret")
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # To test "virsh hostname" command
 
-import os
-import sys
-import re
-import commands
+from utils import process
 
 required_params = ()
 optional_params = {}
@@ -17,17 +14,19 @@ def hostname(params):
     """
     logger = params['logger']
 
-    status, virsh_ret = commands.getstatusoutput(VIRSH_HOSTNAME)
-    if status:
+    ret = process.run(VIRSH_HOSTNAME, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("executing " + "\"" + VIRSH_HOSTNAME + "\"" + " failed")
         return 1
+    virsh_ret = ret.stdout
     logger.info("the output of " + "\"" + VIRSH_HOSTNAME + "\"" + " is %s" % virsh_ret)
 
-    status, host_ret = commands.getstatusoutput("hostname")
+    ret = process.run("hostname", shell=True, ignore_status=True)
     if status:
         logger.error("executing " + "\"" + "hostname" + "\"" + " failed")
         return 1
 
+    host_ret = ret.stdout
     if virsh_ret[:-1] != host_ret:
         logger.error("the output of " + VIRSH_HOSTNAME + " is not right")
         return 1

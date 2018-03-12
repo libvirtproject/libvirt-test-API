@@ -29,7 +29,7 @@ def get_memory_config(domobj, param_dict):
         logger.debug("domain %s xml is :\n%s" % (domobj.name(), guestxml))
         xml = minidom.parseString(guestxml)
         logger.info("get domain memory parameters in config xml")
-        for i in param_dict.keys():
+        for i in list(param_dict.keys()):
             if xml.getElementsByTagName(i):
                 limit_element = xml.getElementsByTagName(i)[0]
                 limit = int(limit_element.childNodes[0].data)
@@ -62,7 +62,7 @@ def memory_params_config(params):
                   'swap_hard_limit': swap_hard_limit
                   }
 
-    for i in param_dict.keys():
+    for i in list(param_dict.keys()):
         if param_dict[i] == -1:
             param_dict[i] = UNLIMITED
 

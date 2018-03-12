@@ -6,10 +6,10 @@ import re
 import time
 import libxml2
 import libvirt
-import commands
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
+from utils import process
 
 BLKIO_PATH1 = "/cgroup/blkio/libvirt/qemu/%s"
 BLKIO_PATH2 = "/sys/fs/cgroup/blkio/machine.slice/machine-qemu\\x2d%s.scope"
@@ -40,11 +40,11 @@ def get_blkio_path(guestname, logger):
 def get_output(command, logger):
     """execute shell command
     """
-    status, ret = commands.getstatusoutput(command)
-    if status:
+    ret = process.run(command, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("executing " + "\"" + command + "\"" + " failed")
-        logger.error(ret)
-    return status, ret
+        logger.error(ret.stdout)
+    return ret.exit_status, ret.stdout
 
 
 def get_device(domobj, logger):
@@ -61,8 +61,9 @@ def get_device(domobj, logger):
     if output.startswith('/dev/mapper'):
         # BUG: Call 'lvs' in python will cause unexpected file descriptor leak
         # so we have to ignore stderr.
-        output = commands.getoutput('lvs "%s" -o devices 2>/dev/null | tail -1 | cut -d "(" -f 1'
-                                    % output).strip()
+        cmd = 'lvs "%s" -o devices 2>/dev/null | tail -1 | cut -d "(" -f 1' % output
+        ret = process.run(command, shell=True, ignore_status=True)
+        output = ret.stdout().strip()
 
     if not status:
         return output[:-1]
@@ -193,7 +194,7 @@ def domain_blkio(params):
         if status != 0:
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

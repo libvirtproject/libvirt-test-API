@@ -30,7 +30,7 @@ def node_mem_param(params):
         return 1
 
     param_dict = {}
-    for i in optional_params.keys():
+    for i in list(optional_params.keys()):
         if eval(i):
             param_dict[i] = int(eval(i))
 
@@ -52,7 +52,7 @@ def node_mem_param(params):
         mem_pos = conn.getMemoryParameters(0)
         logger.info("host node memory parameters is: %s" % mem_pos)
 
-        for i in param_dict.keys():
+        for i in list(param_dict.keys()):
             if not mem_pos[i] == param_dict[i]:
                 logger.error("%s is not set as expected" % i)
 
@@ -61,7 +61,7 @@ def node_mem_param(params):
         logger.info("check tuning detail under %s" % KSM_PATH)
 
         ksm_dict = {}
-        for i in param_dict.keys():
+        for i in list(param_dict.keys()):
             path = "%s%s" % (KSM_PATH, i[4:])
             f = open(path)
             ret = int(f.read().split('\n')[0])

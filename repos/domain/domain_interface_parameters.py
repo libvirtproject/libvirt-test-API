@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # To test domain's interfaceParameters API
 
-import commands
 import re
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
 from src.exception import TestError
+from utils import process
 
 required_params = ('guestname', 'mac')
 optional_params = {}
@@ -83,8 +82,9 @@ def domain_interface_parameters(params):
 
     conn = sharedmod.libvirtobj['conn']
 
-    dev_name_raw = commands.getoutput("virsh domiflist %s" % guestname)
-    dev_name = re.findall(r'\n([a-zA-Z0-9]+)\s.*%s' % mac, dev_name_raw)
+    cmd = "virsh domiflist %s" % guestname
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    dev_name = re.findall(r'\n([a-zA-Z0-9]+)\s.*%s' % mac, ret.stdout)
     if not dev_name or len(dev_name) != 1:
         logger.error("Failed to find interface with mac address: %s "
                      "maybe the guest is not started" % mac)
@@ -93,9 +93,10 @@ def domain_interface_parameters(params):
     dev_name = dev_name[0]
     logger.info("Interface %s is connected to virtual net %s" % (mac, dev_name))
 
-    inbound_tc = commands.getoutput("tc class show dev %s" % dev_name)
-    outbound_tc = commands.getoutput("tc filter show dev %s parent "
-                                     "ffff:" % dev_name)
+    cmd = "tc class show dev %s" % dev_name
+    inbound_tc = process.system_output(cmd, shell=True, ignore_status=True)
+    cmd = "tc filter show dev %s parent ffff:" % dev_name
+    outbound_tc = process.system_output(cmd, shell=True, ignore_status=True)
 
     inbound = {
         'average': find_rate('rate', inbound_tc)/1000,
@@ -167,11 +168,11 @@ def domain_interface_parameters(params):
             success = False
             try:
                 interface_param = domobj.interfaceParameters(mac, flag)
-            except libvirtError, e:
+            except libvirtError as e:
                 success = True
                 logger.info('Got exception as expected')
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

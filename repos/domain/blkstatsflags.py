@@ -56,10 +56,10 @@ def blkstatsflags(params):
             blkstats = domobj.blockStatsFlags(path, flags)
             # check_blkstats()
             logger.debug(blkstats)
-            for entry in blkstats.keys():
+            for entry in list(blkstats.keys()):
                 logger.info("%s %s %s" % (path, entry, blkstats[entry]))
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

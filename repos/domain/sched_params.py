@@ -4,12 +4,10 @@
 import os
 import sys
 import time
-import commands
-
 import libvirt
 
 from src import sharedmod
-from utils import utils
+from utils import utils, process
 
 required_params = ('guestname', 'capshares',)
 optional_params = {}
@@ -32,8 +30,9 @@ def check_sched_params(*args):
     hypervisor, dicts, guestname, domobj = args
     sched_dict = {}
     if hypervisor == "xen":
-        sched_dict = eval(commands.getoutput('xm sched-credit -d %s'
-                                             % guestname))
+        cmd = "xm sched-credit -d %s" % guestname
+        out = process.system_output(cmd, shell=True, ignore_status=True)
+        sched_dict = eval(out)
         if sched_dict['weight'] == dicts['weight'] and \
                 sched_dict['cap'] == dicts['cap']:
             return 0

@@ -43,7 +43,7 @@ def pool_list_active(params):
             logger.error("active pool name list mismatched")
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

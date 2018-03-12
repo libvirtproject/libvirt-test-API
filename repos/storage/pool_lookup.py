@@ -63,7 +63,7 @@ def pool_lookup(params):
                 logger.error("pool object lookup by UUID string failed")
                 retval += 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

@@ -107,7 +107,7 @@ def snapshot_delete(params):
         check_snapshot_dir(flagn, snapshotname, snapshot_childrenname,
                            snapshot_list_dir)
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s" % e.message)
         return 1
 

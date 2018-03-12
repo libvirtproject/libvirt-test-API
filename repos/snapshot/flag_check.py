@@ -40,7 +40,7 @@ def flag_check(params):
     username = params['username']
     password = params['password']
 
-    if 'expectedret' in params:
+    if "expectedret" in params:
         expected_result = params['expectedret']
     else:
         expected_result = "exist"

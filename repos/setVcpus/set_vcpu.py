@@ -32,7 +32,7 @@ def get_vcpu_number(domobj, logger):
 
         logger.info("domain current vcpu number is: %s" % current)
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return False
 
@@ -68,7 +68,7 @@ def set_vcpu(params):
         logger.info("start to set vcpu")
         domobj.setVcpu(vcpulist, state_int, 1)
         after = get_vcpu_number(domobj, logger)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

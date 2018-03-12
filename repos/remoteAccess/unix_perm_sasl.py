@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
 import os
-import commands
 from pwd import getpwnam
 
 import libvirt
 from libvirt import libvirtError
 
-from utils import utils
+from utils import utils, process
 
 required_params = ('auth_unix_ro', 'auth_unix_rw',)
 optional_params = {'unix_sock_group': 'libvirt'}
@@ -21,11 +20,11 @@ TICKET_CACHE = "/tmp/krb5cc_0"
 def get_output(command, flag, logger):
     """execute shell command
     """
-    status, ret = commands.getstatusoutput(command)
-    if not flag and status:
+    ret = process.run(command, shell=True, ignore_status=True)
+    if not flag and ret.exit_status:
         logger.error("executing " + "\"" + command + "\"" + " failed")
-        logger.error(ret)
-    return status, ret
+        logger.error(ret.stdout)
+    return ret.exit_status, ret.stdout
 
 
 def libvirt_configure(unix_sock_group, auth_unix_ro, auth_unix_rw, logger):
@@ -173,7 +172,7 @@ def hypervisor_connecting_test(uri, unix_sock_group, auth_unix_ro, auth_unix_rw,
                     request_credentials, user_data]
             conn = libvirt.openAuth(uri, auth, 0)
         conn.close()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         logger.info("set euid back to %d" % orginal_user)
@@ -194,7 +193,7 @@ def unix_perm_sasl(params):
     auth_unix_rw = params['auth_unix_rw']
 
     unix_sock_group = 'libvirt'
-    if 'unix_sock_group' in params:
+    if "unix_sock_group" in params:
         unix_sock_group = params['unix_sock_group']
 
     uri = "qemu:///system"
@@ -236,7 +235,7 @@ def unix_perm_sasl_clean(params):
     auth_unix_rw = params['auth_unix_rw']
 
     unix_sock_group = 'libvirt'
-    if params.has_key('unix_sock_group'):
+    if "unix_sock_group" in params:
         unix_sock_group = params['unix_sock_group']
 
     if utils.version_compare("libvirt", 3, 2, 0, logger):

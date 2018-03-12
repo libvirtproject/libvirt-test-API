@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 import uuid
-import commands
-from src import sharedmod
-from libvirt import libvirtError
 
 from src import sharedmod
+from libvirt import libvirtError
+from utils import process
 
 required_params = ('guestname',)
 optional_params = {}
@@ -32,16 +31,17 @@ def check_domain_exists(conn, guestname, logger):
 
 def check_domain_uuid_with_virsh(guestname, UUIDString, logger):
     """ check UUID String of guest with virsh """
-    status, ret = commands.getstatusoutput(VIRSH_DOMUUID + ' %s' % guestname)
-    if status:
+    cmd = VIRSH_DOMUUID + ' %s' % guestname
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("executing " + "\"" + VIRSH_DOMUUID + ' %s' % guestname + "\"" + " failed")
-        logger.error(ret)
+        logger.error(ret.stdout)
         return False
     else:
-        UUIDString_virsh = ret[:-1]
+        UUIDString_virsh = ret.stdout[:-1]
         logger.debug("UUIDString from API is %s" % UUIDString)
         logger.debug("UUIDString from virsh domuuid is %s" % UUIDString_virsh)
-        if UUIDString == ret[:-1]:
+        if UUIDString == ret.stdout[:-1]:
             return True
         else:
             return False
@@ -111,7 +111,7 @@ def domain_uuid(params):
         if not check_lookupByUUID(conn, domain, uuid.UUID(UUIDString).bytes, logger):
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

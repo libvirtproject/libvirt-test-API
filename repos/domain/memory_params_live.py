@@ -4,12 +4,11 @@
 
 import os
 import math
-import commands
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
+from utils import process
 
 required_params = (
     'guestname',
@@ -37,12 +36,12 @@ def get_cgroup_setting(guestname):
      """
     guestname_cgroup = guestname.replace('_', '')
     cmd = "lscgroup | grep %s | grep memory:" % (guestname_cgroup)
-    ret, out = commands.getstatusoutput(cmd)
-    if ret:
-        logger.error(out)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
+        logger.error(ret.stdout)
         return 1
     else:
-        mem_cgroup_path = "%s%s" % (cgroup_path, out.replace(':', ''))
+        mem_cgroup_path = "%s%s" % (cgroup_path, ret.stdout.replace(':', ''))
 
     f = open("%s/memory.limit_in_bytes" % mem_cgroup_path)
     hard = int(f.read())
@@ -84,7 +83,7 @@ def memory_params_live(params):
                   'swap_hard_limit': swap_hard_limit
                   }
 
-    for i in param_dict.keys():
+    for i in list(param_dict.keys()):
         if param_dict[i] == -1:
             param_dict[i] = UNLIMITED
 
@@ -110,7 +109,7 @@ def memory_params_live(params):
         ret_pos = domobj.memoryParameters(flags)
         logger.info("%s memory parameters is %s" % (guestname, ret_pos))
 
-        for i in param_dict.keys():
+        for i in list(param_dict.keys()):
             if math.fabs(ret_pos[i] - param_dict[i]) > 3:
                 logger.error("%s value is not as expected" % i)
                 return 1
@@ -122,7 +121,7 @@ def memory_params_live(params):
             logger.error("fail to get domain memory cgroup setting")
             return 1
 
-        for i in param_dict.keys():
+        for i in list(param_dict.keys()):
             if math.fabs(param_dict[i] - ret[i]) > 3:
                 logger.error("%s value not match with cgroup setting" % i)
                 return 1
@@ -141,8 +140,8 @@ def memory_params_live_check(params):
     """
     logger = params['logger']
     cmd = 'lscgroup'
-    ret, out = commands.getstatusoutput(cmd)
-    if ret and 'command not found' in out:
-        logger.error(out)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status and 'command not found' in ret.stdout:
+        logger.error(ret.stdout)
         logger.error("package libcgroup or libcgroup-tools is not installed")
         return 1

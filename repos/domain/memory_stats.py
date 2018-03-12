@@ -21,8 +21,8 @@ def get_memory_actual(guestname):
     logger.info("check memory stats with virsh command: %s" % cmd)
     ret, out = utils.exec_cmd(cmd, shell=True)
     out_dict = eval(out[0])
-    if 'return' in out_dict:
-        if 'actual' in out_dict['return']:
+    if "return" in out_dict:
+        if "actual" in out_dict['return']:
             qmp_actual = out_dict['return']['actual']
     else:
         return False

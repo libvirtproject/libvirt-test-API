@@ -175,7 +175,7 @@ def update_devflag(params):
     try:
         domobj = conn.defineXML(xmlstr)
         domobj.create()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.info("libvirt call failed: " + str(e))
         return 1
 
@@ -215,7 +215,7 @@ def update_devflag(params):
     try:
         domobj.updateDeviceFlags(devxmlstr, flags)
         logger.debug("domain xml after updating:\n%s" % domobj.XMLDesc(0))
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 
@@ -245,7 +245,7 @@ def update_devflag(params):
     try:
         domobj.updateDeviceFlags(new_devxml, flags)
         logger.debug("domain xml after updating:\n%s" % domobj.XMLDesc(0))
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         logger.info("this is expected, %s is mounted in domain" % devtype)
 
@@ -274,7 +274,7 @@ def update_devflag(params):
     try:
         domobj.updateDeviceFlags(new_devxml, flags)
         logger.debug("domain xml after updating:\n%s" % domobj.XMLDesc(0))
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 

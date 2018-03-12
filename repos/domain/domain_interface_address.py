@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # To test domain's interfaceAddresses API
 
-import commands
-
 import libvirt
 from libvirt import libvirtError
 import re
@@ -44,7 +42,7 @@ def domain_interface_address(params):
         interface_dict = domobj.interfaceAddresses(
             libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT, 0)
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1
@@ -97,7 +95,7 @@ def domain_interface_address(params):
                         logger.error("Guest don't have IP %s which can be seen by host!" % ip)
                         raise TestError()
 
-        except TestError, e:
+        except TestError as e:
             logger.error("Invalid data: %s" % str(interface_dict_lease))
             return 1
 
@@ -138,7 +136,7 @@ def domain_interface_address(params):
                 logger.error("Loop interface not found!")
                 raise TestError()
 
-        except TestError, e:
+        except TestError as e:
             logger.error("Invalid data: %s" % str(interface_dict))
             return 1
 

@@ -40,16 +40,16 @@ def block_resize(params):
 
     if out['suffix'] == 'K':
         flag = 0
-        disksize = long(out['capacity'])
+        disksize = int(out['capacity'])
     elif out['suffix'] == 'B':
         flag = 1
-        disksize = long(out['capacity_byte'])
+        disksize = int(out['capacity_byte'])
     elif out['suffix'] == 'M':
         flag = 0
-        disksize = long(out['capacity']) * 1024
+        disksize = int(out['capacity']) * 1024
     elif out['suffix'] == 'G':
         flag = 0
-        disksize = long(out['capacity']) * 1024 * 1024
+        disksize = int(out['capacity']) * 1024 * 1024
     else:
         logger.error("disksize parse error: with a unsupported suffix \'%s\'"
                      % out['suffix'])
@@ -84,7 +84,7 @@ def block_resize(params):
             logger.error("error: domain disk change into %s" % block_info[0])
             return 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

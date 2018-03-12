@@ -4,8 +4,7 @@ import time
 import libvirt
 from libvirt import libvirtError
 from src import sharedmod
-from utils import utils
-import commands
+from utils import utils, process
 
 required_params = ('guestname', )
 optional_params = {'flags': 'graceful',
@@ -31,16 +30,15 @@ def set_signal_ignore(guestname, logger):
     #make guest process block sigterm signal by stopping this guest qemu process
     cmd = "ps -ef | grep %s | grep qemu | head \
             -n 1 | awk '{print $2}' " % guestname
-    (ret, out) = commands.getstatusoutput(cmd)
-    logger.debug("guest qemu process pid is %s" % out)
-    if ret:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    logger.debug("guest qemu process pid is %s" % ret.stdout)
+    if ret.exit_status:
         logger.error("fail to get the guest process pid")
         return 1
 
     cmd = "kill -19 %s" % out
-
-    (ret, out) = commands.getstatusoutput(cmd)
-    if ret:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("fail to stop the guest process")
         return 1
     return 0
@@ -91,7 +89,7 @@ def destroy_flags(params):
     for i in range(2):
         try:
             domobj.destroyFlags(flags)
-        except libvirtError, e:
+        except libvirtError as e:
             #get a error when 'graceful' in flags and guest qemu process stop
             if (flags == libvirt.VIR_DOMAIN_DESTROY_GRACEFUL and
                     "Device or resource busy" in str(e)):

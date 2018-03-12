@@ -97,8 +97,7 @@ def console_io(params):
                     expectstr = f.read()
                     f.close()
                 except Exception as e:
-                    raise TestError(
-                        "Can't read expected output file '%s': '%s'" % (expect, str(e)))
+                    raise TestError("Can't read expected output file '%s': '%s'" % (expect, str(e)))
 
                 if reply.startswith(expectstr):
                     logger.info("Recieved expected output from the host")

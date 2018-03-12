@@ -144,7 +144,7 @@ def domain_list(params):
         else:
             logger.info("get the domains list succeeded")
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s" % e.message)
         return 1
 

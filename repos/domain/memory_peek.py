@@ -29,7 +29,7 @@ def memory_peek(params):
     try:
         domobj = conn.lookupByName(guestname)
         logger.info("test memory peek API")
-        for flag in flag_dict.keys():
+        for flag in list(flag_dict.keys()):
             logger.info("using flag: %s" % flag_dict[flag])
             mem = domobj.memoryPeek(addr_dict[flag], 0, flag)
             if mem:
@@ -38,7 +38,7 @@ def memory_peek(params):
                         flag_dict[flag])
 
         logger.info("peek 8 bytes from domain memory")
-        for flag in flag_dict.keys():
+        for flag in list(flag_dict.keys()):
             logger.info("using flag: %s" % flag_dict[flag])
             mem = domobj.memoryPeek(addr_dict[flag], 8, flag)
             if not mem:

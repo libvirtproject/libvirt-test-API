@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
 import time
-import commands
 from xml.dom import minidom
 
 import libvirt
 from libvirt import libvirtError
-
+from utils import process
 from src import sharedmod
 
 required_params = ('poolname',)
@@ -48,7 +47,7 @@ def check_pool_built(source_device, device_type):
     """using parted command tool to check the validation of final result"""
 
     cmd = "parted -s %s print" % source_device
-    ret, output = commands.getstatusoutput(cmd)
+    output = process.system(cmd, shell=True, ignore_status)
     partition_info = output.split("\n")[3]
 
     logger.debug("the partition information is %s" % partition_info)
@@ -100,7 +99,7 @@ def build_disk_pool(params):
             logger.info("building %s storage pool is UNSUCCESSFUL!!!" %
                         poolname)
             return 1
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.message, e.get_error_code()))
         return 1

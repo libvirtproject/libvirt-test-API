@@ -99,7 +99,7 @@ def perf_events(params):
         events = dom.perfEvents(flags)
         logger.info("perf events: %s" % events)
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code: %s" %
                      (e.message, e.get_error_code()))
         return 1

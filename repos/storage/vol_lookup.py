@@ -51,7 +51,7 @@ def vol_lookup(params):
             logger.error("volume object lookup by path failed")
             retval += 1
 
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
 
