@@ -32,14 +32,14 @@ def check_network_exists(conn, networkname, logger):
 
 def check_network_uuid(networkname, UUIDString, logger):
     """ check UUID String of a network """
-    ret = process.run(VIRSH_NETUUID + ' %s' % networkname, shell=True, ignore_status=True)    
+    ret = process.run(VIRSH_NETUUID + ' %s' % networkname, shell=True, ignore_status=True)
     if ret.exit_status:
         logger.error("executing " + "\"" + VIRSH_NETUUID + ' %s' % networkname +
                      "\"" + " failed")
         logger.error(ret.stdout)
         return False
     else:
-        UUIDString_virsh = ret[:-1]
+        UUIDString_virsh = ret.stdout
         logger.debug("UUIDString from API is %s" % UUIDString)
         logger.debug("UUIDString from " + "\"" + VIRSH_NETUUID + "\"" " is %s"
                      % UUIDString_virsh)

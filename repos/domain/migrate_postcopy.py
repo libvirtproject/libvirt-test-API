@@ -87,10 +87,7 @@ def migrate_postcopy(params):
         logger.error("faild to setup ssh tunnel with target machine %s" % target_machine)
         return 1
 
-    ret = process.run("ssh-add", shell=True, ignore_status=True)
-    if ret.exit_status:
-        logger.error("ssh-add failed: %s" % ret.stdout)
-        return 1
+    process.run("ssh-add", shell=True, ignore_status=True)
     dsturi = "qemu+ssh://%s/system" % target_machine
     dstc = libvirt.open(dsturi)
 

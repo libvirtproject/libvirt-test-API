@@ -407,10 +407,7 @@ def tls_setup_new(params):
         logger.error("failed to setup ssh tunnel with target machine %s" % target_machine)
         return 1
 
-    ret = process.system("ssh-add", shell=True, ignore_status=True)
-    if ret:
-        logger.error("ssh-add failed: %s" % ret)
-        return 1
+    process.run("ssh-add", shell=True, ignore_status=True)
 
     if iptables_stop(target_machine, username, password, logger):
         return 1

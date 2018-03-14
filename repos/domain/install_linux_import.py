@@ -2,11 +2,10 @@ import os
 import re
 import time
 import shutil
+import libvirt
 
 from libvirt import libvirtError
-
-from src import sharedmod
-from src import env_parser
+from src import sharedmod, env_parser
 from utils import utils
 
 required_params = ('guestname',)
@@ -101,7 +100,7 @@ def install_linux_import(params):
 
     logger.info("the name of guest is %s" % guestname)
 
-    conn = sharedmod.libvirtobj['conn']
+    conn = libvirt.open()
     check_domain_state(conn, guestname, logger)
 
     logger.info("the macaddress is %s" %

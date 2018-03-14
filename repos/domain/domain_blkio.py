@@ -62,8 +62,8 @@ def get_device(domobj, logger):
         # BUG: Call 'lvs' in python will cause unexpected file descriptor leak
         # so we have to ignore stderr.
         cmd = 'lvs "%s" -o devices 2>/dev/null | tail -1 | cut -d "(" -f 1' % output
-        ret = process.run(command, shell=True, ignore_status=True)
-        output = ret.stdout().strip()
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        output = ret.stdout.strip()
 
     if not status:
         return output[:-1]

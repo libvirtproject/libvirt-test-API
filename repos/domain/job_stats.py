@@ -4,6 +4,7 @@ import os
 import threading
 import time
 import libvirt
+import functools
 
 from libvirt import libvirtError
 from src import sharedmod
@@ -65,6 +66,13 @@ def clean_dst_env(guestname, target, logger):
     return 0
 
 
+def check_dom_state(domobj, expect_states):
+    state = domobj.info()[0]
+    if state != expect_states:
+        return 1
+    return 0
+
+
 def domain_migrate(dom, target, username, passwd, logger):
     #generate ssh key pair
     ret = domain_common.ssh_keygen(logger)
@@ -77,10 +85,7 @@ def domain_migrate(dom, target, username, passwd, logger):
         logger.error("faild to setup ssh tunnel with target %s" % target)
         return 1
 
-    ret = process.run("ssh-add", shell=True, ignore_status=True)
-    if ret.exit_status:
-        logger.error("ssh-add failed: %s" % ret.stdout)
-        return 1
+    process.run("ssh-add", shell=True, ignore_status=True)
 
     dsturi = "qemu+ssh://%s/system" % target
 
@@ -90,6 +95,11 @@ def domain_migrate(dom, target, username, passwd, logger):
         dom.migrate(dstconn, libvirt.VIR_MIGRATE_LIVE, None, None, 0)
     except libvirtError as e:
         logger.error("info: %s, code: %s" % (e.message, e.get_error_code()))
+        return 1
+
+    ret = utils.wait_for(functools.partial(check_dom_state, dom, 5), 100)
+    if ret:
+        logger.info("The domain state is not as expected")
         return 1
 
     return 0
@@ -159,11 +169,11 @@ def job_stats(params):
     if flags == libvirt.VIR_DOMAIN_JOB_STATS_COMPLETED:
         if version_compare("libvirt", 3, 9, 0, logger):
             if vm_state == "migrate":
-                logger.info("Check page size failed.")
                 ret = check_page_size(target, username, passwd, info, logger)
                 if ret:
                     clean_src_env(guestname, logger)
                     clean_dst_env(guestname, target, logger)
+                    logger.error("Check page size failed.")
                     return 1
                 clean_src_env(guestname, logger)
                 clean_dst_env(guestname, target, logger)
