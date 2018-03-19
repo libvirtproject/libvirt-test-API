@@ -28,7 +28,6 @@ import pty
 import signal
 import struct
 import pexpect
-import string
 import hashlib
 import libvirt
 import math
@@ -37,7 +36,6 @@ import lxml.etree
 
 from xml.dom import minidom
 from src import env_parser
-from six.moves import xrange as range
 from . import process
 
 try:
@@ -546,7 +544,7 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
                 child.sendline(password)
             elif index == 2:
                 child.close()
-                return child.exitstatus, string.strip(child.before)
+                return child.exitstatus, child.before.decode().strip()
             elif index == 3:
                 if timeout <= 0:
                     return 1, "Refused!!!!"
@@ -621,7 +619,7 @@ def remote_exec(hostname, username, password, cmd):
                 elif re.search('password:', output):
                     os.write(fd, password + "\r")
                 elif subproc_flag == 1:
-                    ret = string.strip(output)
+                    ret = output.decode().strip()
                     break
                 elif i == timeout:
                     print("TIMEOUT!!!!")
@@ -640,16 +638,11 @@ def remote_exec(hostname, username, password, cmd):
 def get_remote_vcpus(hostname, username, password):
     """Get cpu number of specified host"""
     cmd = "cat /proc/cpuinfo | grep processor | wc -l"
-    cpunum = -1
-    i = 0
-    while i < 3:
-        i += 1
-        cpunum = int(remote_exec(hostname, username, password, cmd))
-        if cpunum == -1:
-            continue
-        else:
-            break
-    return cpunum
+    (ret, out) = remote_exec_pexpect(hostname, username, password, cmd)
+    if ret:
+        logger.info("get remote vcpus failed. out: %s" % out)
+        return -1
+    return out
 
 
 def get_remote_memory(hostname, username, password, mem_type="DirectMap"):
@@ -1637,4 +1630,4 @@ def get_image_format(img, logger):
     if ret:
         logger.error("cmd: %s, out: %s" % (cmd, out))
         return -1
-    return out[0].split(":")[1].strip()
+    return out[0].decode().split(":")[1].strip()

@@ -26,8 +26,6 @@ import string
 from . import exception
 from . import env_parser
 
-from six.moves import xrange as range
-
 
 class CaseFileParser(object):
 

@@ -5,7 +5,7 @@ import select
 import threading
 import libvirt
 
-from utils import version_compare
+from .utils import version_compare
 
 class eventListenerThread(threading.Thread):
     def __init__(self, event_source, event_id, event_type, event_detail, logger, rand=None):
@@ -540,57 +540,6 @@ class virEventLoopPureThread(threading.Thread):
 
     def run(self):
         self.run_loop()
-
-    def stop(self):
-        self.quit = True
-        self.interrupt()
-
-
-class virEventLoopNativeThread(threading.Thread):
-    """
-    Just like virEventLoopPureThread, just need to call unregist after stop,
-    because we are using libvirt's handler to do interrupt job.
-    eg:
-        loop = virEventLoopPure(logger)
-        try:
-            loop.regist(libvirt)
-            loop.start()
-            # Run test here
-        finally:
-            loop.stop()
-            loop.unregist(libvirt)
-    """
-
-    def __init__(self, logger):
-        threading.Thread.__init__(self, name="libvirtEventLoop-Native")
-        self.quit = False
-        self.logger = logger
-        self.pipetrick = os.pipe()
-
-    def regist(self, libvirt):
-        libvirt.virEventRegisterDefaultImpl()
-        self._handle = libvirt.virEventAddHandle(self.pipetrick[0],
-                                                 libvirt.VIR_EVENT_HANDLE_READABLE |
-                                                 libvirt.VIR_EVENT_HANDLE_ERROR |
-                                                 libvirt.VIR_EVENT_HANDLE_HANGUP,
-                                                 lambda(w, fd, e, op): (
-                                                     self.logger.debug("Interrupted: " + str(e))
-                                                 ),
-                                                 None)
-
-    def unregist(self, libvirt):
-        libvirt.virEventRemoveHandle(self._handle)
-
-    def interrupt(self):
-        os.write(self.pipetrick[1], 'c')
-
-    def run(self):
-        while not self.quit:
-            libvirt.virEventRunDefaultImpl()
-
-    def start(self):
-        self.setDaemon(True)
-        threading.Thread.start(self)
 
     def stop(self):
         self.quit = True

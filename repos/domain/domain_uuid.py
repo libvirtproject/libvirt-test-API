@@ -38,10 +38,10 @@ def check_domain_uuid_with_virsh(guestname, UUIDString, logger):
         logger.error(ret.stdout)
         return False
     else:
-        UUIDString_virsh = ret.stdout[:-1]
+        UUIDString_virsh = ret.stdout
         logger.debug("UUIDString from API is %s" % UUIDString)
         logger.debug("UUIDString from virsh domuuid is %s" % UUIDString_virsh)
-        if UUIDString == ret.stdout[:-1]:
+        if UUIDString == ret.stdout:
             return True
         else:
             return False

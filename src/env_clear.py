@@ -19,7 +19,6 @@
 # to the corresponding testcase's argument in the order of testcase running
 
 from utils import log
-
 from . import mapper
 
 

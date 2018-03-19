@@ -149,17 +149,36 @@ def job_stats(params):
                 domain_dump(domobj, logger)
             elif vm_state == "migrate":
                 domain_migrate(domobj, target, username, passwd, logger)
+            info = domobj.jobStats(flags)
         else:
             if vm_state == "save":
                 ret = threading.Thread(target=domain_save, args=(domobj, logger))
                 ret.start()
-                wait_for(lambda: os.path.exists(SAVE_PATH), 10)
+                timeout = 100
+                while True:
+                    info = domobj.jobStats(flags)
+                    if info['type'] == 2:
+                        break
+                    time.sleep(0.1)
+                    timeout -= 0.1
+                    if timeout <= 0:
+                        logger.error("Timeout waiting get right job type.")
+                        return 1
             elif vm_state == "dump":
                 ret = threading.Thread(target=domain_dump, args=(domobj, logger))
                 ret.start()
-                wait_for(lambda: os.path.exists(DUMP_PATH), 10)
-
-        info = domobj.jobStats(flags)
+                timeout = 100
+                while True:
+                    info = domobj.jobStats(flags)
+                    if info['type'] == 2:
+                        break
+                    time.sleep(0.1)
+                    timeout -= 0.1
+                    if timeout <= 0:
+                        logger.error("Timeout waiting get right job type.")
+                        return 1
+            else:
+                info = domobj.jobStats(flags)
         logger.info("job stats: %s" % info)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
@@ -205,7 +224,7 @@ def job_stats(params):
             return 1
     else:
         if vm_state == "save" or vm_state == "dump":
-            if info['type'] == 3:
+            if info['type'] == 2:
                 logger.info("PASS: check %s type ok." % vm_state)
             else:
                 logger.error("FAIL: check %s type failed." % vm_state)

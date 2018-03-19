@@ -36,7 +36,7 @@ def set_signal_ignore(guestname, logger):
         logger.error("fail to get the guest process pid")
         return 1
 
-    cmd = "kill -19 %s" % out
+    cmd = "kill -19 %s" % ret.stdout
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
         logger.error("fail to stop the guest process")
