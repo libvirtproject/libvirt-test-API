@@ -544,7 +544,10 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
                 child.sendline(password)
             elif index == 2:
                 child.close()
-                return child.exitstatus, child.before.decode().strip()
+                if isinstance(child.before, str):
+                    return child.exitstatus, child.before.strip()
+                else:
+                    return child.exitstatus, child.before.decode().strip()
             elif index == 3:
                 if timeout <= 0:
                     return 1, "Refused!!!!"
