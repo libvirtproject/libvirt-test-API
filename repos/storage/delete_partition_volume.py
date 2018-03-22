@@ -71,7 +71,7 @@ def delete_partition_volume(params):
         volobj.delete(0)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         return 1
 
     logger.info("delete volume successfully, and output the volume information")

@@ -13,7 +13,7 @@ required_params = ('guestname', 'cpulist',)
 optional_params = {}
 
 
-def check_pinemulator(guestname, maxcpu, pininfo_after):
+def check_pinemulator(guestname, maxcpu, pininfo_after, logger):
     """check emulator status of the running virtual machine
     """
 
@@ -31,21 +31,25 @@ def check_pinemulator(guestname, maxcpu, pininfo_after):
 
     cpu_allowed_list = output[0]
     cpulistcheck = cpu_allowed_list.split('\t')[1]
-    pininfo_in_process = str(utils.param_to_tuple(cpulistcheck, maxcpu))
+    pininfo_in_process = utils.param_to_tuple(cpulistcheck, maxcpu)
 
-    if cmp(pininfo_in_process, pininfo_after):
-        logger.error("domain emulator pin failed")
-        return 1
+    if len(pininfo_in_process) == len(pininfo_after):
+        for index in range(len(pininfo_in_process)):
+            if pininfo_in_process[index] != pininfo_after[index]:
+                logger.error("FAIL: pin don't equal. %s" % index)
+                return 1
     else:
-        logger.info("domain emulator pin successed")
-        return 0
+        logger.error("FAIL: pin length don't equal.")
+        return 1
+
+    logger.info("PASS: domain emulator pin successed")
+    return 0
 
 
 def pinemulator(params):
     """Dynamically change the real CPUs which can be allocated to the
        emulator process of a domain. This function requires privileged
        access to the hypervisor. """
-    global logger
     logger = params['logger']
     guestname = params['guestname']
     cpulist = params['cpulist']
@@ -66,20 +70,20 @@ def pinemulator(params):
     try:
         domobj = conn.lookupByName(guestname)
 
-        pininfo_original = str(domobj.emulatorPinInfo())
+        pininfo_original = domobj.emulatorPinInfo()
         logger.info("the original emulator pin of the domain is: %s" %
-                    pininfo_original)
+                    str(pininfo_original))
 
         logger.info("pin domain emulator to host cpu %s" % cpulist)
         domobj.pinEmulator(cpumap)
 
-        pininfo_after = str(domobj.emulatorPinInfo())
+        pininfo_after = domobj.emulatorPinInfo()
         logger.info("the revised emulator pin of the domain is: %s" %
-                    pininfo_after)
+                    str(pininfo_after))
 
-        ret = check_pinemulator(guestname, maxcpu, pininfo_after)
+        ret = check_pinemulator(guestname, maxcpu, pininfo_after, logger)
         return ret
 
     except libvirtError as e:
-        logger.error("libvirt call failed: " + str(e))
+        logger.error("libvirt call failed: " + e.get_error_message())
         return 1

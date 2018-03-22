@@ -18,7 +18,7 @@ def domain_dump(dom, logger):
     try:
         dom.coreDump(DUMP_PATH, 0)
     except libvirtError as e:
-        logger.error("info: %s, code: %s" % (e.message, e.get_error_code()))
+        logger.error("info: %s, code: %s" % (e.get_error_message(), e.get_error_code()))
 
     return
 
@@ -28,7 +28,7 @@ def start_abort_job(dom, logger):
     try:
         dom.abortJob()
     except libvirtError as e:
-        logger.error("info: %s, code: %s" % (e.message, e.get_error_code()))
+        logger.error("info: %s, code: %s" % (e.get_error_message(), e.get_error_code()))
 
     return
 
@@ -51,7 +51,7 @@ def abort_job(params):
         s.start()
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         return 1
 
     d.join()

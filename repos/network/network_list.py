@@ -122,7 +122,7 @@ def network_list(params):
         logger.info("The network list %s" % network_namelist_api)
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         return 1
 
     return 0

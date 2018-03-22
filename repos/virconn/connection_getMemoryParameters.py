@@ -41,7 +41,7 @@ def connection_getMemoryParameters(params):
        test API for getMemoryParameters in class virConnect
     """
     logger = params['logger']
-    uri = params.get("uri", None).decode()
+    uri = params.get("uri", None)
     fail = 0
 
     try:
@@ -53,6 +53,6 @@ def connection_getMemoryParameters(params):
             fail = check_memory_parameter(param_dict, n, logger)
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         fail = 1
     return fail

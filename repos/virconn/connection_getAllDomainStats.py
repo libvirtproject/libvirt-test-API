@@ -555,7 +555,7 @@ def connection_getAllDomainStats(params):
                     logger.info("Success to check block state")
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         return 1
 
     return 0

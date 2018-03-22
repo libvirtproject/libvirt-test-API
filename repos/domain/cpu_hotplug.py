@@ -96,7 +96,7 @@ def set_vcpus(domobj, guestname, vcpu, username, password):
         domobj.destroy()
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to destroy domain")
         return 1
 
@@ -108,7 +108,7 @@ def set_vcpus(domobj, guestname, vcpu, username, password):
         domobj.undefine()
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to undefine guest %s" % guestname)
         return 1
 
@@ -118,7 +118,7 @@ def set_vcpus(domobj, guestname, vcpu, username, password):
         conn.defineXML(newguestxml)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to define guest %s" % guestname)
         return 1
 
@@ -127,7 +127,7 @@ def set_vcpus(domobj, guestname, vcpu, username, password):
         domobj.create()
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
         return 1
 

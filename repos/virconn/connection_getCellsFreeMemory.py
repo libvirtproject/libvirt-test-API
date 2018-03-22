@@ -22,7 +22,7 @@ def connection_getCellsFreeMemory(params):
        test API for getCellsFreeMemory in class virConnect
     """
     logger = params['logger']
-    uri = params.get("uri", None).decode()
+    uri = params.get("uri", None)
     fail = 0
 
     nodeset = utils.file_read(NODE_ONLINE)
@@ -52,6 +52,6 @@ def connection_getCellsFreeMemory(params):
                              (biger than %d) for node %d" % (177 * 5, n))
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         fail = 1
     return fail

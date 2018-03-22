@@ -33,7 +33,7 @@ def domain_rename(params):
     except libvirtError as e:
         if negative == 'no':
             logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
+                         % (e.get_error_message(), e.get_error_code()))
             logger.error("rename failed")
             return 1
         else:

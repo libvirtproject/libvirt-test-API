@@ -85,6 +85,6 @@ def set_memory_period(params):
             fail = 1
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         fail = 1
     return fail

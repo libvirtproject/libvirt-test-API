@@ -329,7 +329,7 @@ def start_guest(conn, installtype, xmlstr, logger):
             domobj.create()
         except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
+                         % (e.get_error_message(), e.get_error_code()))
             return False
     elif installtype == 'create':
         logger.info('create guest from xml description')
@@ -337,7 +337,7 @@ def start_guest(conn, installtype, xmlstr, logger):
             domobj = conn.createXML(xmlstr, 0)
         except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
+                         % (e.get_error_message(), e.get_error_code()))
             return False
     else:
         logger.error("%s is not supported." % installtype)
@@ -404,7 +404,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, installmethod, lo
         domobj = conn.defineXML(xmlstr)
     except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to define domain %s" % guestname)
         return 1
 
@@ -418,7 +418,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, installmethod, lo
         domobj.create()
     except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
         return 1
 
@@ -515,7 +515,7 @@ def wait_install(conn, guestname, xmlstr, installtype, installmethod, logger, ti
                 time.sleep(20)
         except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
+                         % (e.get_error_message(), e.get_error_code()))
             logger.error("fail to start domain %s" % guestname)
             return False
     # end to test

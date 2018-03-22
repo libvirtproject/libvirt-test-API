@@ -38,7 +38,7 @@ def check_current_snapshot(domobj):
                 logger.error("Failed to get current snapshot")
                 return False
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         return 1
 
     return 0
@@ -168,7 +168,7 @@ def snapshot_create(params):
             return 1
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         return 1
 
     return 0

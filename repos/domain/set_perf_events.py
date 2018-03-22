@@ -131,20 +131,20 @@ def set_perf_events(params):
         dom.setPerfEvents(events, flags)
     except libvirtError as e:
         logger.error("API error message: %s, error code: %s" %
-                     (e.message, e.get_error_code()))
+                     (e.get_error_message(), e.get_error_code()))
         # For REHL 7.4
         err_str = ("argument unsupported: unable to enable host cpu perf event for")
-        if (err_str in e.message):
+        if (err_str in e.get_error_message()):
             return 0
 
         # For RHEL 7.3
         err_str = ("Failed to open file '/sys/devices/intel_cqm/type': No such file or directory")
-        if (err_str in e.message):
+        if (err_str in e.get_error_message()):
             return 0
 
         # For RHEL 7.3, when cmt/mbmt/mbml status are 'disable', they can't be disabled again.
         err_str = ("Unable to disable perf event type=")
-        if (err_str in e.message and e.get_error_code() == 38):
+        if (err_str in e.get_error_message() and e.get_error_code() == 38):
             return 0
 
         return 1

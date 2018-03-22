@@ -218,7 +218,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
         domobj = conn.defineXML(xmlstr)
     except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to define domain %s" % guestname)
         return 1
 
@@ -233,7 +233,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
         domobj.create()
     except libvirtError, e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
         return 1
 
@@ -391,7 +391,7 @@ def install_ubuntu(params):
             domobj = conn.defineXML(xmlstr)
         except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
+                         % (e.get_error_message(), e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
 
@@ -401,7 +401,7 @@ def install_ubuntu(params):
             domobj.create()
         except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
+                         % (e.get_error_message(), e.get_error_code()))
             logger.error("fail to start domain %s" % guestname)
             return 1
     elif installtype == 'create':
@@ -410,7 +410,7 @@ def install_ubuntu(params):
             domobj = conn.createXML(xmlstr, 0)
         except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
+                         % (e.get_error_message(), e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
 
@@ -422,7 +422,7 @@ def install_ubuntu(params):
                 state = domobj.info()[0]
             except libvirtError, e:
                 logger.error("API error message: %s, error code is %s"
-                             % (e.message, e.get_error_code()))
+                             % (e.get_error_message(), e.get_error_code()))
                 return 1
             if(state == libvirt.VIR_DOMAIN_SHUTOFF):
                 logger.info("guest installaton of define type is complete.")

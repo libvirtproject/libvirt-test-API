@@ -23,7 +23,7 @@ def connection_getMemoryStats(params):
        test API for getMemoryStats in class virConnect
     """
     logger = params['logger']
-    uri = params.get("uri", None).decode()
+    uri = params.get("uri", None)
     fail = 0
 
     nodeset = utils.file_read(NODE_ONLINE)
@@ -93,6 +93,6 @@ def connection_getMemoryStats(params):
             logger.info("FAIL: Total memory for host is not right" % n)
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         fail = 1
     return fail

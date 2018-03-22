@@ -47,7 +47,7 @@ def migrate(srcc, srcd, dstc, guestname, logger):
         srcd.migrate(dstc, flags, None, None, 0)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         env_clean(srcc, dstc, guestname, logger)
         return 1
 
@@ -60,7 +60,7 @@ def postcopy(srcc, srcd, dstc, guestname, logger):
         srcd.migrateStartPostCopy(0)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         env_clean(srcc, dstc, guestname, logger)
         return 1
 
@@ -126,7 +126,7 @@ def migrate_postcopy(params):
     except libvirtError as e:
         test_result = True
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("Migration Failed")
     finally:
         env_clean(srcc, dstc, guestname, logger)

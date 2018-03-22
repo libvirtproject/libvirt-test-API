@@ -90,7 +90,7 @@ def guest_time(params):
         t2 = domobj.getTime()['seconds']
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         return 1
 
     if check_guest_time(int(t1), t2):

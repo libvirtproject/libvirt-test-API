@@ -80,7 +80,7 @@ def free_pages(params):
 
     conn = sharedmod.libvirtobj['conn']
 
-    page_list = parse_page_list(params['pagesize'].decode())
+    page_list = parse_page_list(params['pagesize'])
     if page_list is None:
         logger.error("pagesize could not be recognized")
         return 1
@@ -95,6 +95,6 @@ def free_pages(params):
             return 1
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s" %
-                     e.message)
+                     e.get_error_message())
         return 1
     return 0

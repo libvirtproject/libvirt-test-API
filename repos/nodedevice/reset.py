@@ -54,7 +54,7 @@ def reset(params):
         logger.info("the node %s device reset is successful" % device_name)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("Error: fail to reset %s node device" % device_name)
         return 1
 

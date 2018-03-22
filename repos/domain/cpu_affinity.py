@@ -57,7 +57,7 @@ def set_vcpus(domobj, domain_name, vcpu):
         domobj.destroy()
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to destroy domain")
         return 1
 
@@ -86,7 +86,7 @@ def set_vcpus(domobj, domain_name, vcpu):
         domobj.undefine()
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to undefine guest %s" % domain_name)
         return 1
 
@@ -96,7 +96,7 @@ def set_vcpus(domobj, domain_name, vcpu):
         conn.defineXML(newguestxml)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to define guest %s" % domain_name)
         return 1
 
@@ -105,7 +105,7 @@ def set_vcpus(domobj, domain_name, vcpu):
         domobj.create()
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to start domain %s" % domain_name)
         return 1
 
@@ -272,7 +272,7 @@ def cpu_affinity(params):
                 domobj.pinVcpu(vcpu_pinned, cpu_affinity_test)
             except libvirtError as e:
                 logger.error("API error message: %s, error code is %s"
-                             % (e.message, e.get_error_code()))
+                             % (e.get_error_message(), e.get_error_code()))
                 logger.error("fail to vcpupin domain")
                 return 1
 

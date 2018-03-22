@@ -41,7 +41,7 @@ def connection_getCPUMap(params):
 
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s" %
-                     e.message)
+                     e.get_error_message())
         logger.error("getCPUMap failed")
         return 1
 

@@ -31,7 +31,7 @@ def domain_dump(dom, logger):
     try:
         dom.coreDump(DUMP_PATH, 0)
     except libvirtError as e:
-        logger.error("info: %s, code: %s" % (e.message, e.get_error_code()))
+        logger.error("info: %s, code: %s" % (e.get_error_message(), e.get_error_code()))
 
     return
 
@@ -44,7 +44,7 @@ def domain_save(dom, logger):
     try:
         dom.save(SAVE_PATH)
     except libvirtError as e:
-        logger.error("info: %s, code: %s" % (e.message, e.get_error_code()))
+        logger.error("info: %s, code: %s" % (e.get_error_message(), e.get_error_code()))
 
     return
 
@@ -94,7 +94,7 @@ def domain_migrate(dom, target, username, passwd, logger):
         dstconn = libvirt.open(dsturi)
         dom.migrate(dstconn, libvirt.VIR_MIGRATE_LIVE, None, None, 0)
     except libvirtError as e:
-        logger.error("info: %s, code: %s" % (e.message, e.get_error_code()))
+        logger.error("info: %s, code: %s" % (e.get_error_message(), e.get_error_code()))
         return 1
 
     ret = utils.wait_for(functools.partial(check_dom_state, dom, 5), 100)
@@ -182,7 +182,7 @@ def job_stats(params):
         logger.info("job stats: %s" % info)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         return 1
 
     if flags == libvirt.VIR_DOMAIN_JOB_STATS_COMPLETED:

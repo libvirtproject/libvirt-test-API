@@ -423,10 +423,10 @@ def connection_getDomainCapabilities(params):
     test API for getDomainCapabilities in class virConnect
     """
     logger = params['logger']
-    emulatorbin = params['emulatorbin'].decode()
-    arch = params['arch'].decode()
-    machine = params['machine'].decode()
-    virttype = params['virttype'].decode()
+    emulatorbin = params['emulatorbin']
+    arch = params['arch']
+    machine = params['machine']
+    virttype = params['virttype']
 
     try:
         logger.info("The specified emulatorbin is %s" % emulatorbin)
@@ -487,7 +487,7 @@ def connection_getDomainCapabilities(params):
             logger.info("Successed to validate hostdev block")
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         clean_env(logger)
         return 1
 

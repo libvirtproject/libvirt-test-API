@@ -70,7 +70,7 @@ def create_rbd_volume(params):
         poolobj.createXML(xmlstr, 0)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         return 1
 
     logger.info("volume create successfully, and output the volume information")

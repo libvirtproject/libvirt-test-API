@@ -205,7 +205,7 @@ def ownership_test(params):
         logger.info("Success save domain %s to %s" % (guestname, SAVE_FILE))
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         return 1
 
     logger.info("check the ownership of %s after save" % SAVE_FILE)
@@ -241,7 +241,7 @@ def ownership_test(params):
                     (guestname, SAVE_FILE))
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("Error: fail to restore domain %s from %s" %
                      (guestname, SAVE_FILE))
         return 1

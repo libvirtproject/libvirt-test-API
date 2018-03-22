@@ -2,6 +2,7 @@
 # Test secret series command, check the set secret value, get secret value
 
 import base64
+
 from src import sharedmod
 from xml.dom import minidom
 from libvirt import libvirtError
@@ -10,12 +11,11 @@ required_params = ('secretUUID', 'value',)
 optional_params = {}
 
 
-def check_setSecret(value, secretobj):
+def check_setSecret(value, secretobj, logger):
     """check whether the secret value is set correctly
     """
     secretvalue = secretobj.value(0)
-    original_data = base64.decodestring(secretvalue)
-
+    original_data = base64.decodestring(secretvalue).decode()
     if original_data == value:
         logger.info("Set secret value successfully")
         return 0
@@ -27,12 +27,11 @@ def check_setSecret(value, secretobj):
 def setSecret(params):
     """set a secret value
     """
-    global logger
     logger = params['logger']
     secretUUID = params['secretUUID']
     value = params['value']
 
-    data = base64.encodestring(value)
+    data = base64.encodestring(value.encode()).decode('ascii')
 
     try:
         conn = sharedmod.libvirtobj['conn']
@@ -45,8 +44,8 @@ def setSecret(params):
         """
         if private == 'no':
             logger.info("the value of secret %s is %s" % (secretUUID,
-                                                          secretobj.value(0)))
-            ret = check_setSecret(value, secretobj)
+                                                          secretobj.value(0).decode()))
+            ret = check_setSecret(value, secretobj, logger)
             return ret
         else:
             logger.info("the value of secret %s is %s" % (secretUUID, data))
@@ -55,5 +54,5 @@ def setSecret(params):
             return 0
 
     except libvirtError as e:
-        logger.error("libvirt call failed: " + str(e))
+        logger.error("libvirt call failed: " + e.get_error_message())
         return 1

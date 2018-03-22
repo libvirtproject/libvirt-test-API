@@ -262,7 +262,7 @@ def migrate(params):
             srcdom.migrate(dstconn, migflags, None, None, 0)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("Migration Failed")
         env_clean(srcconn, dstconn, target_machine, guestname, logger)
         return 1

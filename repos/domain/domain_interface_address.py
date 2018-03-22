@@ -44,7 +44,7 @@ def domain_interface_address(params):
 
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         return 1
 
     if len(interface_dict_lease) == 0:
@@ -148,7 +148,7 @@ def domain_interface_address(params):
 
     except KeyError as e:
         logger.error("Return value of interfaceAddresses is incomplete"
-                     "lack of attribute %s" % e.message)
+                     "lack of attribute %s" % e.get_error_message())
         return 1
 
     return 0

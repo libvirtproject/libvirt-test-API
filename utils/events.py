@@ -374,7 +374,7 @@ class virEventLoopPureThread(threading.Thread):
     def interrupt(self):
         if self.runningPoll and not self.pendingWakeup:
             self.pendingWakeup = True
-            os.write(self.pipetrick[1], 'c')
+            os.write(self.pipetrick[1], 'c'.encode())
 
     # Registers a new file handle 'fd', monitoring  for 'events' (libvirt
     # event constants), firing the callback  cb() when an event occurs.

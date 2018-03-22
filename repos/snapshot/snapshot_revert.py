@@ -73,7 +73,7 @@ def snapshot_revert(params):
         time.sleep(10)
         check_domain_state(flagn, domobj, snapshot)
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         return 1
 
     return 0

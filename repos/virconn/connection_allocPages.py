@@ -34,11 +34,11 @@ def connection_allocPages(params):
        test API for allocPages in class virConnect
     """
     logger = params['logger']
-    uri = params.get("uri", None).decode()
+    uri = params.get("uri", None)
     fail = 0
 
     if 'flags' in params:
-        flags = params.get("flags", None).decode()
+        flags = params.get("flags", None)
         if flags == 'pageset':
             libvirt_flags = libvirt.VIR_NODE_ALLOC_PAGES_SET
         else:
@@ -56,7 +56,7 @@ def connection_allocPages(params):
         list1 = get_host_pagesize(conn)
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         return 1
 
     for i in list1:
@@ -78,15 +78,15 @@ def connection_allocPages(params):
                     i)
                 fail = 1
         except libvirtError as e:
-            if "Allocated only" in e.message:
-                tmp_count = int(e.message.split()[-1])
+            if "Allocated only" in e.get_error_message():
+                tmp_count = int(e.get_error_message().split()[-1])
                 if tmp_count != get_host_pagecount(i):
                     logger.error(
                         "libvirt output %dKiB hugepage count is not right" %
                         i)
                     fail = 1
             else:
-                logger.error("API error message: %s" % e.message)
+                logger.error("API error message: %s" % e.get_error_message())
                 return 1
 
     return fail

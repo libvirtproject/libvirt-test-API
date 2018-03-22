@@ -53,7 +53,7 @@ def connection_security_model(params):
     """test API for getSecurityModel"""
 
     logger = params['logger']
-    uri = params.get("uri", None).decode()
+    uri = params.get("uri", None)
 
     if 'uri' in params:
         conn = libvirt.open(uri)
@@ -72,5 +72,5 @@ def connection_security_model(params):
             return 1
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         return 1

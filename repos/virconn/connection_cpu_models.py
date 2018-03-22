@@ -46,7 +46,7 @@ def connection_cpu_models(params):
        test API for getCPUModelNames in class virConnect
     """
     logger = params['logger']
-    arch_value = params['arch'].decode()
+    arch_value = params['arch']
     try:
         logger.info("get cpu archs from cpu_map.xml")
         if not os.path.exists(CPU_MAP_FILE):
@@ -77,7 +77,7 @@ def connection_cpu_models(params):
                 return 1
         logger.debug("check all cpu models: PASS")
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         return 1
 
     return 0

@@ -142,7 +142,7 @@ def domain_nfs_start(params):
         logger.info("domain %s is %s" % (guestname, state))
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("Error: fail to get domain %s state" % guestname)
         return 1
 
@@ -152,7 +152,7 @@ def domain_nfs_start(params):
             domobj.destroy()
         except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
+                         % (e.get_error_message(), e.get_error_code()))
             logger.error("Error: fail to destroy domain %s" % guestname)
             return 1
 
@@ -164,7 +164,7 @@ def domain_nfs_start(params):
         img_dir = os.path.dirname(disk_file)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("Error: fail to get domain %s xml" % guestname)
         return 1
 
@@ -194,7 +194,7 @@ def domain_nfs_start(params):
                     return 1
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.info("Fail to start domain %s, this is expected" %
                                 guestname)
 
@@ -206,7 +206,7 @@ def domain_nfs_start(params):
                     return 1
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.info("Fail to start domain %s, this is expected" %
                                 guestname)
         elif virt_use_nfs == "off":
@@ -218,7 +218,7 @@ def domain_nfs_start(params):
                     return 1
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.info("Fail to start domain %s, this is expected" %
                                 guestname)
 
@@ -230,7 +230,7 @@ def domain_nfs_start(params):
                     return 1
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.info("Fail to start domain %s, this is expected" %
                                 guestname)
     elif root_squash == "no":
@@ -241,7 +241,7 @@ def domain_nfs_start(params):
                     logger.info("Success start domain %s" % guestname)
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.error("Fail to start domain %s" % guestname)
                     return 1
 
@@ -253,7 +253,7 @@ def domain_nfs_start(params):
                     return 1
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.info("Fail to start domain %s, this is expected" %
                                 guestname)
         elif virt_use_nfs == "off":
@@ -265,7 +265,7 @@ def domain_nfs_start(params):
                     return 1
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.info("Fail to start domain %s, this is expected" %
                                 guestname)
 
@@ -277,7 +277,7 @@ def domain_nfs_start(params):
                     return 1
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.info("Fail to start domain %s, this is expected" %
                                 guestname)
 
@@ -287,7 +287,7 @@ def domain_nfs_start(params):
         logger.info("domain %s is %s" % (guestname, state))
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("Error: fail to get domain %s state" % guestname)
         return 1
 
@@ -297,7 +297,7 @@ def domain_nfs_start(params):
             domobj.destroy()
         except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
+                         % (e.get_error_message(), e.get_error_code()))
             logger.error("Error: fail to destroy domain %s" % guestname)
             return 1
 
@@ -321,7 +321,7 @@ def domain_nfs_start(params):
                     logger.info("Success start domain %s" % guestname)
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.error("Fail to start domain %s" % guestname)
                     return 1
 
@@ -331,7 +331,7 @@ def domain_nfs_start(params):
                     logger.info("Success start domain %s" % guestname)
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.error("Fail to start domain %s" % guestname)
                     return 1
 
@@ -344,7 +344,7 @@ def domain_nfs_start(params):
                     return 1
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.info("Fail to start domain %s, this is expected" %
                                 guestname)
 
@@ -356,7 +356,7 @@ def domain_nfs_start(params):
                     return 1
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.info("Fail to start domain %s, this is expected" %
                                 guestname)
     elif root_squash == "no":
@@ -367,7 +367,7 @@ def domain_nfs_start(params):
                     logger.info("Success start domain %s" % guestname)
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.error("Fail to start domain %s" % guestname)
                     return 1
 
@@ -377,7 +377,7 @@ def domain_nfs_start(params):
                     logger.info("Success start Domain %s" % guestname)
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.error("Fail to start domain %s" % guestname)
                     return 1
 
@@ -390,7 +390,7 @@ def domain_nfs_start(params):
                     return 1
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.info("Fail to start domain %s, this is expected" %
                                 guestname)
 
@@ -402,7 +402,7 @@ def domain_nfs_start(params):
                     return 1
                 except libvirtError as e:
                     logger.error("API error message: %s, error code is %s"
-                                 % (e.message, e.get_error_code()))
+                                 % (e.get_error_message(), e.get_error_code()))
                     logger.info("Fail to start domain %s, this is expected" %
                                 guestname)
 

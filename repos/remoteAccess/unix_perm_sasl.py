@@ -174,7 +174,7 @@ def hypervisor_connecting_test(uri, unix_sock_group, auth_unix_ro, auth_unix_rw,
         conn.close()
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.info("set euid back to %d" % orginal_user)
         os.seteuid(orginal_user)
         conn.close()

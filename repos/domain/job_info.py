@@ -21,7 +21,7 @@ def job_info(params):
         logger.info("job info: %s" % info)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         return 1
 
     if info[0] == libvirt.VIR_DOMAIN_JOB_NONE:

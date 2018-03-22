@@ -135,6 +135,6 @@ def cpu_status(params):
                          (biger than %d) for host user cpu time %d" % (10 * 5, n))
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         fail = 1
     return fail

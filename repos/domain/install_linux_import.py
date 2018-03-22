@@ -45,7 +45,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
         domobj = conn.defineXML(xmlstr)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to define domain %s" % guestname)
         return 1
 
@@ -59,7 +59,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
         domobj.create()
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
         return 1
 
@@ -150,7 +150,7 @@ def install_linux_import(params):
             domobj = conn.defineXML(xmlstr)
         except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
+                         % (e.get_error_message(), e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
         ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger)
@@ -163,7 +163,7 @@ def install_linux_import(params):
             domobj = conn.createXML(xmlstr, 0)
         except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
+                         % (e.get_error_message(), e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
         guest_names = []

@@ -41,7 +41,7 @@ def migrate_get_max_downtime(params):
         logger.info("get downtime from migrateGetMaxDowntime: %s" % downtime)
     except libvirtError as e:
         logger.error("API error message: %s, error code: %s" %
-                     (e.message, e.get_error_code()))
+                     (e.get_error_message(), e.get_error_code()))
         return 1
 
     if downtime == downtime_limit:

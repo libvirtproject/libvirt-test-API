@@ -171,7 +171,7 @@ def securitylabel(params):
             return 1
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         return 1
 
     return 0

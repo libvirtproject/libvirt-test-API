@@ -40,18 +40,29 @@ def get_snapshot_list_virsh(*args):
         snapshot_list_virsh = output[:-1]
         logger.info("Get snapshot name list via VIRSH: %s"
                     % snapshot_list_virsh)
+        return snapshot_list_virsh
 
 
 def compare_snapshot_list(*args):
     """ Compare two snapshot name list  whether have the same items """
 
     (snapshot_list1, snapshot_list2) = args
-    if cmp(snapshot_list1, snapshot_list2) or \
-            cmp(snapshot_list1, snapshot_list2.reverse()):
+    if snapshot_list1 is None and snapshot_list2 is None:
+        logger.info("The two snapshot lists are empty")
+        return True
+
+    if (snapshot_list1 is not None and snapshot_list2 is not None and
+            len(snapshot_list1) == len(snapshot_list2)):
+        list_len = len(snapshot_list1)
+        for index in range(list_len):
+            if (snapshot_list1[index] != snapshot_list2[index] and
+                    snapshot_list1[index] != snapshot_list2[list_len - index]):
+                logger.error("The two snapshot lists don't have the same")
+                return False
         logger.info("The two snapshot lists have the same items")
         return True
     else:
-        logger.error("The two snapshot lists don't have the same")
+        logger.error("The two lists length don't have the same")
         return False
 
 
@@ -151,7 +162,7 @@ def snapshot_list(params):
                 return 1
 
     except libvirtError as e:
-        logger.error("API error message: %s" % e.message)
+        logger.error("API error message: %s" % e.get_error_message())
         return 1
 
     return 0

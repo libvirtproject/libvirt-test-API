@@ -46,7 +46,7 @@ def set_block_threshold(params):
         dom.setBlockThreshold('vdb', int(threshold), flags)
     except libvirtError as e:
         logger.error("API error message: %s, error code: %s" %
-                     (e.message, e.get_error_code()))
+                     (e.get_error_message(), e.get_error_code()))
         return 1
 
     cmd = "virsh domstats %s --block | grep 'threshold'" % guestname

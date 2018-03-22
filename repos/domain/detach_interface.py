@@ -61,7 +61,7 @@ def detach_interface(params):
             return 1
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         logger.error("detach the interface from guest %s" % guestname)
         return 1
 

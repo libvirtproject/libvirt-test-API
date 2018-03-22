@@ -85,7 +85,7 @@ def change_transaction(params):
             test()
         except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
+                         % (e.get_error_message(), e.get_error_code()))
             if negative == 'yes':
                 logger.error("Negative test pass.")
                 return 0
@@ -101,7 +101,7 @@ def change_transaction(params):
 
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
+                     % (e.get_error_message(), e.get_error_code()))
         return 1
 
     if op == 'begin':

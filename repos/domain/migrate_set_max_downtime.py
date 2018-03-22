@@ -98,7 +98,7 @@ def migrate_set_max_downtime(params):
     except libvirtError as e:
         test_result = True
         logger.error("API error message: %s, error code: %s" %
-                     (e.message, e.get_error_code()))
+                     (e.get_error_message(), e.get_error_code()))
     finally:
         clean_log_config(logger)
         if test_result:

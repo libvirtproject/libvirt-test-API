@@ -122,7 +122,7 @@ def connection_nodeinfo(params):
     """test libvirt connection node infomation
     """
     logger = params["logger"]
-    uri = params.get("uri", None).decode()
+    uri = params.get("uri", None)
 
     try:
         # get connection firstly.
@@ -140,7 +140,7 @@ def connection_nodeinfo(params):
 
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s" %
-                     e.message)
+                     e.get_error_message())
         logger.error("start failed")
         return 1
 
