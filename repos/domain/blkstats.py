@@ -2,12 +2,11 @@
 # To test domain block device statistics
 
 import time
-import libxml2
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
+from utils.utils import get_xml_value
 
 required_params = ('guestname',)
 optional_params = {}
@@ -45,12 +44,9 @@ def blkstats(params):
         domobj.create()
         time.sleep(90)
     try:
-        xml = domobj.XMLDesc(0)
-        doc = libxml2.parseDoc(xml)
-        cont = doc.xpathNewContext()
-        devs = cont.xpathEval("/domain/devices/disk/target/@dev")
-        path = devs[0].content
-        blkstats = domobj.blockStats(path)
+        xml_path = "/domain/devices/disk/target/@dev"
+        path = get_xml_value(domobj, xml_path)
+        blkstats = domobj.blockStats(path[0])
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
@@ -59,10 +55,10 @@ def blkstats(params):
     if blkstats:
         # check_blkstats()
         logger.debug(blkstats)
-        logger.info("%s rd_req %s" % (path, blkstats[0]))
-        logger.info("%s rd_bytes %s" % (path, blkstats[1]))
-        logger.info("%s wr_req %s" % (path, blkstats[2]))
-        logger.info("%s wr_bytes %s" % (path, blkstats[3]))
+        logger.info("%s rd_req %s" % (path[0], blkstats[0]))
+        logger.info("%s rd_bytes %s" % (path[0], blkstats[1]))
+        logger.info("%s wr_req %s" % (path[0], blkstats[2]))
+        logger.info("%s wr_bytes %s" % (path[0], blkstats[3]))
     else:
         logger.error("fail to get domain block statistics\n")
         return 1

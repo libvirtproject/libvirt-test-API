@@ -481,7 +481,7 @@ def connection_getAllDomainStats(params):
             return 1
     logger.info("The given flags is %d" % flags)
 
-    if 'doms' in params:
+    if "doms" in params:
         doms = params.get('doms')
         doms_string = doms.split("|")
         doms_list = []

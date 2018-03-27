@@ -2,11 +2,12 @@
 # To test domain block device iotune
 
 import time
-import libxml2
 import libvirt
+
 from libvirt import libvirtError
 from utils import utils
 from src import sharedmod
+from utils.utils import get_xml_value
 
 required_params = ('guestname',)
 optional_params = {'total_bytes_sec': '',
@@ -99,12 +100,8 @@ def block_iotune(params):
         time.sleep(90)
 
     try:
-        xml = domobj.XMLDesc(0)
-        doc = libxml2.parseDoc(xml)
-        cont = doc.xpathNewContext()
-        vdevs = cont.xpathEval("/domain/devices/disk/target/@dev")
-        vdev = vdevs[0].content
-
+        xml_path = "/domain/devices/disk/target/@dev"
+        vdev = get_xml_value(domobj, xml_path)
         logger.info("prepare block iotune:")
         iotune_param = prepare_block_iotune(params, logger)
 
@@ -113,9 +110,9 @@ def block_iotune(params):
             return 0
 
         logger.info("start to set block iotune:")
-        domobj.setBlockIoTune(vdev, iotune_param, flag)
+        domobj.setBlockIoTune(vdev[0], iotune_param, flag)
 
-        res = domobj.blockIoTune(vdev, flag)
+        res = domobj.blockIoTune(vdev[0], flag)
         logger.info("Set block iotune: %s" % res)
         ret = check_iotune(iotune_param, res)
         if not ret:

@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+import sys
+import binascii
+import operator
+
 from libvirt import libvirtError
 from utils import utils
 
@@ -50,9 +54,12 @@ def nwfilter_list(params):
         nwfilter_num = conn.numOfNWFilters()
 
         nwfilter_list_dir = get_nwfilterlist_dir()
-        if nwfilter_num == len(nwfilter_list_api) and \
-                len(nwfilter_list_api) == len(nwfilter_list_dir) and \
-                cmp(nwfilter_namelist_api, nwfilter_list_dir) == 0:
+        if (nwfilter_num == len(nwfilter_list_api) and
+                len(nwfilter_list_api) == len(nwfilter_list_dir)):
+            for index in range(nwfilter_num):
+                if nwfilter_namelist_api[index] != nwfilter_list_dir[index]:
+                    logger.error("nwfilter list don't the same.")
+                    return 1
             logger.info("The number of available network filters is %s" %
                         nwfilter_num)
         else:
@@ -60,14 +67,16 @@ def nwfilter_list(params):
             return 1
 
         for nwfilter_item in nwfilter_list_api:
-            if nwfilter_item.name()in nwfilter_list_dir and \
-                    nwfilter_item.name()in nwfilter_namelist_api:
+            if (nwfilter_item.name() in nwfilter_list_dir and
+                    nwfilter_item.name() in nwfilter_namelist_api):
                 logger.info("The name is %s" % nwfilter_item.name())
             else:
                 logger.error("Failed to get nwfilter's name.")
                 return 1
-            if cmp(str(nwfilter_item.UUID()), nwfilter_item.UUIDString()):
-                logger.info("The UUID is %s" % nwfilter_item.UUIDString())
+            uuid = binascii.hexlify(nwfilter_item.UUID()).decode()
+            logger.debug("UUID: %s" % uuid)
+            if operator.eq(uuid, nwfilter_item.UUIDString().replace('-', '')):
+                logger.info("UUIDString: %s" % nwfilter_item.UUIDString())
             else:
                 logger.error("Failed to get nwfilter's uuid.")
                 return 1

@@ -2,12 +2,11 @@
 # To test domain block device statistics with flags
 
 import time
-import libxml2
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
+from utils.utils import get_xml_value
 
 required_params = ('guestname', 'flags')
 optional_params = {}
@@ -46,11 +45,8 @@ def blkstatsflags(params):
         domobj.create()
         time.sleep(90)
     try:
-        xml = domobj.XMLDesc(0)
-        doc = libxml2.parseDoc(xml)
-        cont = doc.xpathNewContext()
-        devs = cont.xpathEval("/domain/devices/disk/target/@dev")
-
+        xml_path = "/domain/devices/disk/target/@dev"
+        devs = get_xml_value(domobj, xml_value)
         for dev in devs:
             path = dev.content
             blkstats = domobj.blockStatsFlags(path, flags)

@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # test libvirt getCPUMap API
 
-import commands
 import libvirt
 from libvirt import libvirtError
-
+from utils import process
 from src import sharedmod
 
 required_params = ()
@@ -12,14 +11,18 @@ optional_params = {'conn': ''}
 
 
 def gen_hostcpu_online_map():
-    total = int(commands.getoutput(
-        "lscpu | grep '^CPU(s):' | awk '{print $2}'"))
-    online = commands.getoutput(
-        "cat /proc/cpuinfo | grep '^processor' | awk '{print $3}'").split('\n')
+    cmd = "lscpu | grep '^CPU(s):' | awk '{print $2}'"
+    output = process.system_output(cmd, shell=True, ignore_status=True)
+    total = int(output)
+
+    cmd = "cat /proc/cpuinfo | grep '^processor' | awk '{print $3}'"
+    output = process.system_output(cmd, shell=True, ignore_status=True)
+    online = output.split('\n')
+
     online_num = len(online)
-    online_map = map(lambda cpu_num:
-                     True if str(cpu_num) in online else False,
-                     range(total))
+    online_map = list(map(lambda cpu_num:
+                      True if str(cpu_num) in online else False,
+                      range(total)))
     return (total, online_map, online_num)
 
 

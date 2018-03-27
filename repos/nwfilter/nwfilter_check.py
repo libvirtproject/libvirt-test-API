@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+
+import operator
 import time
 import xml.dom.minidom
 
@@ -11,32 +13,25 @@ from src import sharedmod
 required_params = ('nwfiltername', 'guestname',)
 optional_params = {}
 
-EBTABLES = "ebtables -t nat -L"
+EBTABLES = "ebtables -t nat -L %s"
 
 
-def get_ebtables():
+def get_ebtables(params, logger):
     """ Get the output of ebtables """
-    (status, output) = utils.exec_cmd(EBTABLES, shell=True)
-    logger.info("Execute command:" + EBTABLES)
-    ebtables_list = []
-
+    cmd = EBTABLES % params
+    (status, output) = utils.exec_cmd(cmd, shell=True)
+    logger.info("Execute command:" + cmd)
     if status:
-        logger.error("Executing " + EBTABLES + " failed")
+        logger.error("Executing " + cmd + " failed")
         logger.error(output)
         return False
-    else:
-        for i in range(len(output)):
-            ebtables_list.append(output[i])
-        logger.info("Get the output of ebtables list: %s"
-                    % ebtables_list)
-
-    return ebtables_list
+    logger.info("ebtables list: %s" % output)
+    return output
 
 
 def check_ebtables(*args):
     """ Check the ebtables """
-    (nwfiltername, conn) = args
-    ebtables_list = get_ebtables()
+    (nwfiltername, conn, logger) = args
 
     # Get the filter' attribute value
     nwfilter_xml = conn.nwfilterLookupByName(nwfiltername).XMLDesc(0)
@@ -50,25 +45,30 @@ def check_ebtables(*args):
                 (chain, action, direction))
     in_vnet_chain = "I-vnet0-" + chain
     out_vnet_chain = "O-vnet0-" + chain
+    in_chain_str = "Bridge chain: " + in_vnet_chain
+    out_chain_str = "Bridge chain: " + out_vnet_chain
 
-    if cmp(direction, "inout") == 0:
-        if len(ebtables_list) == 21 and in_vnet_chain in ebtables_list[-5]\
-                and out_vnet_chain in ebtables_list[-2] \
-                and action in ebtables_list[-1] \
-                and action in ebtables_list[-4]:
+    if operator.eq(direction, "inout"):
+        in_list = get_ebtables(in_vnet_chain, logger)
+        out_list = get_ebtables(out_vnet_chain, logger)
+        if (in_chain_str in in_list[-2] and
+                out_chain_str in out_list[-2] and
+                action in in_list[-1] and
+                action in out_list[-1]):
             return True
         else:
             return False
-    elif cmp(direction, "in") == 0:
-        if len(ebtables_list) == 14 and out_vnet_chain in ebtables_list[-2]\
-                and action in ebtables_list[-1]:
+    elif operator.eq(direction, "in"):
+        out_list = get_ebtables(out_vnet_chain, logger)
+        if (out_chain_str in out_list[-2] and
+                action in out_list[-1]):
             return True
         else:
             return False
-
-    elif cmp(direction, "out") == 0:
-        if len(ebtables_list) == 14 and in_vnet_chain in ebtables_list[-2] \
-                and action in ebtables_list[-1]:
+    elif operator.eq(direction, "out"):
+        in_list = get_ebtables(in_vnet_chain, logger)
+        if (in_chain_str in in_list[-2] and
+                action in in_list[-1]):
             return True
         else:
             return False
@@ -76,7 +76,6 @@ def check_ebtables(*args):
 
 def nwfilter_check(params):
     """Check the nwfilter via checking ebtales"""
-    global logger
     logger = params['logger']
     nwfiltername = params['nwfiltername']
     guestname = params['guestname']
@@ -109,7 +108,7 @@ def nwfilter_check(params):
         dom_nwfilter.create()
         time.sleep(5)
 
-        if check_ebtables(nwfiltername, conn):
+        if check_ebtables(nwfiltername, conn, logger):
             logger.info("Successfully create nwfilter")
             return 0
         else:

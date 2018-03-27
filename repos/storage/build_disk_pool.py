@@ -47,7 +47,7 @@ def check_pool_built(source_device, device_type):
     """using parted command tool to check the validation of final result"""
 
     cmd = "parted -s %s print" % source_device
-    output = process.system(cmd, shell=True, ignore_status)
+    output = process.system_output(cmd, shell=True, ignore_status=True)
     partition_info = output.split("\n")[3]
 
     logger.debug("the partition information is %s" % partition_info)

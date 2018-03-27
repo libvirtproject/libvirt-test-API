@@ -1,9 +1,11 @@
 #! /usr/bin/env python
 
+import os
 
 from libvirt import libvirtError
 from src import sharedmod
 
+nwfilter_path = "/etc/libvirt/nwfilter/%s.xml"
 
 required_params = ('nwfiltername', 'chain', 'action', 'direction')
 optional_params = {'xml': 'xmls/nwfilter.xml', }
@@ -34,7 +36,7 @@ def nwfilter_define(params):
 
         if nwfiltername in conn.listNWFilters():
             logger.info("The nwfilter list includes the defined nwfilter")
-            if cmp(xmlstr, nwfilterxml):
+            if os.path.exists(nwfilter_path % nwfiltername):
                 logger.info("Successfully define the nwfilter %s" %
                             nwfiltername)
                 return 0
@@ -42,8 +44,7 @@ def nwfilter_define(params):
                 logger.error("Fail to define the nwfilter %s" % nwfiltername)
                 return 1
         else:
-            logger.error("Failed,nwfilter list doesn't include the defined \
-            nwfilter")
+            logger.error("FAIL: nwfilter list doesn't include %s" % nwfiltername)
             return 1
 
     except libvirtError as e:

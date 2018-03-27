@@ -2,13 +2,12 @@
 # To test setting guest time
 
 import time
-import libxml2
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
+from utils.utils import get_xml_value
 
 required_params = ('guestname', 'username', 'userpassword', 'seconds',)
 optional_params = {'flags': 0, 'nseconds': 0}
@@ -26,18 +25,6 @@ def parse_flags(flags):
         return 0
     else:
         return -1
-
-
-def get_guest_mac(dom):
-    """ get guest's MAC address by parsing XML
-    """
-    doc = libxml2.parseDoc(dom.XMLDesc())
-    cont = doc.xpathNewContext()
-    macs = cont.xpathEval("/domain/devices/interface/mac/@address")
-    if macs is None:
-        return None
-    mac = macs[0].content
-    return mac
 
 
 def check_guest_status(domobj):
@@ -89,15 +76,16 @@ def set_guest_time(params):
         time.sleep(90)
 
     # get guest MAC
-    mac = get_guest_mac(domobj)
-    if mac is None:
+    xml_path = "/domain/devices/interface/mac/@address"
+    mac = get_xml_value(domobj, xml_path)
+    if len(mac) == 0:
         logger.error("Failed to get guest's MAC address")
         return 1
     else:
         logger.info("guest's MAC is %s" % mac)
 
-    ipaddr = utils.mac_to_ip(mac, 180)
-    if mac is None:
+    ipaddr = utils.mac_to_ip(mac[0], 180)
+    if ipaddr is None:
         logger.error("Failed to get guest's IP address")
         return 1
     else:
@@ -105,9 +93,8 @@ def set_guest_time(params):
 
     try:
         domobj.setTime({'seconds': seconds, 'nseconds': nseconds}, flags)
-
-        sec = int(utils.remote_exec(ipaddr, username, userpassword, GET_TIME))
-
+        ret, out = utils.remote_exec_pexpect(ipaddr, username, userpassword, GET_TIME)
+        sec = int(out)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))

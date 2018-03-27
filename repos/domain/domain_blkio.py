@@ -4,12 +4,12 @@
 import os
 import re
 import time
-import libxml2
 import libvirt
 
 from libvirt import libvirtError
 from src import sharedmod
 from utils import process
+from utils.utils import get_xml_value
 
 BLKIO_PATH1 = "/cgroup/blkio/libvirt/qemu/%s"
 BLKIO_PATH2 = "/sys/fs/cgroup/blkio/machine.slice/machine-qemu\\x2d%s.scope"
@@ -50,13 +50,9 @@ def get_output(command, logger):
 def get_device(domobj, logger):
     """get the disk device which domain image stored in
     """
-    xml = domobj.XMLDesc(0)
-    doc = libxml2.parseDoc(xml)
-    cont = doc.xpathNewContext()
-    devs = cont.xpathEval("/domain/devices/disk/source/@file")
-    image_file = devs[0].content
-
-    status, output = get_output(GET_PARTITION % image_file, logger)
+    xml_path = "/domain/devices/disk/source/@file"
+    image_file = get_xml_value(domobj, xml_path)
+    status, output = get_output(GET_PARTITION % image_file[0], logger)
 
     if output.startswith('/dev/mapper'):
         # BUG: Call 'lvs' in python will cause unexpected file descriptor leak

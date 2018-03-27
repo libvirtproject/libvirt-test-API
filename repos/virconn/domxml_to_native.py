@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
-from libvirt import libvirtError
+import operator
 
+from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 
@@ -73,7 +74,7 @@ def check_domxml_to_native(nativeconfig, guestname):
 
     logger.debug("Native config from domain log is:  %s" % nativeconLog)
     logger.info("Native config from API is :  %s" % nativeconfig)
-    if cmp(nativeconLog, nativeconfig) == 0:
+    if operator.eq(nativeconLog, nativeconfig):
         logger.info("native config from API can match the config form log")
         return 0
     else:

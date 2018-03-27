@@ -2,13 +2,13 @@
 # To test domain block device peek
 
 import time
-import libxml2
 import libvirt
-from libvirt import libvirtError
-from utils import utils
 import binascii
 
+from libvirt import libvirtError
 from src import sharedmod
+from utils import utils
+from utils.utils import get_xml_value
 
 required_params = ('guestname',)
 optional_params = {}
@@ -44,19 +44,17 @@ def block_peek(params):
         time.sleep(90)
 
     try:
-        xml = domobj.XMLDesc(0)
-        doc = libxml2.parseDoc(xml)
-        cont = doc.xpathNewContext()
-        vdevs = cont.xpathEval("/domain/devices/disk/target/@dev")
-        vdev = vdevs[0].content
-        diskpaths = cont.xpathEval("/domain/devices/disk/source/@file")
-        diskpath = diskpaths[0].content
+        xml_path = "/domain/devices/disk/target/@dev"
+        vdev = get_xml_value(domobj, xml_path)
+
+        xml_path = "/domain/devices/disk/source/@file"
+        diskpath = get_xml_value(domobj, xml_path)
 
         logger.info("get the MBR's first byte of domain %s %s."
                     % (guestname, vdev))
-        first_byte = domobj.blockPeek(vdev, 0, 1, flag)
+        first_byte = domobj.blockPeek(vdev[0], 0, 1, flag)
 
-        cmd = "hexdump %s -n 1 -s 0 -e \'1/1 \"%s \"\'" % (diskpath, "%02x")
+        cmd = "hexdump %s -n 1 -s 0 -e \'1/1 \"%s \"\'" % (diskpath[0], "%02x")
         status, ret = utils.exec_cmd(cmd, shell=True)
         if status:
             return 1

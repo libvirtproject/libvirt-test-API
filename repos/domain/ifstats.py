@@ -5,13 +5,12 @@ import os
 import re
 import sys
 import time
-import libxml2
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
+from utils.utils import get_xml_value
 
 required_params = ('guestname',)
 optional_params = {}
@@ -53,32 +52,28 @@ def ifstats(params):
             return 1
 
     mac = utils.get_dom_mac_addr(guestname)
-    logger.info("get ip by mac address")
+    logger.info("mac address: %s" % mac)
     ip = utils.mac_to_ip(mac, 180)
-
+    logger.info("ip: %s" % ip)
     logger.info('ping guest')
     if not utils.do_ping(ip, 300):
         logger.error('Failed on ping guest, IP: ' + str(ip))
         return 1
 
-    xml = domobj.XMLDesc(0)
-    doc = libxml2.parseDoc(xml)
-    ctx = doc.xpathNewContext()
-    devs = ctx.xpathEval("/domain/devices/interface/target/@dev")
-    path = devs[0].content
-    ifstats = domobj.interfaceStats(path)
-
+    xml_path = "/domain/devices/interface/target/@dev"
+    path = get_xml_value(domobj, xml_path)
+    ifstats = domobj.interfaceStats(path[0])
     if ifstats:
         # check_interface_stats()
         logger.debug(ifstats)
-        logger.info("%s rx_bytes %s" % (path, ifstats[0]))
-        logger.info("%s rx_packets %s" % (path, ifstats[1]))
-        logger.info("%s rx_errs %s" % (path, ifstats[2]))
-        logger.info("%s rx_drop %s" % (path, ifstats[3]))
-        logger.info("%s tx_bytes %s" % (path, ifstats[4]))
-        logger.info("%s tx_packets %s" % (path, ifstats[5]))
-        logger.info("%s tx_errs %s" % (path, ifstats[6]))
-        logger.info("%s tx_drop %s" % (path, ifstats[7]))
+        logger.info("%s rx_bytes %s" % (path[0], ifstats[0]))
+        logger.info("%s rx_packets %s" % (path[0], ifstats[1]))
+        logger.info("%s rx_errs %s" % (path[0], ifstats[2]))
+        logger.info("%s rx_drop %s" % (path[0], ifstats[3]))
+        logger.info("%s tx_bytes %s" % (path[0], ifstats[4]))
+        logger.info("%s tx_packets %s" % (path[0], ifstats[5]))
+        logger.info("%s tx_errs %s" % (path[0], ifstats[6]))
+        logger.info("%s tx_drop %s" % (path[0], ifstats[7]))
     else:
         logger.error("fail to get domain interface statistics\n")
         return 1
