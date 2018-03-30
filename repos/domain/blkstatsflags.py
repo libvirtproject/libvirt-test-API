@@ -46,14 +46,13 @@ def blkstatsflags(params):
         time.sleep(90)
     try:
         xml_path = "/domain/devices/disk/target/@dev"
-        devs = get_xml_value(domobj, xml_value)
+        devs = get_xml_value(domobj, xml_path)
         for dev in devs:
-            path = dev.content
-            blkstats = domobj.blockStatsFlags(path, flags)
+            blkstats = domobj.blockStatsFlags(dev, flags)
             # check_blkstats()
             logger.debug(blkstats)
             for entry in list(blkstats.keys()):
-                logger.info("%s %s %s" % (path, entry, blkstats[entry]))
+                logger.info("%s %s %s" % (dev, entry, blkstats[entry]))
 
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
