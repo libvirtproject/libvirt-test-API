@@ -2,13 +2,9 @@
 # Install a linux domain from CDROM
 # The iso file may be locked by other proces, and cause the failure of installation
 import os
-import sys
 import re
 import time
-import commands
 import shutil
-import urllib
-import requests
 
 import libvirt
 from libvirt import libvirtError
@@ -16,7 +12,8 @@ from repos.domain import install_common
 
 from src import sharedmod
 from src import env_parser
-from utils import utils
+from utils import utils, process
+from six.moves import urllib
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
@@ -54,7 +51,7 @@ def cleanup(mount, logger):
     if os.path.isdir(mount):
         if os.path.ismount(mount):
             logger.info("Path %s is still mounted, please verify" % mount)
-            commands.getstatusoutput("umount -l  %s" % mount)
+            ret = process.run("umount -l  %s" % mount, shell=True, ignore_status=True)
             logger.info("the floppy mount point folder exists, remove it")
             shutil.rmtree(mount)
         else:
@@ -68,7 +65,7 @@ def prepare_ks(ks, guestos, hddriver, ks_path, logger):
     """Prepare the ks file for suse installation
        virtio bus use the vda instead of sda in ide or scsi bus
     """
-    urllib.urlretrieve(ks, ks_path)
+    urllib.request.urlretrieve(ks, ks_path)
     logger.info("the url of kickstart is %s" % ks)
     if (hddriver == "virtio" or hddriver == "lun") and "suse" in guestos:
         with open(ks_path, "r+") as f:
@@ -86,24 +83,24 @@ def prepare_floppy(ks_path, mount_point, floppy_path, logger):
     if os.path.exists(floppy_path):
         os.remove(floppy_path)
     create_cmd = 'dd if=/dev/zero of=%s bs=1440k count=1' % floppy_path
-    (status, text) = commands.getstatusoutput(create_cmd)
-    if status:
+    ret = process.run(create_cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("failed to create floppy image")
         return 1
     format_cmd = 'mkfs.msdos -s 1 %s' % floppy_path
-    (status, text) = commands.getstatusoutput(format_cmd)
-    if status:
+    ret = process.run(format_cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("failed to format floppy image")
         return 1
     if os.path.exists(mount_point):
         logger.info("the floppy mount point folder exists, remove it")
-        commands.getstatusoutput("umount -l %s" % mount_point)
+        ret = process.run("umount -l %s" % mount_point, shell=True, ignore_status=True)
         shutil.rmtree(mount_point)
     logger.info("create mount point %s" % mount_point)
     os.makedirs(mount_point)
     mount_cmd = 'mount -o loop %s %s' % (floppy_path, mount_point)
-    (status, text) = commands.getstatusoutput(mount_cmd)
-    if status:
+    ret = process.run(mount_cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error(
             "failed to mount /tmp/floppy.img to /mnt/libvirt_floppy")
         return 1
@@ -138,16 +135,16 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
 
     # copy iso file
     mount_command = "mount -o loop %s %s" % (local_iso, mount_point)
-    (status, message) = commands.getstatusoutput(mount_command)
-    if status:
+    ret = process.run(mount_command, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("mount iso failure")
         return 1
     logger.info("Copying the iso file to working directory")
-    commands.getstatusoutput("cp -rf %s/* %s" % (mount_point, new_dir + "/custom"))
+    ret = process.run("cp -rf %s/* %s" % (mount_point, new_dir + "/custom"), shell=True, ignore_status=True)
 
     # prepare the custom iso
     if "ubuntu" in guestos:
-        commands.getstatusoutput("cp -rf %s/.disk %s" % (mount_point, new_dir + "/custom"))
+        ret = process.run("cp -rf %s/.disk %s" % (mount_point, new_dir + "/custom"), shell=True, ignore_status=True)
         prepare_ks(ks, guestos, hddriver, new_dir + "/custom/install/ks.cfg", logger)
         os.remove(new_dir + "/custom/isolinux/isolinux.cfg")
         shutil.copy(HOME_PATH + "/repos/domain/isolinux/ubuntu/isolinux.cfg",
@@ -157,7 +154,7 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
                     -no-emul-boot -boot-load-size 4 \
                     -boot-info-table %s"
         logger.info("Making the custom.iso file")
-        (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO % (new_dir, new_dir + "/custom"))
+        ret = process.run(MAKE_ISO % (new_dir, new_dir + "/custom"), shell=True, ignore_status=True)
     else:
         prepare_ks(ks, guestos, hddriver, new_dir + "/custom/autoinst.xml", logger)
         flag = prepare_floppy(new_dir + "/custom/autoinst.xml",
@@ -177,26 +174,26 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
                         boot/i386/loader/isolinux.bin -c boot.cat \
                         -no-emul-boot -boot-load-size 4 \
                         -boot-info-table %s'
-            (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO % (new_dir, new_dir + "/custom"))
+            ret = process.run(MAKE_ISO % (new_dir, new_dir + "/custom"), shell=True, ignore_status=True)
         else:
             MAKE_ISO = 'mkisofs -o %s/custom.iso -J -r -v -R -b \
                         boot/x86_64/loader/isolinux.bin -c boot.cat \
                         -no-emul-boot -boot-load-size 4 \
                         -boot-info-table %s'
-            (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO % (new_dir, new_dir + "/custom"))
+            ret = process.run(MAKE_ISO % (new_dir, new_dir + "/custom"), shell=True, ignore_status=True)
 
-    if statusiso:
-        logger.error(messageiso)
+    if ret.exit_status:
+        logger.error(ret.stdout)
         logger.error("makeing iso failure")
         return 1
 
     os.remove(local_iso)
-    (status, text) = commands.getstatusoutput("umount -l /mnt/floppy")
-    if status:
+    ret = process.run("umount -l /mnt/floppy", shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error(
             "failed to umount %s" % mount_point)
 
-    (statusumount, messageumount) = commands.getstatusoutput("umount -l %s" % mount_point)
+    ret = process.run("umount -l %s" % mount_point, shell=True, ignore_status=True)
     return new_dir
 
 
@@ -216,7 +213,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     try:
         conn = domobj._conn
         domobj = conn.defineXML(xmlstr)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to define domain %s" % guestname)
@@ -231,7 +228,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
 
     try:
         domobj.create()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
@@ -301,9 +298,9 @@ def install_ubuntu(params):
             (imageformat, diskpath, seeksize)
         logger.debug("the command line of creating disk images is '%s'" %
                      disk_create)
-        (status, message) = commands.getstatusoutput(disk_create)
-        if status != 0:
-            logger.debug(message)
+        ret = process.run(disk_create, shell=True, ignore_status=True)
+        if ret.exit_status != 0:
+            logger.debug(ret.stdout)
             return 1
         os.chown(diskpath, 107, 107)
         logger.info("creating disk images file is successful.")
@@ -389,7 +386,7 @@ def install_ubuntu(params):
         logger.info('define guest from xml description')
         try:
             domobj = conn.defineXML(xmlstr)
-        except libvirtError, e:
+        except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
                          % (e.get_error_message(), e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
@@ -399,7 +396,7 @@ def install_ubuntu(params):
 
         try:
             domobj.create()
-        except libvirtError, e:
+        except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
                          % (e.get_error_message(), e.get_error_code()))
             logger.error("fail to start domain %s" % guestname)
@@ -408,7 +405,7 @@ def install_ubuntu(params):
         logger.info('create guest from xml description')
         try:
             domobj = conn.createXML(xmlstr, 0)
-        except libvirtError, e:
+        except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
                          % (e.get_error_message(), e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
@@ -420,7 +417,7 @@ def install_ubuntu(params):
         if installtype == 'define':
             try:
                 state = domobj.info()[0]
-            except libvirtError, e:
+            except libvirtError as e:
                 logger.error("API error message: %s, error code is %s"
                              % (e.get_error_message(), e.get_error_code()))
                 return 1
@@ -491,25 +488,25 @@ def install_ubuntu_clean(params):
 
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
 
-    (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
-    if not status:
+    ret = process.run(VIRSH_QUIET_LIST % guestname, shell=True, ignore_status=True)
+    if not ret.exit_status:
         logger.info("remove guest %s, and its disk image file" % guestname)
-        (status, output) = commands.getstatusoutput(VM_STAT % guestname)
-        if status:
-            (status, output) = commands.getstatusoutput(VM_DESTROY % guestname)
-            if status:
+        ret = process.run(VM_STAT % guestname, shell=True, ignore_status=True)
+        if ret.exit_status:
+            ret = process.run(VM_DESTROY % guestname, shell=True, ignore_status=True)
+            if ret.exit_status:
                 logger.error("failed to destroy guest %s" % guestname)
-                logger.error("%s" % output)
+                logger.error("%s" % ret.stdout)
             else:
-                (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-                if status:
+                ret = process.run(VM_UNDEFINE % guestname, shell=True, ignore_status=True)
+                if ret.exit_status:
                     logger.error("failed to undefine guest %s" % guestname)
-                    logger.error("%s" % output)
+                    logger.error("%s" % ret.stdout)
         else:
-            (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-            if status:
+            ret = process.run(VM_UNDEFINE % guestname, shell=True, ignore_status=True)
+            if ret.exit_status:
                 logger.error("failed to undefine guest %s" % guestname)
-                logger.error("%s" % output)
+                logger.error("%s" % ret.stdout)
 
     if os.path.exists(diskpath + '/' + guestname):
         os.remove(diskpath + '/' + guestname)

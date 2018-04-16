@@ -4,18 +4,15 @@
 import os
 import re
 import time
-import commands
 import shutil
-import urllib
 
-import libvirt
-from libvirt import libvirtError
 from src.exception import TestError
 
 from src import sharedmod
-from src import env_parser
-from utils import utils
+from utils import process
 from repos.domain import install_common
+from six.moves import urllib
+
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
@@ -56,10 +53,10 @@ def mk_kickstart_iso(kscfg, guestos, logger):
     os.makedirs(boot_iso_dir)
 
     logger.debug("mount " + boot_iso)
-    (ret, msg) = commands.getstatusoutput("mount -t iso9660 -o loop %s %s"
-                                          % (boot_iso, boot_iso_dir))
-    if ret != 0:
-        raise RuntimeError('Failed to start making custom iso: ' + msg)
+    ret = process.run("mount -t iso9660 -o loop %s %s"
+                      % (boot_iso, boot_iso_dir), shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        raise RuntimeError('Failed to start making custom iso: ' + ret.stdout)
 
     logger.debug("copy original iso files to custom work directory")
     shutil.copytree(boot_iso_dir, custom_iso_dir)
@@ -70,18 +67,18 @@ def mk_kickstart_iso(kscfg, guestos, logger):
         for i in files:
             os.chmod(os.path.join(root, i), 511)
 
-    (ret, msg) = commands.getstatusoutput("umount %s" % boot_iso_dir)
-    if ret != 0:
-        raise RuntimeError('Failed umounting boot iso: ' + msg)
+    ret = process.run("umount %s" % boot_iso_dir, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        raise RuntimeError('Failed umounting boot iso: ' + ret.stdout)
 
-    vlmid = commands.getoutput("isoinfo -d -i %s |grep 'Volume id:'" % boot_iso)
-    logger.debug("vlmid :" + vlmid)
+    ret = process.run("isoinfo -d -i %s |grep 'Volume id:'" % boot_iso, shell=True, ignore_status=True)
+    logger.debug("ret.stdout :" + ret.stdout)
 
     logger.debug("editing config files")
     new_cfg_filename = 'tmp_cfg'
     new_cfg = open('tmp_cfg', 'w')
 
-    if "ppc" in vlmid:
+    if "ppc" in ret.stdout:
         logger.debug("edit yaboot.conf and add kickstart entry")
         old_cfg_filename = custom_iso_dir + "/etc/yaboot.conf"
         old_cfg = open(old_cfg_filename, 'r')
@@ -95,7 +92,7 @@ def mk_kickstart_iso(kscfg, guestos, logger):
             if not append_found and re.search('append', line):
                 append_found = True
                 line = ('append= "root=live:CDLABEL=%s ks=cdrom:/%s "\n'
-                        % (vlmid, kscfg))
+                        % (ret.stdout, kscfg))
             new_cfg.write(line)
 
         new_cfg.close()
@@ -107,7 +104,7 @@ def mk_kickstart_iso(kscfg, guestos, logger):
         mkisofs_command = ('mkisofs -R -V "%s" -sysid PPC -chrp-boot '
                            '-U -prep-boot ppc/chrp/yaboot -hfs-bless ppc/mac -no-desktop '
                            '-allow-multidot -volset 4 -volset-size 1 -volset-seqno 1 '
-                           '-hfs-volid 4 -o %s/%s .' % (vlmid, cwd, custom_iso))
+                           '-hfs-volid 4 -o %s/%s .' % (ret.stdout, cwd, custom_iso))
     else:
         logger.debug("copy kickstart to custom work directory")
         old_kscfg, new_kscfg = open(kscfg, 'r'), open(custom_iso_dir + '/' + kscfg, 'w')
@@ -167,9 +164,9 @@ def mk_kickstart_iso(kscfg, guestos, logger):
                            '-boot-load-size 4 -boot-info-table -o %s/%s .'
                            % (cwd, custom_iso))
 
-    (ret, msg) = commands.getstatusoutput(mkisofs_command)
-    if ret != 0:
-        raise RuntimeError("Failed to make custom_iso, error %d: %s!" % (ret, msg))
+    ret = process.run(mkisofs_command, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        raise RuntimeError("Failed to make custom_iso, error %d: %s!" % (ret, ret.stdout))
 
     # clean up
     install_common.remove_all(boot_iso_dir, logger)
@@ -198,10 +195,10 @@ def prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger):
     boot_path = os.path.join(ostree, 'images/boot.iso')
     logger.info("the url of downloading boot.iso file is %s" % boot_path)
 
-    urllib.urlretrieve(boot_path, '%s/boot.iso' % new_dir)
+    urllib.request.urlretrieve(boot_path, '%s/boot.iso' % new_dir)
     time.sleep(10)
 
-    urllib.urlretrieve(kscfg, '%s/%s' % (new_dir, ks_name))
+    urllib.request.urlretrieve(kscfg, '%s/%s' % (new_dir, ks_name))
     logger.info("the url of kickstart is %s" % kscfg)
 
     src_path = os.getcwd()
@@ -243,7 +240,7 @@ def install_linux_bootiso(params):
     rhelnewest = params.get('rhelnewest')
 
     options = [guestname, guestos, guestarch, nicdriver, hddriver,
-              imageformat, graphic, video, diskpath, seeksize, "local"]
+               imageformat, graphic, video, diskpath, seeksize, "local"]
     install_common.prepare_env(options, logger)
 
     install_common.remove_all(diskpath, logger)
@@ -260,7 +257,7 @@ def install_linux_bootiso(params):
     try:
         logger.info("begin to customize the custom.iso file")
         prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger)
-    except TestError, err:
+    except TestError as err:
         logger.error("Failed to prepare boot cdrom!")
         return 1
 

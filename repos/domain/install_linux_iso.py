@@ -2,18 +2,14 @@
 # Install a linux domain from CDROM
 
 import os
-import re
 import time
-import commands
 import shutil
-import urllib
 import tempfile
-import libvirt
 
-from libvirt import libvirtError
 from src import sharedmod
-from utils import utils
+from utils import utils, process
 from repos.domain import install_common
+from six.moves import urllib
 
 required_params = ('guestname', 'guestos', 'guestarch')
 optional_params = {
@@ -67,14 +63,14 @@ def set_xml(sourcehost, sourcepath, xmlstr, hddriver, diskpath, ks, nfs_server, 
     ks_name = os.path.basename(ks)
     tmppath = tempfile.mkdtemp()
     cmd = "mount -t nfs %s:/srv/www/html/test-api-ks/tmp-ks %s" % (nfs_server, tmppath)
-    (stat, out) = commands.getstatusoutput(cmd)
-    if stat:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("mount failed: %s" % cmd)
         return 1
     if os.path.exists("%s/%s" % (tmppath, ks_name)):
         os.remove("%s/%s" % (tmppath, ks_name))
 
-    urllib.urlretrieve(ks, "%s/%s" % (tmppath, ks_name))
+    urllib.request.urlretrieve(ks, "%s/%s" % (tmppath, ks_name))
     old_ks_fp = open('%s/%s' % (tmppath, ks_name), "rw+")
     new_ks_fp = open("%s/test_api_iso_ks.cfg" % tmppath, "w")
     old_ks_file = old_ks_fp.read()
@@ -84,8 +80,8 @@ def set_xml(sourcehost, sourcepath, xmlstr, hddriver, diskpath, ks, nfs_server, 
     old_ks_fp.close()
     shutil.move("%s/test_api_iso_ks.cfg" % tmppath, "%s/%s" % (tmppath, ks_name))
     cmd = "umount %s" % tmppath
-    (stat, out) = commands.getstatusoutput(cmd)
-    if stat:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("umount failed: %s" % cmd)
         return 1
     xmlstr = xmlstr.replace('KS', 'http://%s/test-api-ks/tmp-ks/%s' % (nfs_server, ks_name))
@@ -117,7 +113,7 @@ def install_linux_iso(params):
     sourcepath = params.get('sourcepath', '')
 
     options = [guestname, guestos, guestarch, nicdriver, hddriver,
-              imageformat, graphic, video, diskpath, seeksize, storage]
+               imageformat, graphic, video, diskpath, seeksize, storage]
     install_common.prepare_env(options, logger)
 
     mountpath = tempfile.mkdtemp()

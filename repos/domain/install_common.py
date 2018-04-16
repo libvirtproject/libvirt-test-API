@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 import os
 import shutil
-import tempfile
 import re
 import requests
 import libvirt
-import urllib
 import time
 
-from src import sharedmod
 from src import env_parser
 from utils import utils
 from libvirt import libvirtError
+from six.moves import urllib
 
 brickpath = "/tmp/test-api-brick"
 imagename = "libvirt-test-api"
@@ -36,7 +34,7 @@ def setup_storage(params, mountpath, logger):
     else:
         if storage == "gluster":
             if not os.path.isdir(brickpath):
-                os.mkdir(brickpath, 0755)
+                os.mkdir(brickpath, 0o755)
             utils.setup_gluster("test-api-gluster", utils.get_local_hostname(), brickpath, logger)
             utils.mount_gluster("test-api-gluster", utils.get_local_hostname(), mountpath, logger)
             diskpath = mountpath + "/" + imagename
@@ -304,7 +302,7 @@ def set_video_xml(video, xmlstr):
         video_model = ("<model type='qxl' ram='65536' vram='65536' "
                        "vgamem='16384' heads='1' primary='yes'/>")
         xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' "
-                                 "heads='1'/>", video_model)
+                                "heads='1'/>", video_model)
     return xmlstr
 
 
@@ -327,7 +325,7 @@ def start_guest(conn, installtype, xmlstr, logger):
             time.sleep(3)
             logger.info('start installation guest ...')
             domobj.create()
-        except libvirtError, e:
+        except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
                          % (e.get_error_message(), e.get_error_code()))
             return False
@@ -335,7 +333,7 @@ def start_guest(conn, installtype, xmlstr, logger):
         logger.info('create guest from xml description')
         try:
             domobj = conn.createXML(xmlstr, 0)
-        except libvirtError, e:
+        except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
                          % (e.get_error_message(), e.get_error_code()))
             return False
@@ -371,7 +369,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, installmethod, lo
         xmlstr = re.sub("<kernel>.*</kernel>\n", "", xmlstr)
         xmlstr = re.sub("<initrd>.*</initrd>\n", "", xmlstr)
         xmlstr = re.sub('<cmdline>.*</cmdline>', '', xmlstr)
-    elif installmethod == "http" or installmethod == "ftp" :
+    elif installmethod == "http" or installmethod == "ftp":
         xmlstr = re.sub("<kernel>.*</kernel>\n", "", xmlstr)
         xmlstr = re.sub("<initrd>.*</initrd>\n", "", xmlstr)
         xmlstr = re.sub("<cmdline>.*</cmdline>\n", "", xmlstr)
@@ -402,7 +400,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, installmethod, lo
     try:
         conn = domobj._conn
         domobj = conn.defineXML(xmlstr)
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to define domain %s" % guestname)
@@ -416,7 +414,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, installmethod, lo
     time.sleep(3)
     try:
         domobj.create()
-    except libvirtError, e:
+    except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
         logger.error("fail to start domain %s" % guestname)
@@ -513,7 +511,7 @@ def wait_install(conn, guestname, xmlstr, installtype, installmethod, logger, ti
                 time.sleep(3)
                 dom.create()
                 time.sleep(20)
-        except libvirtError, e:
+        except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
                          % (e.get_error_message(), e.get_error_code()))
             logger.error("fail to start domain %s" % guestname)
@@ -537,8 +535,8 @@ def get_vmlinuz_initrd(ostree, xmlstr, logger):
     logger.debug("vmlinuz: %s" % vmlinuzpath)
     logger.debug("initrd: %s" % initrdpath)
     remove_vmlinuz_initrd(logger)
-    urllib.urlretrieve(vmlinuzpath, VMLINUZ)
-    urllib.urlretrieve(initrdpath, INITRD)
+    urllib.request.urlretrieve(vmlinuzpath, VMLINUZ)
+    urllib.request.urlretrieve(initrdpath, INITRD)
 
     logger.debug("Download to %s" % BOOT_DIR)
 
@@ -546,6 +544,7 @@ def get_vmlinuz_initrd(ostree, xmlstr, logger):
     xmlstr = xmlstr.replace('INITRD', INITRD)
 
     return xmlstr
+
 
 def remove_vmlinuz_initrd(logger):
     remove_all(VMLINUZ, logger)

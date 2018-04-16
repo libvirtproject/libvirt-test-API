@@ -2,20 +2,10 @@
 # Install a linux domain from network
 
 import os
-import sys
-import re
 import time
-import commands
-import shutil
-import urllib
-
-
-import libvirt
-from libvirt import libvirtError
 
 from src import sharedmod
-from src import env_parser
-from utils import utils
+from utils import utils, process
 from repos.domain import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch', 'netmethod')
@@ -50,25 +40,14 @@ def get_interface(logger):
     cmd = ("ip addr show | grep \'state UP\' | awk \'{print $2}\'"
            "| cut -d\':\' -f1")
     logger.info(cmd)
-    ret, out = commands.getstatusoutput(cmd)
-    logger.info("get interface: %s" % out)
-    if ret == 1:
-        logger.error("fail to get interface.")
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    logger.info("get interface: %s" % ret.stdout)
+    if ret.exit_status == 1:
+        logger.error("fail to get interface. %s" % ret.stdout)
         return 1
 
-    interface = out.split('\n')
+    interface = ret.stdout.split('\n')
     return interface[0]
-
-
-def get_remote_hypervisor_uri(hostip, user, password):
-    (ret1, out1) = utils.remote_exec_pexpect(hostip, user, password, 'lsmod|grep kvm')
-    (ret2, out2) = utils.remote_exec_pexpect(hostip, user, password, 'ls /proc|grep xen')
-    if strip(out1) != "":
-        return "qemu+ssh://%s/system" % hostip
-    elif strip == "xen":
-        return "xen+ssh://%s" % hostip
-    else:
-        return "No hypervisor running"
 
 
 def set_xml(rhelnewest, xmlstr, installmethod, guestos, guestarch, logger):
@@ -106,7 +85,6 @@ def set_xml(rhelnewest, xmlstr, installmethod, guestos, guestarch, logger):
     return xmlstr
 
 
-
 def install_linux_net_remote(params):
     """install a new virtual machine"""
     # Initiate and check parameters
@@ -132,8 +110,7 @@ def install_linux_net_remote(params):
     imageformat = params.get('imageformat', 'qcow2')
     seeksize = params.get('disksize', 10)
 
-    options = [guestname, guestos, guestarch, nicdriver, hddriver,
-              imageformat, graphic, video, diskpath, seeksize, "local"]
+    options = [guestname, guestos, guestarch, nicdriver, hddriver, imageformat, graphic, video, diskpath, seeksize, "local"]
     install_common.prepare_env(options, logger)
 
     install_common.remove_all(diskpath, logger)

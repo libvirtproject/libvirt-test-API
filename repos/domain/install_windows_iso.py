@@ -2,24 +2,16 @@
 # Install a Windows domain
 
 import os
-import sys
 import re
 import time
-import commands
 import shutil
-import urllib
-import requests
 import tempfile
-
-import libvirt
-from libvirt import libvirtError
 
 from src import sharedmod
 from src import env_parser
-from utils import utils
+from utils import utils, process
 from repos.domain import install_common
 from utils.utils import version_compare
-
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
 VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
@@ -91,14 +83,14 @@ def prepare_floppy_image(guestname, guestos, guestarch,
         os.remove(FLOOPY_IMG)
 
     create_cmd = 'dd if=/dev/zero of=%s bs=1440k count=1' % FLOOPY_IMG
-    (status, text) = commands.getstatusoutput(create_cmd)
-    if status:
+    ret = process.run(create_cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("failed to create floppy image")
         return 1
 
     format_cmd = 'mkfs.msdos -s 1 %s' % FLOOPY_IMG
-    (status, text) = commands.getstatusoutput(format_cmd)
-    if status:
+    ret = process.run(format_cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("failed to format floppy image")
         return 1
 
@@ -112,8 +104,8 @@ def prepare_floppy_image(guestname, guestos, guestarch,
 
     try:
         mount_cmd = 'mount -o loop %s %s' % (FLOOPY_IMG, floppy_mount)
-        (status, text) = commands.getstatusoutput(mount_cmd)
-        if status:
+        ret = process.run(mount_cmd, shell=True, ignore_status=True)
+        if ret.exit_status:
             logger.error(
                 "failed to mount /tmp/floppy.img to /mnt/libvirt_floppy")
             return 1
@@ -154,11 +146,11 @@ def prepare_floppy_image(guestname, guestos, guestarch,
 
     finally:
         cmd = "mount | grep '/mnt/libvirt_floppy'"
-        (stat, out) = commands.getstatusoutput(cmd)
-        if stat == 0:
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        if ret.exit_status == 0:
             umount_cmd = 'umount %s' % floppy_mount
-            (stat, out) = commands.getstatusoutput(umount_cmd)
-            if stat:
+            ret = process.run(umount_cmd, shell=True, ignore_status=True)
+            if ret.exit_status:
                 logger.error("umount failed: %s" % umount_cmd)
                 return 1
 
@@ -193,8 +185,7 @@ def install_windows_iso(params):
     storage = params.get('storage', 'local')
     installtype = params.get('type', 'define')
 
-    options = [guestname, guestos, guestarch, nicdriver, hddriver,
-              imageformat, graphic, video, diskpath, seeksize, storage]
+    options = [guestname, guestos, guestarch, nicdriver, hddriver, imageformat, graphic, video, diskpath, seeksize, storage]
     install_common.prepare_env(options, logger)
 
     mountpath = tempfile.mkdtemp()

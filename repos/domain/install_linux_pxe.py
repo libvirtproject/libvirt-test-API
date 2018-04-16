@@ -2,16 +2,12 @@
 # Install a linux domain from pxe
 
 import os
-import re
 import time
-import commands
 import shutil
 
-from libvirt import libvirtError
-from src import env_parser
 from src import sharedmod
 from repos.domain import install_common
-from utils import utils
+from utils import utils, process
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {'memory': 2097152,
@@ -47,28 +43,28 @@ def clean_env(diskpath, logger):
         os.remove(TFTPPATH + '/pxelinux.cfg/default')
 
     cmd = "virsh net-list --all | grep \'pxeboot\'"
-    (status, output) = commands.getstatusoutput(cmd)
-    if not status:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if not ret.exit_status:
         logger.info("remove network pxeboot")
         cmd = "virsh net-destroy pxeboot"
-        (status, output) = commands.getstatusoutput(cmd)
-        if status:
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        if ret.exit_status:
             logger.error("failed to destroy network pxeboot")
-            logger.error("%s" % output)
+            logger.error("%s" % ret.stdout)
         else:
             cmd = "virsh net-undefine pxeboot"
-            (status, output) = commands.getstatusoutput(cmd)
-            if status:
+            ret = process.run(cmd, shell=True, ignore_status=True)
+            if ret.exit_status:
                 logger.error("failed to undefine network pxeboot")
-                logger.error("%s" % output)
+                logger.error("%s" % ret.stdout)
 
 
 def prepare_install(default_file, logger):
     if not os.path.exists(TFTPPATH + "/pxelinux.cfg"):
         logger.info("%s not exists, create it" % (TFTPPATH + "/pxelinux.cfg"))
-        os.makedirs(TFTPPATH + "/pxelinux.cfg", mode=0777)
+        os.makedirs(TFTPPATH + "/pxelinux.cfg", mode=0o777)
     else:
-        os.chmod(TFTPPATH + "/pxelinux.cfg", 0777)
+        os.chmod(TFTPPATH + "/pxelinux.cfg", 0o777)
     # Get rid of selinux problem
     os.system("restorecon -Rv %s" % TFTPPATH)
     bootp_file = TFTPPATH + "/pxelinux.0"
@@ -77,16 +73,16 @@ def prepare_install(default_file, logger):
 
     cmd = "wget " + default_file + " -P " + TFTPPATH + "/pxelinux.cfg/"
     logger.info("%s" % cmd)
-    (status, out) = commands.getstatusoutput(cmd)
+    ret = process.run(cmd, shell=True, ignore_status=True)
 
     xmlpath = os.path.join(HOME_PATH, 'repos/domain/xmls/pxeboot.xml')
     cmd = "virsh net-define %s" % xmlpath
     logger.info("%s" % cmd)
-    (status, text) = commands.getstatusoutput(cmd)
+    ret = process.run(cmd, shell=True, ignore_status=True)
 
     cmd = "virsh net-start pxeboot"
     logger.info("%s" % cmd)
-    (status, text) = commands.getstatusoutput(cmd)
+    ret = process.run(cmd, shell=True, ignore_status=True)
 
 
 def install_linux_pxe(params):
@@ -107,8 +103,7 @@ def install_linux_pxe(params):
     installtype = params.get('type', 'define')
     rhelnewest = params.get('rhelnewest')
 
-    options = [guestname, guestos, guestarch, nicdriver, hddriver,
-              imageformat, graphic, video, diskpath, seeksize, "local"]
+    options = [guestname, guestos, guestarch, nicdriver, hddriver, imageformat, graphic, video, diskpath, seeksize, "local"]
     install_common.prepare_env(options, logger)
 
     clean_env(diskpath, logger)
@@ -138,7 +133,7 @@ def install_linux_pxe(params):
             default_file = install_common.get_value_from_global("guest", os_arch + "_pxe_default")
         else:
             default_file = install_common.get_value_from_global("guest", "rhel%s_newest_%s_pxe_default" %
-                                          (version.split(".")[0], guestarch))
+                                                                (version.split(".")[0], guestarch))
 
     logger.debug('default file:\n    %s' % default_file)
 
