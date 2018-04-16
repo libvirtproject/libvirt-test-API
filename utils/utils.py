@@ -525,7 +525,10 @@ def exec_cmd(command, sudo=False, cwd=None, infile=None, outfile=None,
     if out is None:
         # Prevent splitlines() from barfing later on
         out = ""
-    return (process.returncode, out.decode().splitlines())
+    if isinstance(out, str):
+        return (process.returncode, out.splitlines())
+    else:
+        return (process.returncode, out.decode().splitlines())
 
 
 def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
