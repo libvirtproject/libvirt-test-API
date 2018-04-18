@@ -25,7 +25,7 @@ def disk_errors(params):
         logger.info("define and start guest.")
         domobj = conn.defineXML(xmlstr)
         domobj.create()
-        time.sleep(10)
+        time.sleep(30)
         error_list = domobj.diskErrors()
     except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))

@@ -65,7 +65,7 @@ def open_graphics(params):
                         shared['success'] = True
                         return
                 except socket.error as e:
-                    logger.info("No data yet")
+                    logger.info("No data yet: %s" % e)
                 try:
                     # Send some data...
                     client.send('HELP\r')
@@ -79,7 +79,7 @@ def open_graphics(params):
                     shared['success'] = True
                     return
 
-        conn = sharedmod.libvirtobj['conn']
+        conn = libvirt.open(None)
         domobj = conn.lookupByName(guestname)
 
         domobj.openGraphics(idx, server.fileno(), flag)

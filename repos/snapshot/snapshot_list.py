@@ -54,9 +54,10 @@ def compare_snapshot_list(*args):
     if (snapshot_list1 is not None and snapshot_list2 is not None and
             len(snapshot_list1) == len(snapshot_list2)):
         list_len = len(snapshot_list1)
+        snapshot_list1.sort()
+        snapshot_list2.sort()
         for index in range(list_len):
-            if (snapshot_list1[index] != snapshot_list2[index] and
-                    snapshot_list1[index] != snapshot_list2[list_len - index]):
+            if snapshot_list1[index] != snapshot_list2[index]:
                 logger.error("The two snapshot lists don't have the same")
                 return False
         logger.info("The two snapshot lists have the same items")
