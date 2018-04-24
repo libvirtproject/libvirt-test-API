@@ -6,7 +6,8 @@ from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 
-GET_NATIVE_CONFIG = "grep %s /var/log/libvirt/qemu/%s.log | tail -1"
+GREP_STR = "LC_ALL=C PATH="
+GET_NATIVE_CONFIG = "grep '%s' /var/log/libvirt/qemu/%s.log | tail -1"
 SPLIT_STR = " -"
 
 required_params = ('nativeformat', 'guestname')
@@ -20,7 +21,7 @@ def check_domxml_to_native(nativeconfig, guestname):
        port and netdev part before compare.
     """
     (status, output) = utils.exec_cmd(GET_NATIVE_CONFIG %
-                                      (guestname, guestname), shell=True)
+                                      (GREP_STR, guestname), shell=True)
     if status:
         logger.error("Fail to get native config of domain %s" % guestname)
         return 1

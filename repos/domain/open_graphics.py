@@ -48,7 +48,7 @@ def open_graphics(params):
     logger.info("the idx is %s" % idx)
     logger.info("the flags is %s" % flag)
 
-    shared = {'timeout': 10, 'success': False}
+    shared = {'timeout': 20, 'success': False}
 
     try:
         logger.info("Opening socket...")

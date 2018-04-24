@@ -80,7 +80,18 @@ def destroy(params):
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
         logger.error("failed to destroy domain")
-        return 1
+        # Add for test
+        err_msg = "Some processes refused to die"
+        if "lxc" in virt_type and err_msg in e.get_error_message():
+            try:
+                time.sleep(10)
+                domobj.destroy()
+            except libvirtError as e:
+                logger.error("Still destroy error: %s" % e.get_error_message())
+                return 1
+        # End for test
+        else:
+            return 1
 
     # Check domain status by ping ip
     if "noping" not in flags:
