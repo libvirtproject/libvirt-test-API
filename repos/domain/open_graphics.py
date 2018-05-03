@@ -6,11 +6,7 @@ import os
 import socket
 import select
 import libvirt
-
-try:
-    import thread
-except ImportError:
-    import _thread as thread
+import threading
 
 from libvirt import libvirtError
 from src import sharedmod
@@ -82,8 +78,10 @@ def open_graphics(params):
         conn = libvirt.open(None)
         domobj = conn.lookupByName(guestname)
 
+        p = threading.Thread(target=ClientFunc, args=())
         domobj.openGraphics(idx, server.fileno(), flag)
-        thread.start_new_thread(ClientFunc, ())
+        p.start()
+        p.join()
         while shared['timeout'] > 0 and shared['success'] is False:
             shared['timeout'] = shared['timeout'] - 1
             time.sleep(1)
