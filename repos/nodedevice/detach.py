@@ -10,42 +10,25 @@ import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
-from utils import utils
+from utils import utils, sriov, process
 
-required_params = ('pciaddress',)
+required_params = ('vf_num',)
 optional_params = {}
-
-
-def check_node_detach(pciaddress):
-    """Check node device detach result, if detachment is successful, the
-       device host driver should be hided and the device should be bound
-       to pci-stub driver, argument 'address' is a address of the node device
-    """
-
-    driver_cmd = "readlink /sys/bus/pci/devices/0000:%s/driver/ -f" % pciaddress
-    logger.debug("execute shell cmd line: %s " % driver_cmd)
-    (status, retval) = commands.getstatusoutput(driver_cmd)
-    if status != 0:
-        logger.error("shell cmd line exit status: %d" % status)
-        logger.error("shell cmd line exit result: %s" % retval)
-        return 1
-    else:
-        logger.debug("shell cmd line exit status: %d" % status)
-
-    driver = os.path.basename(retval)
-    return driver
 
 
 def detach(params):
     """Dettach a specific node device and bind it to pci-stub driver, argument
-       'params' is a dictionary type and includes 'pciaddress' key, whose value
-       uniquely identify a pci address of the node device
+       'params' is a dictionary type and includes 'vf_num' key
     """
-    global logger
     logger = params['logger']
-    pciaddress = params['pciaddress']
+    vf_num = params['vf_num']
 
-    original_driver = check_node_detach(pciaddress)
+    if not sriov.create_vf(vf_num, logger):
+        logger.error("create vf fail.")
+        return 1
+
+    vf_addr = sriov.get_vfs_addr(vf_num, logger)
+    original_driver = sriov.get_vf_driver(vf_addr, logger)
     logger.info("original device driver: %s" % original_driver)
 
     kernel_version = utils.get_host_kernel_version()
@@ -60,7 +43,7 @@ def detach(params):
         pciback = 'vfio-pci'
 
     if 'el5' in kernel_version:
-        vendor_product_get = "lspci -n |grep %s|awk '{print $3}'" % pciaddress
+        vendor_product_get = "lspci -n |grep %s|awk '{print $3}'" % vf_addr
         logger.debug("the vendor:product is %s" % vendor_product_get)
         (status, retval) = commands.getstatusoutput(vendor_product_get)
         if status != 0:
@@ -71,7 +54,7 @@ def detach(params):
             product_ID = retval.split(":")[1]
             device_name = "pci_%s_%s" % (vendor_ID, product_ID)
     else:
-        (bus, slot_func) = pciaddress.split(":")
+        (dom, bus, slot_func) = vf_addr.split(":")
         (slot, func) = slot_func.split(".")
         device_name = "pci_0000_%s_%s_%s" % (bus, slot, func)
 
@@ -83,7 +66,7 @@ def detach(params):
         nodeobj = conn.nodeDeviceLookupByName(device_name)
         logger.info("detach the node device")
         nodeobj.dettach()
-        current_driver = check_node_detach(pciaddress)
+        current_driver = sriov.get_vf_driver(vf_addr, logger)
         logger.info("current device driver: %s" % current_driver)
         if current_driver != original_driver and current_driver == pciback:
             logger.info("the node %s device detach is successful"

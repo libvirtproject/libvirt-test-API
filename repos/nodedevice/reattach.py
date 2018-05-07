@@ -10,43 +10,27 @@ import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
-from utils import utils
+from utils import utils, sriov, process
 
-required_params = ('pciaddress',)
+required_params = ('vf_num',)
 optional_params = {}
-
-
-def check_node_reattach(pciaddress):
-    """Check node device reattach result, if reattachment is successful, the
-       device will be removed from pci-stub driver and return original driver
-       to the device, argument 'address' is a address of the node device
-    """
-    driver_cmd = "readlink /sys/bus/pci/devices/0000:%s/driver/ -f" % pciaddress
-    logger.debug("execute shell cmd line: %s " % driver_cmd)
-    (status, retval) = commands.getstatusoutput(driver_cmd)
-    if status != 0:
-        logger.error("shell cmd line exit status: %d" % status)
-        logger.error("shell cmd line exit result: %s" % retval)
-        return 1
-    else:
-        logger.debug("shell cmd line exit status: %d" % status)
-
-    driver = os.path.basename(retval)
-    return driver
 
 
 def reattach(params):
     """Reattach a specific node device and removed it
        from pci-stub driver, argument 'params' is a dictionary type
-       and includes 'pciaddress' key, whose value
-       uniquely identify a pci address of the node device
+       and includes 'vf_num' key
     """
-    global logger
     logger = params['logger']
-    pciaddress = params['pciaddress']
+    vf_num = params['vf_num']
 
-    original_driver = check_node_reattach(pciaddress)
-    logger.info("original device driver: %s" % original_driver)
+    if not sriov.create_vf(vf_num, logger):
+        logger.error("create vf fail.")
+        return 1
+
+    vf_addr = sriov.get_vfs_addr(vf_num, logger)
+    original_driver = sriov.get_vf_driver(vf_addr, logger)
+    logger.info("original_driver: %s" % original_driver)
 
     kernel_version = utils.get_host_kernel_version()
     hypervisor = utils.get_hypervisor()
@@ -60,18 +44,18 @@ def reattach(params):
         pciback = 'vfio-pci'
 
     if 'el5' in kernel_version:
-        vendor_product_get = "lspci -n |grep %s|awk '{print $3}'" % pciaddress
-        logger.debug("the vendor:product is %s" % vendor_product_get)
-        (status, retval) = commands.getstatusoutput(vendor_product_get)
-        if status != 0:
+        cmd = "lspci -n |grep %s|awk '{print $3}'" % vf_addr
+        logger.debug("cmd: %s" % cmd)
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        if ret.exit_status != 0:
             logger.error("failed to get vendor product ID")
             return 1
         else:
-            vendor_ID = retval.split(":")[0]
-            product_ID = retval.split(":")[1]
+            vendor_ID = ret.stdout.split(":")[0]
+            product_ID = re.stdout.split(":")[1]
             device_name = "pci_%s_%s" % (vendor_ID, product_ID)
     else:
-        (bus, slot_func) = pciaddress.split(":")
+        (dom, bus, slot_func) = vf_addr.split(":")
         (slot, func) = slot_func.split(".")
         device_name = "pci_0000_%s_%s_%s" % (bus, slot, func)
 
@@ -83,8 +67,8 @@ def reattach(params):
         nodeobj = conn.nodeDeviceLookupByName(device_name)
         nodeobj.reAttach()
         logger.info("reattach the node device")
-        current_driver = check_node_reattach(pciaddress)
-        logger.info("current device driver: %s" % current_driver)
+        current_driver = sriov.get_vf_driver(vf_addr, logger)
+        logger.info("current_driver: %s" % current_driver)
         if original_driver == pciback and current_driver != pciback:
             logger.info("the node %s device reattach is successful"
                         % device_name)
