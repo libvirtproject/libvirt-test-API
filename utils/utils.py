@@ -33,6 +33,7 @@ import libvirt
 import math
 import lxml
 import lxml.etree
+import locale
 
 from xml.dom import minidom
 from src import env_parser
@@ -42,6 +43,11 @@ try:
     from urlparse import urlparse
 except ImportError:
     from urllib.parse import urlparse
+
+try:
+    unicode
+except NameError:
+    unicode = str  # pylint:disable=W0622
 
 subproc_flag = 0
 
@@ -1231,7 +1237,7 @@ def version_compare(package_name, major, minor, update, logger):
                 logger.error("Get %s version failed." % package_name)
                 return False
 
-            package = out[0].decode().split('-')
+            package = decode_to_text(out[0]).split('-')
             for item in package:
                 if not item.isalnum() and ".x86_64" not in item:
                     ver = item.split('.')
@@ -1636,4 +1642,21 @@ def get_image_format(img, logger):
     if ret:
         logger.error("cmd: %s, out: %s" % (cmd, out))
         return -1
-    return out[0].decode().split(":")[1].strip()
+    return decode_to_text(out[0]).split(":")[1].strip()
+
+
+def decode_to_text(stream, encoding=locale.getpreferredencoding(),
+                   errors='strict'):
+    """
+    Decode decoding string
+    :param stream: string stream
+    :param encoding: encode_type
+    :param errors: error handling to use while decoding (strict,replace,
+                   ignore,...)
+    :return: encoding text
+    """
+    if hasattr(stream, 'decode'):
+        return stream.decode(encoding, errors)
+    if isinstance(stream, (str, unicode)):
+        return stream
+    raise TypeError("Unable to decode stream into a string-like type")

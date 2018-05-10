@@ -57,7 +57,7 @@ def check_hypervisor_ver_num(conn, logger):
             if status != 0:
                 logger.error("Could not be aware of qemu")
                 return False
-        hyper_version = output[0].decode()
+        hyper_version = utils.decode_to_text(output[0])
         ver = hyper_version.split('-')[ver_num_pos]
         x = int(ver.split('.')[0])
         y = int(ver.split('.')[1])
@@ -68,7 +68,7 @@ def check_hypervisor_ver_num(conn, logger):
         if status != 0:
             logger.error("Exec_cmd failed: %s" % cmds)
             return False
-        hyper_version = output[0].decode()
+        hyper_version = utils.decode_to_text(output[0])
         ver = hyper_version.split('-')[0]
         x = int(ver.split('.')[0])
         y = int(ver.split('.')[1])

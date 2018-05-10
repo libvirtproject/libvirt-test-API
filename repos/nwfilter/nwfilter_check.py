@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import operator
 import time
 import xml.dom.minidom
 
@@ -48,7 +47,7 @@ def check_ebtables(*args):
     in_chain_str = "Bridge chain: " + in_vnet_chain
     out_chain_str = "Bridge chain: " + out_vnet_chain
 
-    if operator.eq(direction, "inout"):
+    if direction == "inout":
         in_list = get_ebtables(in_vnet_chain, logger)
         out_list = get_ebtables(out_vnet_chain, logger)
         if (in_chain_str in in_list[-2] and
@@ -58,14 +57,14 @@ def check_ebtables(*args):
             return True
         else:
             return False
-    elif operator.eq(direction, "in"):
+    elif direction == "in":
         out_list = get_ebtables(out_vnet_chain, logger)
         if (out_chain_str in out_list[-2] and
                 action in out_list[-1]):
             return True
         else:
             return False
-    elif operator.eq(direction, "out"):
+    elif direction == "out":
         in_list = get_ebtables(in_vnet_chain, logger)
         if (in_chain_str in in_list[-2] and
                 action in in_list[-1]):

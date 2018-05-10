@@ -115,10 +115,10 @@ def check_domain_list(name_list, flag):
                 domain_list.append(guest)
 
     logger.info("check the %s domains list is %s" % (flag, domain_list))
-    if cmp(sorted(domain_list), sorted(name_list)):
-        return 1
-    else:
+    if sorted(domain_list) == sorted(name_list):
         return 0
+    else:
+        return 1
 
 
 def domain_list(params):

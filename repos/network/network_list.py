@@ -91,7 +91,7 @@ def network_list(params):
             networkname = network.name()
             logger.info("Network name: %s " % networkname)
             # Check if the network is active
-            if cmp(flags, "active") == 0:
+            if flags == "active":
                 if network.isActive():
                     logger.info("The %s network is active" % networkname)
                 else:
@@ -100,7 +100,7 @@ def network_list(params):
                     return 1
 
             # Check if the network is persistent
-            if cmp(flags, "persistent") == 0:
+            if flags == "persistent":
                 if network.isPersistent() and \
                         check_persistent_netxml(networkname):
                     logger.info("The %s network is persistent" % networkname)
@@ -110,7 +110,7 @@ def network_list(params):
                     return 1
 
             # Check if the network is auto start
-            if cmp(flags, "autostart") == 0:
+            if flags == "autostart":
                 if check_autostart_netxml(networkname):
                     logger.info("The %s network is autostart" % networkname)
                 else:

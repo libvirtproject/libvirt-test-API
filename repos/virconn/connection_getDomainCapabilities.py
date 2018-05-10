@@ -58,7 +58,7 @@ def get_hypervisor_ver(emulatorbin, logger):
     else:
         logger.debug("The package is %s" % package)
         return 0
-    package = package[0].decode().split('-')
+    package = utils.decode_to_text(package[0]).split('-')
     version = ""
     for item in package:
         if not item.isalnum():

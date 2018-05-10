@@ -32,7 +32,7 @@ def check_network_bridge_name(network_obj, network_bridge_name, logger):
     bridge_element = doc.getElementsByTagName('bridge')[0]
     bridge_name = bridge_element.attributes['name'].value
     logger.debug("bridge name from xml is %s" % bridge_name)
-    if cmp(network_bridge_name, bridge_name) == 0:
+    if network_bridge_name == bridge_name:
         logger.debug("the bridge name is right")
         return True
     else:
