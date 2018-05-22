@@ -5,7 +5,7 @@ import re
 
 import libvirt
 from libvirt import libvirtError
-from utils.utils import version_compare
+from utils.utils import version_compare, isRelease
 from src import sharedmod
 from utils import process
 
@@ -57,7 +57,7 @@ def check_block_data(blockdev, blkdata, logger):
     get_physical = "ls -l %s | awk '{print $5}'"
     qemu_img_check_re = r"(\d+)/(\d+) = \d+.\d+% allocated, (\d+.\d+)% fragmented,"
 
-    if version_compare("qemu-kvm-rhev", 2, 10, 0, logger):
+    if isRelease("8", logger) or version_compare("qemu-kvm-rhev", 2, 10, 0, logger):
         qemu_img_format = "qemu-img info -U %s |grep format |awk -F': ' '{print $2}'"
         qemu_img_cluster_size = "qemu-img info -U %s |grep cluster_size |awk -F': ' '{print $2}'"
         qemu_img_check = "qemu-img check -U %s"

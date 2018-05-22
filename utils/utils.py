@@ -1671,3 +1671,15 @@ def decode_to_text(stream, encoding=locale.getpreferredencoding(),
     if isinstance(stream, (str, unicode)):
         return stream
     raise TypeError("Unable to decode stream into a string-like type")
+
+
+def isRelease(version, logger):
+    cmd = "cat /etc/redhat-release"
+    ret, out = exec_cmd(cmd, shell=True)
+    if ret != 0:
+        logger.error("cmd: %s, out: %s" % (cmd, out))
+        return False
+    if "release %s" % version in out[0]:
+        return True
+    else:
+        return False

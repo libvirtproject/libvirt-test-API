@@ -9,13 +9,13 @@ from utils import utils, process
 required_params = ('poolname',
                    'volname',
                    'cephserver',
-                   'cephserverpool',
+                   'cephpool',
                    'flags',)
 optional_params = {'snapshotname': ''}
 
 
-def prepare_snapshot(cephserver, cephserverpool, volname, sn, logger):
-    cmd = "rbd -m %s snap create %s/%s@%s" % (cephserver, cephserverpool, volname, sn)
+def prepare_snapshot(cephserver, cephpool, volname, sn, logger):
+    cmd = "rbd -m %s snap create %s/%s@%s" % (cephserver, cephpool, volname, sn)
     logger.debug("prepare_snapshot: cmd: %s" % cmd)
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status == 1:
@@ -26,8 +26,8 @@ def prepare_snapshot(cephserver, cephserverpool, volname, sn, logger):
     return 0
 
 
-def check_volume(cephserver, cephserverpool, volname, logger):
-    cmd = "rbd -m %s -p %s ls | grep %s" % (cephserver, cephserverpool, volname)
+def check_volume(cephserver, cephpool, volname, logger):
+    cmd = "rbd -m %s -p %s ls | grep %s" % (cephserver, cephpool, volname)
     logger.debug("check_volume: cmd: %s" % cmd)
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status == 0:
@@ -47,17 +47,17 @@ def delete_rbd_volume(params):
     volname = params['volname']
     sn = params.get('snapshotname', '')
     cephserver = params['cephserver']
-    cephserverpool = params['cephserverpool']
+    cephpool = params['cephpool']
     flags = params['flags']
 
     logger.info("the poolname is %s, volname is %s, snapshot name is %s" %
                 (poolname, volname, sn))
     logger.info("ceph server is %s, ceph server pool is %s" %
-                (cephserver, cephserverpool))
+                (cephserver, cephpool))
     logger.info("the flags given is %s" % flags)
 
     if sn:
-        ret = prepare_snapshot(cephserver, cephserverpool, volname, sn, logger)
+        ret = prepare_snapshot(cephserver, cephpool, volname, sn, logger)
         if ret == 1:
             return 1
 
@@ -67,7 +67,7 @@ def delete_rbd_volume(params):
         vol = poolobj.storageVolLookupByName(volname)
         vol.delete(int(flags))
 
-        if check_volume(cephserver, cephserverpool, volname, logger):
+        if check_volume(cephserver, cephpool, volname, logger):
             return 1
 
     except libvirtError as e:
@@ -82,22 +82,22 @@ def delete_rbd_volume_clean(params):
     logger = params['logger']
     volname = params['volname']
     cephserver = params.get('cephserver', '')
-    cephserverpool = params.get('cephserverpool', '')
+    cephpool = params.get('cephpool', '')
     snapshotname = params.get('snapshotname', '')
 
     if snapshotname:
         cmd = ("rbd -m %s -p %s --image %s snap purge" %
-               (cephserver, cephserverpool, volname))
+               (cephserver, cephpool, volname))
         (ret, output) = utils.exec_cmd(cmd, shell=True)
         if ret:
             logger.error("Delete snapshot for %s failed." % volname)
             logger.error("Output: %s" % output)
 
     cmd = ("rbd -m %s -p %s ls | grep %s" %
-           (cephserver, cephserverpool, volname))
+           (cephserver, cephpool, volname))
     (ret, output) = utils.exec_cmd(cmd, shell=True)
     if not ret:
-        cmd = "rbd -m %s -p %s remove %s" % (cephserver, cephserverpool, volname)
+        cmd = "rbd -m %s -p %s remove %s" % (cephserver, cephpool, volname)
         (ret, output) = utils.exec_cmd(cmd, shell=True)
         if ret:
             logger.error("Remove %s failure." % volname)

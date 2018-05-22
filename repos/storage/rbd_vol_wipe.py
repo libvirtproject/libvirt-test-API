@@ -7,7 +7,7 @@ from src import sharedmod
 from libvirt import libvirtError
 from utils import utils, process
 
-required_params = ('guestname', 'cephserver', 'cephserverpool', 'poolname', 'volname', 'alg',)
+required_params = ('guestname', 'cephserver', 'cephpool', 'poolname', 'volname', 'alg',)
 optional_params = {'xml': 'xmls/rbd_disk.xml',}
 
 
@@ -48,9 +48,9 @@ def write_img(ip, logger):
         return 1
 
 
-def get_size(cephserver, cephserverpool, poolname, volname, logger):
+def get_size(cephserver, cephpool, poolname, volname, logger):
     cmd = ("rbd -m %s -p %s du %s | grep %s" %
-           (cephserver, cephserverpool, volname, volname))
+           (cephserver, cephpool, volname, volname))
     logger.debug("get_size: cmd: %s" % cmd)
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
@@ -76,18 +76,18 @@ def rbd_vol_wipe(params):
     global logger
     logger = params['logger']
     cephserver = params['cephserver']
-    cephserverpool = params['cephserverpool']
+    cephpool = params['cephpool']
     poolname = params['poolname']
     volname = params['volname']
     alg = params['alg']
     xmlstr = params['xml']
     guestname = params['guestname']
 
-    logger.info("ceph server: %s, ceph server pool: %s" % (cephserver, cephserverpool))
+    logger.info("ceph server: %s, ceph server pool: %s" % (cephserver, cephpool))
     logger.info("the poolname is %s, volname is %s, alg is %s" %
                 (poolname, volname, alg))
 
-    sourcename = "%s/%s" % (cephserverpool, volname)
+    sourcename = "%s/%s" % (cephpool, volname)
     xmlstr = xmlstr.replace('SOURCENAME', sourcename)
     xmlstr = xmlstr.replace('CEPHSERVER', cephserver)
 
@@ -101,14 +101,14 @@ def rbd_vol_wipe(params):
         logger.info("guest ip is %s" % ip)
         write_img(ip, logger)
 
-        before_size = get_size(cephserver, cephserverpool, poolname, volname, logger)
+        before_size = get_size(cephserver, cephpool, poolname, volname, logger)
         logger.info("before wipe, img used is %s" % before_size)
 
         poolobj = conn.storagePoolLookupByName(poolname)
         vol = poolobj.storageVolLookupByName(volname)
         vol.wipePattern(int(alg), 0)
 
-        after_size = get_size(cephserver, cephserverpool, poolname, volname, logger)
+        after_size = get_size(cephserver, cephpool, poolname, volname, logger)
         logger.info("after wipe, img used is %s" % after_size)
         if after_size != "0" or before_size == "0":
             logger.error("rbd vol wipe failed.")
@@ -126,12 +126,12 @@ def rbd_vol_wipe(params):
 def rbd_vol_wipe_clean(params):
     """clean testing environment"""
     cephserver = params['cephserver']
-    cephserverpool = params['cephserverpool']
+    cephpool = params['cephpool']
     poolname = params['poolname']
     volname = params['volname']
 
     # rbd -m 10.73.75.52 -p libvirt-pool rm rbd_vol.img
-    cmd = "rbd -m %s -p %s rm %s" % (cephserver, cephserverpool, volname)
+    cmd = "rbd -m %s -p %s rm %s" % (cephserver, cephpool, volname)
     logger.debug("rbd_vol_wipe_clean: cmd: %s" % cmd)
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:

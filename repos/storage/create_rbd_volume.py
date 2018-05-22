@@ -5,7 +5,7 @@ from libvirt import libvirtError
 from src import sharedmod
 from utils import process
 
-required_params = ('poolname', 'volname', 'cephserver', 'cephserverpool',)
+required_params = ('poolname', 'volname', 'cephserver', 'cephpool',)
 optional_params = {'xml': 'xmls/rbd_volume.xml',
                    'suffix': 'bytes',
                    'capacity': '1073741824',
@@ -13,12 +13,12 @@ optional_params = {'xml': 'xmls/rbd_volume.xml',
                    }
 
 
-def check_volume_from_server(poolname, volname, cephserver, cephserverpool, logger):
-    cmd = "rbd -m %s -p %s ls | grep %s" % (cephserver, cephserverpool, volname)
+def check_volume_from_server(poolname, volname, cephserver, cephpool, logger):
+    cmd = "rbd -m %s -p %s ls | grep %s" % (cephserver, cephpool, volname)
     ret = process.run(cmd, shell=True, ignore_status=True)
     if not ret.exit_status:
         logger.info("%s already exist in ceph server, remove it." % volname)
-        cmd = "rbd -m %s -p %s rm %s" % (cephserver, cephserverpool, volname)
+        cmd = "rbd -m %s -p %s rm %s" % (cephserver, cephpool, volname)
         ret = process.run(cmd, shell=True, ignore_status=True)
         if ret.exit_status:
             logger.info("Remove %s failed." % volname)
@@ -45,11 +45,11 @@ def create_rbd_volume(params):
     volname = params['volname']
     xmlstr = params['xml']
     cephserver = params['cephserver']
-    cephserverpool = params['cephserverpool']
+    cephpool = params['cephpool']
 
     logger.info("the poolname is %s, volname is %s" %
                 (poolname, volname))
-    if check_volume_from_server(poolname, volname, cephserver, cephserverpool, logger):
+    if check_volume_from_server(poolname, volname, cephserver, cephpool, logger):
         return 1
 
     try:
@@ -85,7 +85,7 @@ def create_rbd_volume_clean(params):
     poolname = params['poolname']
     volname = params['volname']
     cephserver = params['cephserver']
-    cephserverpool = params['cephserverpool']
+    cephpool = params['cephpool']
 
     conn = sharedmod.libvirtobj['conn']
     poollist = conn.listStoragePools()
@@ -98,7 +98,7 @@ def create_rbd_volume_clean(params):
             volobj = poolobj.storageVolLookupByName(volname)
             volobj.delete(0)
 
-    cmd = "rbd -m %s -p %s rm %s" % (cephserver, cephserverpool, volname)
+    cmd = "rbd -m %s -p %s rm %s" % (cephserver, cephpool, volname)
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
         logger.debug(ret.stdout)

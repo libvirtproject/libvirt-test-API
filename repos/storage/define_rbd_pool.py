@@ -7,7 +7,7 @@ from libvirt import libvirtError
 from src import sharedmod
 from repos.storage import storage_common
 
-required_params = ('poolname', 'cephserver', 'cephserverpool')
+required_params = ('poolname', 'cephserver', 'cephpool')
 optional_params = {'xml': 'xmls/rbd_pool.xml',}
 
 
@@ -16,7 +16,7 @@ def define_rbd_pool(params):
     logger = params['logger']
     poolname = params['poolname']
     server = params['cephserver']
-    serverpool = params['cephserverpool']
+    serverpool = params['cephpool']
     xmlstr = params['xml']
 
     try:

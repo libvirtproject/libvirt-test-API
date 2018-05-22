@@ -5,7 +5,7 @@ import libvirt
 
 from libvirt import libvirtError
 from src import sharedmod
-from utils.utils import exec_cmd, version_compare
+from utils.utils import exec_cmd, version_compare, isRelease
 
 required_params = ('poolname', 'volname', 'flags')
 optional_params = {}
@@ -13,7 +13,7 @@ optional_params = {}
 
 def check_vol_info(info, vol_path, flags, logger):
     # check capacity
-    if version_compare("qemu-kvm-rhev", 2, 10, 0, logger):
+    if isRelease("8", logger) or version_compare("qemu-kvm-rhev", 2, 10, 0, logger):
         cmd = "qemu-img info -U %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'" % vol_path
     else:
         cmd = "qemu-img info %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'" % vol_path

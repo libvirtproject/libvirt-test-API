@@ -2,7 +2,7 @@
   <name>POOLNAME</name>
   <source>
     <host name='CEPHSERVER'/>
-    <name>CEPHSERVERPOOL</name>
+    <name>CEPHPOOL</name>
   </source>
 </pool>
 
