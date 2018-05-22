@@ -4,6 +4,7 @@
 
 import os
 import string
+import sys
 
 from xml.dom import minidom
 from libvirt import libvirtError
@@ -35,8 +36,12 @@ def write_file(path):
     """
     logger.info("write 1M data into file %s" % path)
     f = open(path, 'w')
-    datastr = ''.join(string.lowercase + string.uppercase +
-                      string.digits + '.' + '\n')
+    if sys.version_info[0] < 3:
+        datastr = ''.join(string.lowercase + string.uppercase +
+                          string.digits + '.' + '\n')
+    else:
+        datastr = ''.join(string.ascii_lowercase + string.ascii_uppercase +
+                          string.digits + '.' + '\n')
     data = ''.join(16384 * datastr)
     f.write(data)
     f.close()
@@ -93,7 +98,10 @@ def logical_vol_upload(params):
 
         st = conn.newStream(0)
 
-        f = open(test_path, 'r')
+        if sys.version_info[0] < 3:
+            f = open(test_path, 'r')
+        else:
+            f = open(test_path, 'rb')
         logger.info("start upload")
         vol.upload(st, offset, length, 0)
         logger.info("sent all data")

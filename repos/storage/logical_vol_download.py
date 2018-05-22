@@ -3,6 +3,8 @@
 
 import os
 import string
+import sys
+
 from xml.dom import minidom
 
 from libvirt import libvirtError
@@ -35,9 +37,13 @@ def write_file(path, capacity):
     """
     logger.info("write %sM data into file %s" % (capacity, path))
     f = open(path, 'w')
-    datastr = ''.join(string.lowercase + string.uppercase +
-                      string.digits + '.' + '\n')
-    repeat = capacity / 64
+    if sys.version_info[0] < 3:
+        datastr = ''.join(string.lowercase + string.uppercase +
+                          string.digits + '.' + '\n')
+    else:
+        datastr = ''.join(string.ascii_lowercase + string.ascii_uppercase +
+                          string.digits + '.' + '\n')
+    repeat = int(capacity / 64)
     data = ''.join(repeat * datastr)
     f.write(data)
     f.close()
@@ -87,7 +93,10 @@ def logical_vol_download(params):
 
         test_path = path_value + "/" + "vol_test"
 
-        f = open(test_path, 'w')
+        if sys.version_info[0] < 3:
+            f = open(test_path, 'w')
+        else:
+            f = open(test_path, 'wb')
         logger.info("start download")
         vol.download(st, offset, length, 0)
         logger.info("downloaded all data")

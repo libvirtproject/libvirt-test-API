@@ -85,7 +85,7 @@ def check_list_volumes(pool_obj, vol_name_list):
         if status is False:
             return False
     elif pooltype in ['iscsi', 'scsi', 'mpath']:
-        if (cmp(vol_poolobj_list, vol_name_list) == 0):
+        if vol_poolobj_list == vol_name_list:
             return True
         else:
             return False
@@ -98,8 +98,7 @@ def check_list_volumes(pool_obj, vol_name_list):
     vol_name_list.sort()
     vol_poolobj_list.sort()
     vol_cmd_list.sort()
-    if (cmp(vol_poolobj_list, vol_name_list) == 0) and \
-            (cmp(vol_name_list, vol_cmd_list) == 0):
+    if vol_poolobj_list == vol_name_list and vol_name_list == vol_cmd_list:
         return True
     else:
         return False

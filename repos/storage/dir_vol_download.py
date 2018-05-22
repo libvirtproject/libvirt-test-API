@@ -3,6 +3,8 @@
 
 import os
 import string
+import sys
+
 from xml.dom import minidom
 from libvirt import libvirtError
 from src import sharedmod
@@ -35,9 +37,13 @@ def write_file(path, capacity):
     logger.info("write %s data into file %s" % (capacity, path))
     out = utils.get_capacity_suffix_size(capacity)
     f = open(path, 'w')
-    datastr = ''.join(string.lowercase + string.uppercase +
-                      string.digits + '.' + '\n')
-    repeat = out['capacity_byte'] / 64
+    if sys.version_info[0] < 3:
+        datastr = ''.join(string.lowercase + string.uppercase +
+                          string.digits + '.' + '\n')
+    else:
+        datastr = ''.join(string.ascii_lowercase + string.ascii_uppercase +
+                          string.digits + '.' + '\n')
+    repeat = int(out['capacity_byte'] / 64)
     data = ''.join(repeat * datastr)
     f.write(data)
     f.close()
@@ -88,7 +94,10 @@ def dir_vol_download(params):
 
         test_path = path_value + "/" + "vol_test"
 
-        f = open(test_path, 'w')
+        if sys.version_info[0] < 3:
+            f = open(test_path, 'w')
+        else:
+            f = open(test_path, 'wb')
         logger.info("start download")
         vol.download(st, offset, length, 0)
         logger.info("downloaded all data")

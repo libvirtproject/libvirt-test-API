@@ -880,7 +880,10 @@ def digest(path, offset, length):
         if got == 0:
             break
         done += got
-        hash_value.update(outstr)
+        if sys.version_info[0] < 3:
+            hash_value.update(outstr)
+        else:
+            hash_value.update(outstr.encode(locale.getpreferredencoding()))
 
     fhandle.close()
     return hash_value.hexdigest()

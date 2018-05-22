@@ -18,6 +18,9 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
+import types
+
 from xml.dom import minidom
 
 try:
@@ -58,7 +61,12 @@ class xml_parser(object):
 
     def parse(self, arg):
         out = None
-        if isinstance(arg, file):
+        if sys.version_info[0] >= 3:
+            from io import IOBase
+            filetype = IOBase
+        else:
+            filetype = types.FileType
+        if isinstance(arg, filetype):
             out = self.parsefile(arg)
         elif os.path.exists(arg):
             print("file: %s " % arg)

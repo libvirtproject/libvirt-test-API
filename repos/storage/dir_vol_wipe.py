@@ -3,6 +3,8 @@
 
 import os
 import string
+import sys
+
 from xml.dom import minidom
 from libvirt import libvirtError
 from src import sharedmod
@@ -34,9 +36,13 @@ def write_file(path, capacity):
     logger.info("write %s data into file %s" % (capacity, path))
     out = utils.get_capacity_suffix_size(capacity)
     f = open(path, 'w')
-    datastr = ''.join(string.lowercase + string.uppercase +
-                      string.digits + '.' + '\n')
-    repeat = out['capacity_byte'] / 64
+    if sys.version_info[0] < 3:
+        datastr = ''.join(string.lowercase + string.uppercase +
+                          string.digits + '.' + '\n')
+    else:
+        datastr = ''.join(string.ascii_lowercase + string.ascii_uppercase +
+                          string.digits + '.' + '\n')
+    repeat = int(out['capacity_byte'] / 64)
     data = ''.join(repeat * datastr)
     f.write(data)
     f.close()
@@ -80,7 +86,7 @@ def dir_vol_wipe(params):
 
         test_path = path_value + "/" + "vol_test"
         out = utils.get_capacity_suffix_size(capacity)
-        count = out['capacity_byte'] / 1024
+        count = int(out['capacity_byte'] / 1024)
         logger.info("write %s zero to test volume %s" % (capacity, test_path))
         cmd = "dd if=/dev/zero of=%s bs=1024 count=%s" % (test_path, count)
         utils.exec_cmd(cmd, shell=True)
