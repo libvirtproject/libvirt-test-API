@@ -58,7 +58,7 @@ def create_vf(num, logger):
         return False
     max_vf = int(re.findall(r"Total VFs: (.+?),", ret.stdout)[0]) - 1
     logger.info("max vf number: %s" % max_vf)
-    if max_vf < num and num < 0:
+    if max_vf < int(num) and int(num) < 0:
         logger.error("vf num %s error." % num)
         return False
 

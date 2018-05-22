@@ -4,7 +4,6 @@
 import os
 import re
 import sys
-import commands
 
 import libvirt
 from libvirt import libvirtError
@@ -43,15 +42,15 @@ def detach(params):
         pciback = 'vfio-pci'
 
     if 'el5' in kernel_version:
-        vendor_product_get = "lspci -n |grep %s|awk '{print $3}'" % vf_addr
-        logger.debug("the vendor:product is %s" % vendor_product_get)
-        (status, retval) = commands.getstatusoutput(vendor_product_get)
-        if status != 0:
+        cmd = "lspci -n |grep %s|awk '{print $3}'" % vf_addr
+        logger.debug("the vendor:product is %s" % cmd)
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        if ret.exit_status != 0:
             logger.error("failed to get vendor product ID")
             return 1
         else:
-            vendor_ID = retval.split(":")[0]
-            product_ID = retval.split(":")[1]
+            vendor_ID = ret.stdout.split(":")[0]
+            product_ID = ret.stdout.split(":")[1]
             device_name = "pci_%s_%s" % (vendor_ID, product_ID)
     else:
         (dom, bus, slot_func) = vf_addr.split(":")

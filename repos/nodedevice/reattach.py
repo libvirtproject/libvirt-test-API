@@ -4,7 +4,6 @@
 import os
 import re
 import sys
-import commands
 
 import libvirt
 from libvirt import libvirtError

@@ -2,11 +2,10 @@
 # Test nodedev numbers
 
 import libvirt
-import commands
 from libvirt import libvirtError
 
 from src import sharedmod
-from utils import utils
+from utils import utils, process
 
 required_params = ()
 optional_params = {}
@@ -60,17 +59,21 @@ def check_num_cap(conn, num, cap, logger):
             return False
     if len(devs) == num:
         return True
-    logger.error("Number don't match with listAllDevices."
+    logger.error("Number don't match with listCaps."
                  " Expect %d, got %d, cap %s"
                  % (len(devs), num, cap))
     return False
 
 
 def check_num_virsh(num, logger, cap=""):
-    (ret, out) = commands.getstatusoutput('virsh nodedev-list --cap "%s"' % cap)
-    if ret != 0:
-        logger.error("virsh error: %s" % out)
-    vir_num = len(out.split('\n')) - 1
+    if cap == "":
+        cmd = "virsh nodedev-list | wc -l"
+    else:
+        cmd = "virsh nodedev-list --cap '%s' | wc -l" % cap
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        logger.error("virsh error: %s" % ret.stdout)
+    vir_num = int(ret.stdout) - 1
     if num == vir_num:
         return True
     logger.error("Number don't match with virsh."
