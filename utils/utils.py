@@ -866,7 +866,10 @@ def digest(path, offset, length):
     """read data from file with length bytes, begin at offset
        and return md5 hexdigest
     """
-    fhandle = open(path, 'r')
+    if sys.version_info[0] < 3:
+        fhandle = open(path, 'r')
+    else:
+        fhandle = open(path, 'rb')
     fhandle.seek(offset)
     hash_value = hashlib.md5()
     done = 0
@@ -880,10 +883,7 @@ def digest(path, offset, length):
         if got == 0:
             break
         done += got
-        if sys.version_info[0] < 3:
-            hash_value.update(outstr)
-        else:
-            hash_value.update(outstr.encode(locale.getpreferredencoding()))
+        hash_value.update(outstr)
 
     fhandle.close()
     return hash_value.hexdigest()
