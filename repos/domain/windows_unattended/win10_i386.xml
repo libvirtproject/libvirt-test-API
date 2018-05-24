@@ -15,15 +15,15 @@
 			<UILanguageFallback>en-us</UILanguageFallback>
 			<UserLocale>en-us</UserLocale>
 		</component>
-		<component name="Microsoft-Windows-PnpCustomizationsWinPE" 
-			processorArchitecture="x86" publicKeyToken="31bf3856ad364e35" 
-			language="neutral" versionScope="nonSxS" 
-			xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" 
+		<component name="Microsoft-Windows-PnpCustomizationsWinPE"
+			processorArchitecture="x86" publicKeyToken="31bf3856ad364e35"
+			language="neutral" versionScope="nonSxS"
+			xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
 			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 			<DriverPaths>
 				<PathAndCredentials wcm:keyValue="1" wcm:action="add">
 					<Path>A:\i386\PATHOFDRIVER</Path>
-			</PathAndCredentials>
+				</PathAndCredentials>
 			</DriverPaths>
 		</component>
 		<component name="Microsoft-Windows-Setup"
@@ -37,14 +37,13 @@
 					<CreatePartitions>
 						<CreatePartition wcm:action="add">
 							<Order>1</Order>
-							<Size>20000</Size>
+                                                        <Extend>true</Extend>
 							<Type>Primary</Type>
 						</CreatePartition>
 					</CreatePartitions>
 					<ModifyPartitions>
 						<ModifyPartition wcm:action="add">
 							<Active>true</Active>
-							<Extend>false</Extend>
 							<Format>NTFS</Format>
 							<Label>OS_Install</Label>
 							<Letter>C</Letter>
@@ -58,6 +57,12 @@
 			</DiskConfiguration>
 			<ImageInstall>
 				<OSImage>
+					<InstallFrom>
+						<MetaData wcm:action="add">
+							<Key>/IMAGE/INDEX</Key>
+							<Value>3</Value>
+						</MetaData>
+					</InstallFrom>
 					<InstallTo>
 						<DiskID>0</DiskID>
 						<PartitionID>1</PartitionID>
