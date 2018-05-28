@@ -144,8 +144,8 @@ def vcpu_affinity_check(domain_name, vcpu, expected_pinned_cpu, hypervisor):
                           the running virtual machine process")
             return 1
         pid = ret.stdout
-        if 'el6' or 'el7' in host_kernel_version:
-            cmd = "virsh qemu-monitor-command %s --hmp info cpus|grep '#%s'|cut -d '=' -f3"\
+        if 'el6' or 'el7' or 'el8' in host_kernel_version:
+            cmd = "virsh qemu-monitor-command %s --hmp info cpus|grep '#%s'|cut -d '=' -f2"\
                 % (domain_name, vcpu)
             ret = process.run(cmd, shell=True, ignore_status=True)
             vcpu_task_id = ret.stdout

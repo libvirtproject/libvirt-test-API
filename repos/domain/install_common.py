@@ -5,6 +5,7 @@ import re
 import requests
 import libvirt
 import time
+import sys
 
 from src import env_parser
 from utils import utils
@@ -83,7 +84,10 @@ def get_iscsi_disk_path(portal, target):
 def get_path_from_url(url, key):
     web_con = requests.get(url)
     match = re.compile(r'<a href=".*">.*%s</a>' % key)
-    name = re.findall(match, web_con.content)[0].split("\"")[1]
+    if sys.version_info[0] < 3:
+        name = re.findall(match, web_con.content)[0].split("\"")[1]
+    else:
+        name = re.findall(match, utils.decode_to_text(web_con.content))[0].split("\"")[1]
     path = "%s/%s" % (url, name)
     return path
 
@@ -429,7 +433,7 @@ def wait_install(conn, guestname, xmlstr, installtype, installmethod, logger, ti
     domobj = conn.lookupByName(guestname)
     interval = 0
     xmlstr_bak = xmlstr
-    while interval < timeout:
+    while interval < int(timeout):
         time.sleep(10)
         if installtype == 'define':
             state = domobj.info()[0]

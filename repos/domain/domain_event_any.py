@@ -15,7 +15,7 @@ optional_params = {
 
 
 def error_handle(unused, error):
-    logger.info("error: %s" % error)
+    print("error: %s" % error)
 
 
 def domain_event_any(params):

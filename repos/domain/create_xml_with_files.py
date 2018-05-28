@@ -5,6 +5,8 @@
 
 import os
 import time
+import sys
+import locale
 
 import shutil
 import libvirt
@@ -41,13 +43,17 @@ def create_files(logger, params):
     default_filenum = 3
 
     if files == 'auto':
-        #files = map(lambda x: "/tmp/libvirt-test-api-create-file-%d" % x,
-        #            range(default_filenum))
         files = ["/tmp/libvirt-test-api-create-file-%d" % x for x in range(default_filenum)]
         for i in files:
             variable = variable + 1
-            with open(i, 'w') as tmp_file:
-                tmp_file.write(TEST_TEXT + str(variable))
+            tmp_str = TEST_TEXT + str(variable)
+            if sys.version_info[0] < 3:
+                with open(i, 'w') as tmp_file:
+                    tmp_file.write(tmp_str)
+            else:
+                with open(i, 'wb') as tmp_file:
+                    encoding = locale.getpreferredencoding()
+                    tmp_file.write(tmp_str.encode(encoding))
 
     for filename in files:
         try:
@@ -158,12 +164,13 @@ def create_xml_with_files(params):
 
     stream = conn.newStream(libvirt.VIR_STREAM_NONBLOCK)
     domobj.openConsole(None, stream, 0)
+    encoding = locale.getpreferredencoding()
     for i in range(len(files)):
         cmd = "cat /proc/1/fd/%d  >>/tmp/libvirt_passfile_check\n" % (i + 3)
-        stream.send(cmd)
+        stream.send(cmd.encode(encoding))
         time.sleep(5)
     cmd = "sync\n"
-    stream.send(cmd)
+    stream.send(cmd.encode(encoding))
     stream.finish()
 
     #test whether or not pass-fd is successful

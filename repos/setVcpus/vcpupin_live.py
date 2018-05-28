@@ -24,7 +24,7 @@ def vcpupin_check(guestname, vcpu, cpulist):
         logger.error("failed to get the pid of domain %s" % guestname)
         return 1
 
-    cmd_vcpu_task_id = "virsh qemu-monitor-command %s --hmp info cpus|grep '#%s'|cut -d '=' -f3"\
+    cmd_vcpu_task_id = "virsh qemu-monitor-command %s --hmp info cpus|grep '#%s'|cut -d '=' -f2"\
         % (guestname, vcpu)
     status, vcpu_task_id = utils.exec_cmd(cmd_vcpu_task_id, shell=True)
     if status:
