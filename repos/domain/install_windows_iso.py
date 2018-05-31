@@ -270,6 +270,10 @@ def install_windows_iso(params):
         iscsi_path = install_common.get_iscsi_disk_path(sourcehost, sourcepath)
         xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='%s'" % iscsi_path)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
+        if guestarch == "x86_64":
+            xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
+        else:
+            xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
