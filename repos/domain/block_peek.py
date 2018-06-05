@@ -61,15 +61,11 @@ def block_peek(params):
 
         logger.info("cmd: %s" % cmd)
         logger.info("result: %s" % ret[0].strip())
-        if ret[0].strip() == binascii.b2a_hex(first_byte):
-            logger.info("Pass: hexdump: %s, api: %s"
-                        % (ret[0].strip(), binascii.b2a_hex(first_byte)))
-        else:
-            logger.error("Failed: hexdump: %s, api: %s"
-                         % (ret[0].strip(), binascii.b2a_hex(first_byte)))
+        api_first_byte = utils.decode_to_text(binascii.b2a_hex(first_byte))
+        logger.info("hexdump: %s, api: %s" % (ret[0].strip(), api_first_byte))
+        if ret[0].strip() != api_first_byte:
             logger.error("please make sure the guest is bootable")
             return 1
-
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))

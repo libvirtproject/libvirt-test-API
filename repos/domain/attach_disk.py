@@ -65,7 +65,7 @@ def check_disk_permission(guestname, devname, username, password):
     if not ret:
         logger.info("Login guest to run mount /dev/%s /mnt : %s" % (devname,
                                                                     output))
-        if "is write-protected, mounting read-only" in output:
+        if "write-protected" in output and "read-only" in output:
             touchcmd = "touch test /mnt"
             (ret, output) = utils.remote_exec_pexpect(ip, username, password,
                                                       touchcmd)
