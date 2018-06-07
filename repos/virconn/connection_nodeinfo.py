@@ -24,7 +24,7 @@ def get_memory(logger):
     """
     output = utils.get_host_memory()
     # the memory value python API returned is devided by 1024
-    mem_cap = int(output) / 1024
+    mem_cap = int(int(output) / 1024)
     logger.info("memory is %s MiB" % mem_cap)
     return mem_cap
 
@@ -140,8 +140,7 @@ def connection_nodeinfo(params):
 
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s" %
-                     e.get_error_message())
-        logger.error("start failed")
+                     (e.get_error_message(), e.get_error_code()))
         return 1
 
     return 0
