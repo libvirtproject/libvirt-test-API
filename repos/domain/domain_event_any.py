@@ -14,8 +14,11 @@ optional_params = {
 }
 
 
-def error_handle(unused, error):
-    print("error: %s" % error)
+def error_handle(logger, error):
+    logger.info("error code: %s" % str(error[0]))
+    logger.info("error domain: %s" % str(error[1]))
+    logger.info("error message: %s" % error[2])
+    logger.info("error level: %s" % str(error[3]))
 
 
 def domain_event_any(params):
@@ -46,7 +49,7 @@ def domain_event_any(params):
     else:
         logger.info("Listening for events")
 
-    libvirt.registerErrorHandler(error_handle, None)
+    libvirt.registerErrorHandler(error_handle, (logger))
 
     #String, use it to verify the integrity of callback's extra param
     random_str = get_rand_str()
