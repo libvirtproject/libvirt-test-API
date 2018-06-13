@@ -253,5 +253,5 @@ def job_stats_clean(params):
         if os.path.exists(DUMP_PATH):
             os.remove(DUMP_PATH)
     elif vm_state == "migrate" and flags == libvirt.VIR_DOMAIN_JOB_STATS_COMPLETED:
-        clean_src_env(guestname, logger)
         clean_dst_env(guestname, target, logger)
+    clean_src_env(guestname, logger)
