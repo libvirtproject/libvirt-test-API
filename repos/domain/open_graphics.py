@@ -10,6 +10,7 @@ import threading
 
 from libvirt import libvirtError
 from src import sharedmod
+from utils import utils
 
 required_params = ('guestname',)
 optional_params = {'flags': '', 'idx': 0}
@@ -64,11 +65,18 @@ def open_graphics(params):
                     logger.info("No data yet: %s" % e)
                 try:
                     # Send some data...
-                    client.send('HELP\r')
-                    client.send('help\r')
-                    client.send('h\r')
-                    client.send('?\r')
-                    client.send('\r')
+                    if utils.isRelease('8', logger):
+                        client.send(b'HELP\r')
+                        client.send(b'help\r')
+                        client.send(b'h\r')
+                        client.send(b'?\r')
+                        client.send(b'\r')
+                    else:
+                        client.send('HELP\r')
+                        client.send('help\r')
+                        client.send('h\r')
+                        client.send('?\r')
+                        client.send('\r')
                     time.sleep(1)
                 except socket.error as e:
                     logger.info("Socket closed by server")
