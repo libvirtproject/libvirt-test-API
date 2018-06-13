@@ -8,7 +8,26 @@ from utils import utils
 required_params = ('guestname',)
 optional_params = {}
 
+USER = "root"
+PASSWD = "redhat"
 NMI_INFO = "NMI received for unknown reason"
+
+
+def check_rsyslog(ip, logger):
+    cmd = "rpm -qa | grep rsyslog"
+    ret, out = utils.remote_exec_pexpect(ip, USER, PASSWD, cmd)
+    if ret:
+        cmd = "yum install rsyslog -y"
+        ret, out = utils.remote_exec_pexpect(ip, USER, PASSWD, cmd)
+        if ret:
+            logger.error("out: %s" % out)
+            return 1
+    cmd = "systemctl restart rsyslog.service"
+    ret, out = utils.remote_exec_pexpect(ip, USER, PASSWD, cmd)
+    if ret:
+        logger.error("out: %s" % out)
+        return 1
+    return 0
 
 
 def inject_nmi(params):
@@ -18,6 +37,10 @@ def inject_nmi(params):
     try:
         conn = sharedmod.libvirtobj['conn']
         domobj = conn.lookupByName(guestname)
+        mac = utils.get_dom_mac_addr(guestname)
+        ip = utils.mac_to_ip(mac, 120)
+        if check_rsyslog(ip, logger):
+            return 1
         logger.info('inject NMI to domain.')
         domobj.injectNMI()
     except libvirtError as e:
@@ -26,11 +49,9 @@ def inject_nmi(params):
         logger.error("inject NMI failed.")
         return 1
 
-    mac = utils.get_dom_mac_addr(guestname)
-    ip = utils.mac_to_ip(mac, 120)
     cmd = "grep '%s' /var/log/messages" % NMI_INFO
     logger.debug("cmd: %s" % cmd)
-    ret, out = utils.remote_exec_pexpect(ip, "root", "redhat", cmd)
+    ret, out = utils.remote_exec_pexpect(ip, USER, PASSWD, cmd)
     if ret:
         logger.error("FAIL: inject NMI to guest failed.")
         logger.error("out : %s" % out)
