@@ -114,7 +114,10 @@ def check_DAC_label(api, domain, logger):
     tmp1 = tmp[0].strip().replace("+", "")
     tmp[0] = tmp1.split(':')
     tmp1 = context.split()
-    context = str(tmp1.pop(1) + " " + tmp1.pop(1)).split()
+    if utils.isRelease('8', logger):
+        context = str(tmp1.pop(2) + " " + tmp1.pop(2)).split()
+    else:
+        context = str(tmp1.pop(1) + " " + tmp1.pop(1)).split()
     if tmp[0] == context:
         if tmp[1] == get_enforce:
             logger.debug("PASS: '%s'" % api)
