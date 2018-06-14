@@ -9,6 +9,8 @@ import libvirt
 from src import sharedmod
 from lxml import etree as ET
 from utils import utils
+from repos.domain import domain_common
+
 required_params = ('guestname',)
 optional_params = {'flags': 'secure',
                    }
@@ -98,4 +100,6 @@ def save_image_get_xml_desc(params):
 def save_image_get_xml_desc_clean(params):
     guestname = params['guestname']
     logger = params['logger']
-    ret = utils.del_file("/tmp/%s.save" % guestname, logger)
+    conn = libvirt.open()
+    domain_common.guest_clean(conn, guestname, logger)
+    utils.del_file("/tmp/%s.save" % guestname, logger)

@@ -6,6 +6,7 @@ with parameter requirement
 
 from libvirt import libvirtError
 import libvirt
+import time
 from src import sharedmod
 from lxml import etree as ET
 
@@ -91,6 +92,7 @@ def managedsave_get_xml_desc(params):
     like cmd "virsh managedsave guestname"
     """
     domobj.managedSave()
+    time.sleep(10)
 
     """get current domain configuration,it is used to compare with a
        new configuration from managedsave
@@ -108,3 +110,14 @@ def managedsave_get_xml_desc(params):
 
     logger.info("PASS")
     return 0
+
+
+def managedsave_get_xml_desc_clean(params):
+    guestname = params['guestname']
+    logger = params['logger']
+    conn = libvirt.open()
+    dom = conn.lookupByName(guestname)
+    state = dom.info()[0]
+    if state == libvirt.VIR_DOMAIN_RUNNING:
+        dom.destroy()
+    dom.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_MANAGED_SAVE)

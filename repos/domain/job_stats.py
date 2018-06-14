@@ -179,6 +179,7 @@ def job_stats(params):
                         return 1
             else:
                 info = domobj.jobStats(flags)
+        time.sleep(10)
         logger.info("job stats: %s" % info)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"

@@ -4,6 +4,7 @@
 
 from libvirt import libvirtError
 import libvirt
+import time
 from src import sharedmod
 from utils import utils
 import functools
@@ -70,6 +71,7 @@ def managedsave_define_xml(params):
        like cmd "virsh managedsave guestname"
     """
     domobj.managedSave()
+    time.sleep(10)
 
     #get guest'xml
     guestxml = domobj.XMLDesc(0)
@@ -115,3 +117,14 @@ def managedsave_define_xml(params):
     logger.info("The domain is changed as expected")
     logger.info("PASS")
     return 0
+
+
+def managedsave_define_xml_clean(params):
+    guestname = params['guestname']
+    logger = params['logger']
+    conn = libvirt.open()
+    dom = conn.lookupByName(guestname)
+    state = dom.info()[0]
+    if state == libvirt.VIR_DOMAIN_RUNNING:
+        dom.destroy()
+    dom.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_MANAGED_SAVE)

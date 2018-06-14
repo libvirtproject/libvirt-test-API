@@ -8,6 +8,7 @@ from src import sharedmod
 from utils import utils
 import functools
 from xml.dom import minidom
+from repos.domain import domain_common
 
 required_params = ('guestname',)
 optional_params = {'flags': 'save_running',
@@ -119,4 +120,6 @@ def save_image_define_xml(params):
 def save_image_define_xml_clean(params):
     guestname = params['guestname']
     logger = params['logger']
-    ret = utils.del_file("/tmp/%s.save" % guestname, logger)
+    conn = libvirt.open()
+    domain_common.guest_clean(conn, guestname, logger)
+    utils.del_file("/tmp/%s.save" % guestname, logger)
