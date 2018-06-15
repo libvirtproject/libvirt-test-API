@@ -29,12 +29,12 @@ def ssh_keygen(logger):
         elif index == 2:
             child.sendline("\r")
         elif index == 3:
-            logger.debug(string.strip(child.before))
+            #logger.debug(string.strip(child.before))
             child.close()
             return 0
         elif index == 4:
             logger.error("ssh_keygen timeout")
-            logger.debug(string.strip(child.before))
+            #logger.debug(string.strip(child.before))
             child.close()
             return 1
 
@@ -55,12 +55,12 @@ def ssh_tunnel(hostname, username, password, logger):
         elif index == 1:
             child.sendline(password)
         elif index == 2:
-            logger.debug(string.strip(child.before))
+            #logger.debug(string.strip(child.before))
             child.close()
             return 0
         elif index == 3:
             logger.error("setup tunnel timeout")
-            logger.debug(string.strip(child.before))
+            #logger.debug(string.strip(child.before))
             child.close()
             return 1
 
