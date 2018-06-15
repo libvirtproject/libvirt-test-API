@@ -2,6 +2,7 @@
 # To test domain's blockkinfo API
 
 import re
+import time
 
 import libvirt
 from libvirt import libvirtError
@@ -161,6 +162,8 @@ def domain_blkinfo(params):
         return 1
 
     try:
+        # need time to wait image refresh
+        time.sleep(300)
         logger.info("the output of domain blockinfo is:")
         block_info = domobj.blockInfo(blockdev, 0)
         logger.info("Capacity  : %d " % block_info[0])
