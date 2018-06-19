@@ -8,7 +8,7 @@ import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
-from utils import utils
+from utils import utils, process
 
 required_params = ('guestname', 'vcpu', 'cpulist',)
 optional_params = {}
@@ -24,8 +24,15 @@ def vcpupin_check(guestname, vcpu, cpulist):
         logger.error("failed to get the pid of domain %s" % guestname)
         return 1
 
-    cmd_vcpu_task_id = "virsh qemu-monitor-command %s --hmp info cpus|grep '#%s'|cut -d '=' -f2"\
-        % (guestname, vcpu)
+    host_kernel_ver = utils.get_host_kernel_version()
+    cmd = "rpm -q qemu-kvm-rhev"
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ('el8' in host_kernel_ver) or ('el7' in host_kernel_ver and not ret.exit_status):
+        cmd_vcpu_task_id = ("virsh qemu-monitor-command %s --hmp info cpus|grep '#%s'|cut -d '=' -f2"
+                            % (guestname, vcpu))
+    else:
+        cmd_vcpu_task_id = ("virsh qemu-monitor-command %s --hmp info cpus|grep '#%s'|cut -d '=' -f3"
+                            % (guestname, vcpu))
     status, vcpu_task_id = utils.exec_cmd(cmd_vcpu_task_id, shell=True)
     if status:
         logger.error("failed to get the threadid of domain %s" % guestname)

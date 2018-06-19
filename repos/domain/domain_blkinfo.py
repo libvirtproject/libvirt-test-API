@@ -19,7 +19,6 @@ def get_output(command, logger):
     """
     ret = process.run(command, shell=True, ignore_status=True)
     logger.debug("cmd: %s" % command)
-    logger.debug("ret: %s" % ret)
     if ret.exit_status:
         logger.error("executing " + "\"" + command + "\"" + " failed")
         logger.error(ret.stdout)
@@ -162,10 +161,17 @@ def domain_blkinfo(params):
         return 1
 
     try:
-        # need time to wait image refresh
-        time.sleep(300)
         logger.info("the output of domain blockinfo is:")
         block_info = domobj.blockInfo(blockdev, 0)
+        # Add to test
+        for count in range(0, 100):
+            if block_info[1] != block_info[2]:
+                time.sleep(3)
+                block_info = domobj.blockInfo(blockdev, 0)
+            else:
+                logger.debug("count: %s" % count)
+                break
+        # End to test
         logger.info("Capacity  : %d " % block_info[0])
         logger.info("Allocation: %d " % block_info[1])
         logger.info("Physical  : %d " % block_info[2])
