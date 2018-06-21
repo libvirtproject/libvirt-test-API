@@ -1683,3 +1683,15 @@ def isRelease(version, logger):
         return True
     else:
         return False
+
+
+def get_version():
+    cmd = "cat /etc/redhat-release"
+    ret, out = exec_cmd(cmd, shell=True)
+    if ret != 0:
+        return False
+    if "Server" in out[0]:
+        release = out[0].split(' ')[6]
+    else:
+        release = out[0].split(' ')[5]
+    return release.split('.')

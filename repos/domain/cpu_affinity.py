@@ -135,7 +135,7 @@ def vcpu_affinity_check(domain_name, vcpu, expected_pinned_cpu, hypervisor):
     """check the task in the process of the running virtual machine
        grep Cpus_allowed_list /proc/PID/task/*/status
     """
-    host_kernel_version = utils.get_host_kernel_version()
+    major, minor = utils.get_version()
     if 'qemu' in hypervisor:
         cmd = "cat /var/run/libvirt/qemu/%s.pid" % domain_name
         ret = process.run(cmd, shell=True, ignore_status=True)
@@ -144,10 +144,10 @@ def vcpu_affinity_check(domain_name, vcpu, expected_pinned_cpu, hypervisor):
                           the running virtual machine process")
             return 1
         pid = ret.stdout
-        if 'el6' or 'el7' or 'el8' in host_kernel_version:
+        if int(major) > 5:
             cmd = "rpm -q qemu-kvm-rhev"
             ret = process.run(cmd, shell=True, ignore_status=True)
-            if ('el8' in host_kernel_version) or ('el7' in host_kernel_version and not ret.exit_status):
+            if int(minor) == 8 or (int(major) == 7 and int(minor) == 6 and not ret.exit_status):
                 cmd = ("virsh qemu-monitor-command %s --hmp info cpus|grep '#%s'|cut -d '=' -f2"
                        % (domain_name, vcpu))
             else:
@@ -162,8 +162,7 @@ def vcpu_affinity_check(domain_name, vcpu, expected_pinned_cpu, hypervisor):
             logger.debug("the output of command 'grep Cpus_allowed_list \
                           /proc/%s/task/%s/status' is %s" % (pid, vcpu_task_id, ret.stdout))
             actual_pinned_cpu = int(ret.stdout.split('\t')[1])
-
-        elif 'el5' in host_kernel_version:
+        elif int(major) == 5:
             cmd = "grep Cpus_allowed /proc/%s/task/*/status" % pid
             ret = process.run(cmd, shell=True, ignore_status=True)
             logger.debug("the output of command 'grep Cpus_allowed \
@@ -173,9 +172,7 @@ def vcpu_affinity_check(domain_name, vcpu, expected_pinned_cpu, hypervisor):
             tmp = int(vcpu_task.split('\t')[1].split(',')[-1])
             actual_pinned_cpu = math.log(tmp, 2)
         else:
-            logger.error(
-                "unsupported host os version: %s" %
-                host_kernel_version)
+            logger.error("unsupported host os version: %s.%s" % (major, minor))
             return 1
     elif 'xen' in hypervisor:
         cmd = "virsh vcpuinfo %s|grep -1 ^VCPU.*[^0-9]%s$|tail -1|cut -d: -f2" % (domain_name, vcpu)

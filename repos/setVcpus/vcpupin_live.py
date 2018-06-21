@@ -24,10 +24,10 @@ def vcpupin_check(guestname, vcpu, cpulist):
         logger.error("failed to get the pid of domain %s" % guestname)
         return 1
 
-    host_kernel_ver = utils.get_host_kernel_version()
+    major, minor = utils.get_version()
     cmd = "rpm -q qemu-kvm-rhev"
     ret = process.run(cmd, shell=True, ignore_status=True)
-    if ('el8' in host_kernel_ver) or ('el7' in host_kernel_ver and not ret.exit_status):
+    if int(minor) == 8 or (int(major) == 7 and int(minor) == 6 and not ret.exit_status):
         cmd_vcpu_task_id = ("virsh qemu-monitor-command %s --hmp info cpus|grep '#%s'|cut -d '=' -f2"
                             % (guestname, vcpu))
     else:
