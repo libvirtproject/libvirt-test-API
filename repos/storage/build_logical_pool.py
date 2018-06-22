@@ -42,8 +42,8 @@ def check_build_pool(poolname):
     path = "/etc/lvm/backup/%s" % poolname
     logger.debug("%s xml file path: %s" % (poolname, path))
     if os.access(path, os.R_OK):
-        logger.debug("execute grep vgcreate %s command" % path)
-        ret = process.run("grep vgcreate %s" % path, shell=True, ignore_status=True)
+        cmd = "grep %s %s" % (poolname, path)
+        ret = process.run(cmd, shell=True, ignore_status=True)
         logger.debug(ret.stdout)
         if ret.exit_status == 0:
             return True

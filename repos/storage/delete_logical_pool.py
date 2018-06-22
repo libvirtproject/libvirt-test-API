@@ -43,7 +43,7 @@ def check_delete_pool(poolname):
     path = "/etc/lvm/backup/%s" % poolname
     logger.debug("%s xml file path: %s" % (poolname, path))
     if os.access(path, os.R_OK):
-        logger.debug("%s is still existing")
+        logger.debug("%s is still existing" % path)
         return False
     else:
         logger.debug("%s file don't exist" % path)
