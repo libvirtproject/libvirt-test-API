@@ -71,7 +71,7 @@ def set_xml(sourcehost, sourcepath, xmlstr, hddriver, diskpath, ks, nfs_server, 
         os.remove("%s/%s" % (tmppath, ks_name))
 
     urllib.request.urlretrieve(ks, "%s/%s" % (tmppath, ks_name))
-    old_ks_fp = open('%s/%s' % (tmppath, ks_name), "rw+")
+    old_ks_fp = open('%s/%s' % (tmppath, ks_name), "r+")
     new_ks_fp = open("%s/test_api_iso_ks.cfg" % tmppath, "w")
     old_ks_file = old_ks_fp.read()
     old_ks_file = old_ks_file.replace("--boot-drive=", "--boot-drive=%s" % boot_driver)
