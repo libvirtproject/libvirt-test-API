@@ -30,7 +30,6 @@ def domain_interface_address(params):
     guestname = params.get('guestname')
 
     logger.info("the name of guest is %s" % guestname)
-
     conn = sharedmod.libvirtobj['conn']
 
     try:
@@ -41,15 +40,15 @@ def domain_interface_address(params):
             libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE, 0)
         interface_dict = domobj.interfaceAddresses(
             libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT, 0)
-        interface_dict_arp = domobj.interfaceAddresses(
-            libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_ARP, 0)
-
+        if utils.version_compare("libvirt-python", 4, 4, 0, logger):
+            interface_dict_arp = domobj.interfaceAddresses(
+                libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_ARP, 0)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
         return 1
 
-    if len(interface_dict_lease) == 0 or len(interface_dict_arp) == 0:
+    if len(interface_dict_lease) == 0:
         logger.error('Guest have no interface?')
         return 1
 
@@ -60,28 +59,33 @@ def domain_interface_address(params):
     guest_address, guest_lease_address = [], []
 
     try:
-        # Verify addresses in interface_dict_arp
-        try:
-            logger.info("arp api output: %s" % interface_dict_arp)
-            for interface in interface_dict_arp:
-                logger.info(interface)
-                hwaddr = interface_dict_arp[interface]['hwaddr']
+        if utils.version_compare("libvirt-python", 4, 4, 0, logger):
+            if len(interface_dict_arp) == 0:
+                logger.error('Guest have no interface?')
+                return 1
 
-                # arp command or check /proc/net/arp
-                cmd = "arp | grep %s" % hwaddr
-                ret, output = utils.exec_cmd(cmd, shell=True)
-                if ret:
-                    logger.error("get arp failed: %s" % output)
-                    return 1
+            # Verify addresses in interface_dict_arp
+            try:
+                logger.info("arp api output: %s" % interface_dict_arp)
+                for interface in interface_dict_arp:
+                    logger.info(interface)
+                    hwaddr = interface_dict_arp[interface]['hwaddr']
 
-                for addr in interface_dict_arp[interface]['addrs']:
-                    for out in output:
-                        if addr['addr'] not in out:
-                            logger.error("invalid address %s" % str(addr))
-                            raise TestError()
-        except TestError as e:
-            logger.error("Invalid data: %s" % str(interface_dict_arp))
-            return 1
+                    # arp command or check /proc/net/arp
+                    cmd = "arp | grep %s" % hwaddr
+                    ret, output = utils.exec_cmd(cmd, shell=True)
+                    if ret:
+                        logger.error("get arp failed: %s" % output)
+                        return 1
+
+                    for addr in interface_dict_arp[interface]['addrs']:
+                        for out in output:
+                            if addr['addr'] not in out:
+                                logger.error("invalid address %s" % str(addr))
+                                raise TestError()
+            except TestError as e:
+                logger.error("Invalid data: %s" % str(interface_dict_arp))
+                return 1
 
         # Verify addresses in interface_dict_lease
         try:
