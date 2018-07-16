@@ -39,7 +39,7 @@ CLIENTKEY = os.path.join(TEMP_TLS_FOLDER, 'clientkey.pem')
 CLIENTCERT = os.path.join(TEMP_TLS_FOLDER, 'clientcert.pem')
 
 
-def CA_setting_up(logger):
+def CA_setting_up(target_hostname, logger):
     """ setting up a Certificate Authority """
     # Create a private key for CA
     logger.info("generate CA certificates")
@@ -55,9 +55,9 @@ def CA_setting_up(logger):
     # ca.info file
     cainfo = os.path.join(TEMP_TLS_FOLDER, 'ca.info')
     cainfo_fd = open(cainfo, 'w')
-    cainfo_str = ("cn = Libvirt_test_API\n"
+    cainfo_str = ("cn = %s\n"
                   "ca\n"
-                  "cert_signing_key\n")
+                  "cert_signing_key\n" % target_hostname)
 
     cainfo_fd.write(cainfo_str)
     cainfo_fd.close()
@@ -81,7 +81,7 @@ def CA_setting_up(logger):
     return 0
 
 
-def tls_server_cert(target_machine, logger):
+def tls_server_cert(target_machine, target_hostname,logger):
     """ generating server certificates """
     # Create tls server key
     logger.info("generate server certificates")
@@ -99,9 +99,11 @@ def tls_server_cert(target_machine, logger):
     serverinfo_fd = open(serverinfo, 'w')
     serverinfo_str = ("organization = Libvirt_test_API\n"
                       "cn = %s\n"
+                      "dns_name = %s\n"
+                      "ip_address = %s\n"
                       "tls_www_server\n"
                       "encryption_key\n"
-                      "signing_key\n" % target_machine)
+                      "signing_key\n" % (target_hostname, target_hostname, target_machine))
 
     serverinfo_fd.write(serverinfo_str)
     serverinfo_fd.close()
@@ -141,9 +143,9 @@ def tls_client_cert(local_machine, logger):
     # client.info
     clientinfo = os.path.join(TEMP_TLS_FOLDER, 'client.info')
     clientinfo_fd = open(clientinfo, 'w')
-    clientinfo_str = ("country = xxx\n"
-                      "state = xxx\n"
-                      "locality = xxx\n"
+    clientinfo_str = ("country = GB\n"
+                      "state = London\n"
+                      "locality = London\n"
                       "organization = Libvirt_test_API\n"
                       "cn = %s\n"
                       "tls_www_client\n"
@@ -433,8 +435,10 @@ def tls_setup(params):
         uri += "?pkipath=%s" % pkipath
 
     local_machine = utils.get_local_hostname()
+    target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
 
-    logger.info("the hostname of server is %s" % target_machine)
+    logger.info("server's ip: %s" % target_machine)
+    logger.info("server's hostname: %s" % target_hostname)
     logger.info("the hostname of local machine is %s" % local_machine)
     logger.info("the value of listen_tls is %s" % listen_tls)
     logger.info("the value of auth_tls is %s" % auth_tls)
@@ -451,10 +455,10 @@ def tls_setup(params):
     if iptables_stop(target_machine, username, password, logger):
         return 1
 
-    if CA_setting_up(logger):
+    if CA_setting_up(target_hostname, logger):
         return 1
 
-    if tls_server_cert(target_machine, logger):
+    if tls_server_cert(target_machine, target_hostname, logger):
         return 1
 
     if tls_client_cert(local_machine, logger):
