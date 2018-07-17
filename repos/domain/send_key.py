@@ -43,6 +43,41 @@ def check_file(domobj, logger, username, password, ip):
         return 1
     return 0
 
+# For test
+import aexpect
+
+def login_guest(guestname, username, password, logger):
+    cmd = "virsh console %s --force" % guestname
+    session = aexpect.ShellSession(cmd)
+    try:
+        while True:
+            match, text = session.read_until_last_line_matches(
+                [r"[E|e]scape character is", r"login:",
+                 r"[P|p]assword:", session.prompt],
+                10, internal_timeout=1)
+            if match == 0:
+                logger.debug("Got '^]', sending '\\n'")
+                session.sendline()
+            elif match == 1:
+                logger.debug("Got 'login:', sending '%s'", username)
+                session.sendline(username)
+            elif match == 2:
+                logger.debug("Got 'Password:', sending '%s'", password)
+                session.sendline(password)
+            elif match == 3:
+                logger.debug("Got Shell prompt -- logged in")
+                break
+        session.close()
+    except (aexpect.ShellError,
+            aexpect.ExpectError) as detail:
+        if 'Shell process terminated' not in str(detail):
+            logger.error('Expect shell terminated, but found %s'
+                         % detail)
+        log = session.get_output()
+        logger.error("failed login guest: %s" % log)
+        session.close()  
+# end test
+
 
 def send_key(params):
     """
@@ -100,6 +135,17 @@ def send_key(params):
     try:
         conn = sharedmod.libvirtobj['conn']
         domobj = conn.lookupByName(guestname)
+        #login_guest(guestname, username, password, logger)
+        # username: root
+        user_code_1 = [19, 24]
+        domobj.sendKey(0, 30, user_code_1, len(user_code_1), 0)
+        user_code_2 = [24, 20, 28]
+        domobj.sendKey(0, 30, user_code_2, len(user_code_2), 0)
+        time.sleep(2)
+        # password: redhat
+        passwd_code = [19, 18, 32, 35, 30, 20, 28]
+        domobj.sendKey(0, 30, passwd_code, len(passwd_code), 0)
+        time.sleep(3)
         if clean_guest(domobj, logger, username, password, ip):
             logger.error("clean guest failed.")
             return 1
