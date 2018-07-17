@@ -95,7 +95,7 @@ def migrate_tls(params):
 
     try:
         logger.info("use migrate() to migrate")
-        srcdom.migrate(dstconn, libvirt.VIR_MIGRATE_TLS, None, None, 0)
+        srcdom.migrate(dstconn, libvirt.VIR_MIGRATE_TLS|libvirt.VIR_MIGRATE_UNSAFE, None, None, 0)
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))

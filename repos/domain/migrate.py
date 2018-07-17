@@ -197,6 +197,10 @@ def migrate(params):
             logger.error("unknown flag")
             return 1
 
+    # To avoid error: "Unsafe migration: Migration without "
+    # "shared storage is unsafe"
+    migflags |= libvirt.VIR_MIGRATE_UNSAFE
+
     #generate ssh key pair
     ret = domain_common.ssh_keygen(logger)
     if ret:

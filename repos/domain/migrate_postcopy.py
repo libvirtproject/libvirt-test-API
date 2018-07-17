@@ -42,7 +42,7 @@ def env_clean(srcc, dstc, guestname, logger):
 
 def migrate(srcc, srcd, dstc, guestname, logger):
     try:
-        flags = libvirt.VIR_MIGRATE_LIVE | libvirt.VIR_MIGRATE_POSTCOPY
+        flags = libvirt.VIR_MIGRATE_LIVE | libvirt.VIR_MIGRATE_POSTCOPY | libvirt.VIR_MIGRATE_UNSAFE
         logger.info("use migrate() to migrate")
         srcd.migrate(dstc, flags, None, None, 0)
     except libvirtError as e:

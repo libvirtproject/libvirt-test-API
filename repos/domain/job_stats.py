@@ -92,7 +92,7 @@ def domain_migrate(dom, target, username, passwd, logger):
     logger.info("start to migrate.")
     try:
         dstconn = libvirt.open(dsturi)
-        dom.migrate(dstconn, libvirt.VIR_MIGRATE_LIVE, None, None, 0)
+        dom.migrate(dstconn, libvirt.VIR_MIGRATE_LIVE|libvirt.VIR_MIGRATE_UNSAFE, None, None, 0)
     except libvirtError as e:
         logger.error("info: %s, code: %s" % (e.get_error_message(), e.get_error_code()))
         return 1
