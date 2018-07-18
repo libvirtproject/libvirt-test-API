@@ -50,9 +50,10 @@ def baseline_hypervisor_cpu(params):
         baseline_features = get_cpu_feature_set(baseline)
         logger.info("Expect: %s" % str(sub_features))
         logger.info("Got: %s" % str(baseline_features))
-        if sub_features != baseline_features:
-            logger.error("baseline hypervisor cpu failed.")
-            return 1
+        for feature in baseline_features:
+            if feature not in sub_features:
+                logger.error("baseline hypervisor cpu failed: %s." % feature)
+                return 1
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s" %
                      (e.get_error_message(), e.get_error_code()))
