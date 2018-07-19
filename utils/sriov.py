@@ -1,6 +1,7 @@
 import glob
 import os
 import re
+import time
 
 from utils import process
 
@@ -73,12 +74,13 @@ def create_vf(num, logger):
         if ret.exit_status:
             logger.error("set vf num to 0 fail: %s" % ret)
             return False
-
+    time.sleep(5)
     cmd = "echo %s > %s%s/%s/sriov_numvfs" % (num, DRIVER_DIR, driver_name, pci_addr)
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
         logger.error("set vf num to %s fail: %s" % (num, ret))
         return False
+    time.sleep(5)
     return True
 
 

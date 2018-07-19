@@ -4,6 +4,7 @@
 import os
 import re
 import sys
+import time
 
 import libvirt
 from libvirt import libvirtError
@@ -66,6 +67,7 @@ def reattach(params):
         nodeobj = conn.nodeDeviceLookupByName(device_name)
         nodeobj.reAttach()
         logger.info("reattach the node device")
+        time.sleep(5)
         current_driver = sriov.get_vf_driver(vf_addr, logger)
         logger.info("current_driver: %s" % current_driver)
         if original_driver == pciback and current_driver != pciback:

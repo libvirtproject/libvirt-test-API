@@ -43,7 +43,7 @@ def detach(params):
 
     if 'el5' in kernel_version:
         cmd = "lspci -n |grep %s|awk '{print $3}'" % vf_addr
-        logger.debug("the vendor:product is %s" % cmd)
+        logger.debug("cmd: %s" % cmd)
         ret = process.run(cmd, shell=True, ignore_status=True)
         if ret.exit_status != 0:
             logger.error("failed to get vendor product ID")
