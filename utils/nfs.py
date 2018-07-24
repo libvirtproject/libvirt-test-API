@@ -5,7 +5,8 @@ import re
 import os
 import shutil
 
-from utils import process, utils
+from utils import process
+from . import utils
 
 
 def local_nfs_exported(nfs_path):
@@ -42,7 +43,6 @@ def local_restart_service(logger):
 def local_is_mounted(nfs_path, mount_path, logger):
     cmd = "cat /proc/mounts"
     ret = process.system_output(cmd, shell=True, ignore_status=True)
-    #logger.debug("ret: %s" % ret)
     for line in ret.splitlines():
         if nfs_path in line and mount_path in line:
             logger.info("%s is mounted." % nfs_path)
@@ -52,11 +52,8 @@ def local_is_mounted(nfs_path, mount_path, logger):
 
 def local_mount(nfs_path, mount_path, logger):
     if local_is_mounted(nfs_path, mount_path, logger):
-        #options = "-o remount,soft,timeo=15,retrans=3"
-        options = "-o remount"
-    else:
-        options = ""
-        #options = "-o soft,timeo=15,retrans=3"
+        local_umount(mount_path, logger)
+    options = "-o rw"
     cmd = "mount %s -t nfs %s %s" % (options, nfs_path, mount_path)
     ret = process.run(cmd, shell=True)
     if ret.exit_status:
@@ -66,11 +63,6 @@ def local_mount(nfs_path, mount_path, logger):
 
 
 def local_umount(mount_path, logger):
-    cmd = "fuser -km %s" % mount_path
-    ret = process.run(cmd, shell=True, ignore_status=True)
-    if ret.exit_status:
-        logger.error("%s failed: %s." % (cmd, ret.stdout))
-        #return False
     cmd = "umount -lf %s" % mount_path
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
@@ -109,7 +101,6 @@ def local_nfs_clean(nfs_path, mount_path, logger):
 def remote_is_mounted(remote_ip, username, password, nfs_path, mount_path, logger):
     cmd = "cat /proc/mounts"
     ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
-    #logger.debug("ret: %s, out: %s" % (ret, out))
     for line in out.splitlines():
         if nfs_path in line and mount_path in line:
             logger.info("%s is mounted." % nfs_path)
@@ -120,7 +111,8 @@ def remote_is_mounted(remote_ip, username, password, nfs_path, mount_path, logge
 def remote_mount(server_ip, remote_ip, username, password, nfs_path, mount_path, logger):
     if remote_is_mounted(remote_ip, username, password, nfs_path, mount_path, logger):
         remote_umount(remote_ip, username, password, mount_path, logger)
-    cmd = "mount -t nfs %s:%s %s" % (server_ip, nfs_path, mount_path)
+    options = "-o rw"
+    cmd = "mount %s -t nfs %s:%s %s" % (options, server_ip, nfs_path, mount_path)
     ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
     if ret:
         logger.error("mount %s failed: %s" % (nfs_path, out))
@@ -129,11 +121,6 @@ def remote_mount(server_ip, remote_ip, username, password, nfs_path, mount_path,
 
 
 def remote_umount(remote_ip, username, password, mount_path, logger):
-    cmd = "fuser -km %s" % mount_path
-    ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
-    if ret:
-        logger.error("%s failed: %s." % (cmd, out))
-        #return False
     cmd = "umount -lf %s" % mount_path
     ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
     if ret:

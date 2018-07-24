@@ -59,7 +59,6 @@ def exec_command(logger, command, flag):
 
 
 def env_clean(srcconn, dstconn, target_machine, guestname, logger):
-
     logger.info("destroy and undefine %s on both side if it exsits", guestname)
     exec_command(logger, "virsh destroy %s" % guestname, 1)
     exec_command(logger, "virsh undefine %s" % guestname, 1)
@@ -199,7 +198,7 @@ def migrate(params):
 
     # To avoid error: "Unsafe migration: Migration without "
     # "shared storage is unsafe"
-    migflags |= libvirt.VIR_MIGRATE_UNSAFE
+    #migflags |= libvirt.VIR_MIGRATE_UNSAFE
 
     #generate ssh key pair
     ret = domain_common.ssh_keygen(logger)
