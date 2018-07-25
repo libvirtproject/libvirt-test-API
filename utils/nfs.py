@@ -103,7 +103,7 @@ def remote_is_mounted(remote_ip, username, password, nfs_path, mount_path, logge
     ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
     for line in out.splitlines():
         if nfs_path in line and mount_path in line:
-            logger.info("%s is mounted." % nfs_path)
+            logger.info("remote %s is mounted." % nfs_path)
             return True
     return False
 
@@ -111,11 +111,19 @@ def remote_is_mounted(remote_ip, username, password, nfs_path, mount_path, logge
 def remote_mount(server_ip, remote_ip, username, password, nfs_path, mount_path, logger):
     if remote_is_mounted(remote_ip, username, password, nfs_path, mount_path, logger):
         remote_umount(remote_ip, username, password, mount_path, logger)
+    cmd = "ls %s" % mount_path
+    ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
+    if ret:
+        cmd = "mkdir -p %s" % mount_path
+        ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
+        if ret:
+            logger.error("%s failed: %s" % (cmd, out))
+            return False
     options = "-o rw"
     cmd = "mount %s -t nfs %s:%s %s" % (options, server_ip, nfs_path, mount_path)
     ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
     if ret:
-        logger.error("mount %s failed: %s" % (nfs_path, out))
+        logger.error("remote mount %s failed: %s" % (nfs_path, out))
         return False
     return True
 
@@ -124,7 +132,7 @@ def remote_umount(remote_ip, username, password, mount_path, logger):
     cmd = "umount -lf %s" % mount_path
     ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
     if ret:
-        logger.error("%s failed: %s." % (cmd, out))
+        logger.error("remote %s failed: %s." % (cmd, out))
         return False
     return True
 
