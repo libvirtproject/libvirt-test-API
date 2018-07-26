@@ -23,7 +23,7 @@
   <devices>
     <emulator>/usr/libexec/qemu-kvm</emulator>
     <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2'/>
+      <driver name='qemu' type='qcow2' cache='none'/>
       <source file='DISKPATH'/>
       <backingStore/>
       <target dev='vda' bus='virtio'/>

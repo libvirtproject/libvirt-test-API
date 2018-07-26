@@ -24,7 +24,8 @@ required_params = ('transport',
 optional_params = {'auth_tcp': '',
                    'xml': None,
                    'migrate_uri': None,
-                   'params_list': None}
+                   'params_list': None,
+                   'diskpath': '/var/lib/libvirt/migrate/libvirt-test-api'}
 
 
 def get_state(state):
@@ -157,6 +158,7 @@ def migrate(params):
     postdstconfig = params['postdstconfig']
     flags = params['flags']
 
+    diskpath = params.get('diskpath', '/var/lib/libvirt/migrate/libvirt-test-api')
     auth_tcp = params.get('auth_tcp', '')
     domxml = params.get('xml', None)
     migrate_uri = params.get('migrate_uri', None)
@@ -249,6 +251,7 @@ def migrate(params):
             else:
                 domxml = domxml.replace('GUESTNAME', guestname)
                 domxml = domxml.replace('UUID', srcdom.UUIDString())
+                domxml = domxml.replace('DISKPATH', diskpath)
                 if params_list:
                     if migrate_uri:
                         params_list['migrate_uri'] = migrate_uri
