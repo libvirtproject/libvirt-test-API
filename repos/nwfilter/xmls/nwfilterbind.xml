@@ -1,0 +1,10 @@
+<filterbinding>
+  <owner>
+    <name>OWNER_NAME</name>
+    <uuid>OWNER_UUID</uuid>
+  </owner>
+  <portdev name='PORTDEV'/>
+  <mac address='MAC_ADDR'/>
+  <filterref filter='clean-traffic'/>
+</filterbinding>
+
