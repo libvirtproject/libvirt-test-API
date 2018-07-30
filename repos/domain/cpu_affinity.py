@@ -251,8 +251,8 @@ def cpu_affinity(params):
         cpu_affinity = cpu_affinity + (False,)
 
     cmd = "lscpu | grep 'POWER8'"
-    status, output = commands.getstatusoutput(cmd)
-    if status:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         cpu_power8 = False
     else:
         cpu_power8 = True
