@@ -68,7 +68,10 @@ def get_fileflags():
     (status, output) = utils.exec_cmd(GET_CMD % pid[0], shell=True)
     if status == 0 and len(output) == 1:
         logger.info("The flags of saved file %s " % output[0])
-        fileflags = output[0][-5]
+        if utils.isPower():
+            fileflags = output[0][-6]
+        else:
+            fileflags = output[0][-5]
     else:
         logger.error("Fail to get the flags of saved file")
         return 1
@@ -78,12 +81,20 @@ def get_fileflags():
 
 def check_fileflag(fileflags):
     """Check the file flags of managed save file if include O_DIRECT"""
-    if int(fileflags) == 4:
-        logger.info("file flags include O_DIRECT")
-        return True
+    if utils.isPower():
+        if int(fileflags) & 4:
+            logger.info("file flags include O_DIRECT")
+            return True
+        else:
+            logger.error("file flags doesn't include O_DIRECT")
+            return False
     else:
-        logger.error("file flags doesn't include O_DIRECT")
-        return False
+        if int(fileflags) == 4:
+            logger.info("file flags include O_DIRECT")
+            return True
+        else:
+            logger.error("file flags doesn't include O_DIRECT")
+            return False
 
 
 def managedsave(params):
