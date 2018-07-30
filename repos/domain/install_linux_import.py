@@ -24,6 +24,8 @@ optional_params = {
                    'guestmachine': 'pc',
                    'networksource': 'default',
                    'bridgename': 'virbr0',
+                   'video': 'qxl',
+                   'graphic': 'spice'
 }
 
 HOME_PATH = os.getcwd()
@@ -103,6 +105,15 @@ def install_linux_import(params):
     if utils.isPower():
         guestmachine = "persies"
         xmlstr = xmlstr.replace('GUESTMACHINE', guestmachine)
+        video = params.get('video', 'vga')
+        xmlstr = xmlstr.replace('VIDEO', video)
+        graphic = params.get('graphic', 'vnc')
+        xmlstr = xmlstr.replace('GRAPHIC', graphic)
+    else:
+        video = params.get('video', 'qxl')
+        xmlstr = xmlstr.replace('VIDEO', video)
+        graphic = params.get('graphic', 'spice')
+        xmlstr = xmlstr.replace('GRAPHIC', graphic)
 
     conn = libvirt.open()
     check_domain_state(conn, guestname, logger)
