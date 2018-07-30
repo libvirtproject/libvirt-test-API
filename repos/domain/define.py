@@ -39,6 +39,8 @@ optional_params = {'memory': 1048576,
                    'on_poweroff': 'destroy',
                    'on_reboot': 'restart',
                    'on_crash': 'restart',
+                   'video': 'qxl',
+                   'graphic': 'spice'
                    }
 
 
