@@ -106,10 +106,10 @@ def check_domain_kernel_line(guestname, username, password, logger):
 
     guest_kernel = utils.get_remote_kernel(ipaddr, username, password)
     if 'el6' in guest_kernel:
-	grub_etc = /etc/grub.conf
+        grub_etc = "/etc/grub.conf"
         cmd = "cat /boot/grub/grub.conf"
     else:
-	grub_etc = /etc/grub2.conf
+        grub_etc = "/etc/grub2.conf"
         cmd = "cat /boot/grub2/grub.cfg"
     ret, output = utils.remote_exec_pexpect(ipaddr, username, password, cmd)
     if ret:
