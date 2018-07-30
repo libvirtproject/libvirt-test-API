@@ -25,7 +25,8 @@ optional_params = {
                    'networksource': 'default',
                    'bridgename': 'virbr0',
                    'video': 'qxl',
-                   'graphic': 'spice'
+                   'graphic': 'spice',
+                   'guestarch': 'x86_64'
 }
 
 HOME_PATH = os.getcwd()
