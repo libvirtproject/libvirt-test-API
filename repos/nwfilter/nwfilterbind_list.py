@@ -5,7 +5,7 @@ import time
 
 from libvirt import libvirtError
 from src import sharedmod
-from utils import process
+from utils import process, utils
 
 required_params = ()
 optional_params = {}
@@ -30,6 +30,10 @@ def check_filter_list(all_filter_list, logger):
 
 def nwfilterbind_list(params):
     logger = params['logger']
+
+    if not utils.version_compare("libvirt-python", 4, 5, 0, logger):
+        logger.info("Current libvirt-python don't support listAllNWFilterBindings().")
+        return 0
 
     try:
         conn = sharedmod.libvirtobj['conn']

@@ -5,7 +5,7 @@ import time
 
 from libvirt import libvirtError
 from src import sharedmod
-from utils import process
+from utils import process, utils
 
 required_params = ('portdev', 'mac_addr')
 optional_params = {'xml': 'xmls/nwfilterbind.xml',
@@ -30,6 +30,10 @@ def nwfilterbind_create_xml(params):
     owner_uuid = params.get('owner_uuid', 'd54df46f-1ab5-4a22-8618-4560ef5fac2c')
     portdev = params['portdev']
     mac_addr = params['mac_addr']
+
+    if not utils.version_compare("libvirt-python", 4, 5, 0, logger):
+        logger.info("Current libvirt-python don't support nwfilterBindingCreateXML().")
+        return 0
 
     xmlstr = xmlstr.replace('OWNER_NAME', owner_name)
     xmlstr = xmlstr.replace('OWNER_UUID', owner_uuid)

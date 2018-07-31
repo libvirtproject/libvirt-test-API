@@ -17,6 +17,10 @@ def nwfilterbind_xml_desc(params):
     portdev = params['portdev']
     logger.info("portdev: %s" % portdev)
 
+    if not utils.version_compare("libvirt-python", 4, 5, 0, logger):
+        logger.info("Current libvirt-python don't support nwfilterbind.XMLDesc().")
+        return 0
+
     try:
         conn = sharedmod.libvirtobj['conn']
         nwfilterbind = conn.nwfilterBindingLookupByPortDev(portdev)

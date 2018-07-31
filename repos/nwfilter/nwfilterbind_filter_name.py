@@ -15,6 +15,9 @@ def nwfilterbind_filter_name(params):
     logger = params['logger']
     portdev = params['portdev']
 
+    if not utils.version_compare("libvirt-python", 4, 5, 0, logger):
+        logger.info("Current libvirt-python don't support nwfilterbind.filterName().")
+        return 0
     try:
         conn = sharedmod.libvirtobj['conn']
         nwfilterbind = conn.nwfilterBindingLookupByPortDev(portdev)
