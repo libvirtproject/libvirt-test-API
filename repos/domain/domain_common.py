@@ -167,3 +167,17 @@ def guest_clean(conn, guestname, logger):
 
     return 0
 
+
+def get_last_error(logger):
+    err = libvirt.virGetLastError()
+    logger.info("last error:")
+    for i in range(len(err)):
+        logger.info("    %s" % err[i])
+    err_msg = libvirt.virGetLastErrorMessage()
+    logger.info("error msg: %s" % err_msg)
+
+    if utils.version_compare("libvirt-python", 4, 5, 0, logger):
+        err_dom = libvirt.virGetLastErrorDomain()
+        err_code = libvirt.virGetLastErrorCode()
+        logger.info("error domain: %s" % err_dom)
+        logger.info("error code: %s" % err_code)

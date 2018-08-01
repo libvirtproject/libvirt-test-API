@@ -7,6 +7,7 @@ import libvirt
 from libvirt import libvirtError
 from src import sharedmod
 from utils import process, utils
+from repos.domain import domain_common
 
 required_params = ('portdev',)
 optional_params = {}
@@ -33,6 +34,7 @@ def nwfilterbind_lookup_by_portdev(params):
             return 1
     except libvirtError as e:
         logger.error("API error message: %s, error code: %s." % (e.get_error_message(), e.get_error_code()))
+        domain_common.get_last_error(logger)
         if e.get_error_code() == libvirt.VIR_ERR_NO_NWFILTER_BINDING and portdev == 'for-test':
             logger.info("PASS: negative test for VIR_ERR_NO_NWFILTER_BINDING flag.")
             return 0
