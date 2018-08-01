@@ -27,7 +27,8 @@ fg = {"active": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_ACTIVE,
       "shutoff": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_SHUTOFF,
       "other": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_OTHER,
       "backing": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_BACKING,
-      "enforce": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_ENFORCE_STATS}
+      "enforce": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_ENFORCE_STATS,
+      "nowait": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_NOWAIT}
 
 
 def filer_domains(logger, flags):
@@ -473,6 +474,11 @@ def connection_getAllDomainStats(params):
             backing_f = True
         elif flag == 'enforce':
             flags |= fg.get('enforce')
+        elif flag == 'nowait':
+            if not utils.version_compare('libvirt-python', 4, 5, 0, logger):
+                logger.info("Current libvirt-python don't support VIR_CONNECT_GET_ALL_DOMAINS_STATS_NOWAIT.")
+            else:
+                flags |= fg.get('nowait')
         elif flag == 'all':
             flags = 0
             filter_f = False
