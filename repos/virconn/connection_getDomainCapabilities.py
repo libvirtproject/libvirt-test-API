@@ -357,6 +357,8 @@ def check_disk(given_list, logger):
         alldevice.remove("floppy")
         allbus.remove("ide")
         allbus.remove("fdc")
+        if version_compare('libvirt', 3, 2, 0, logger):
+            allbus.remove("sata")
 
     logger.debug("Got diskDevice list: %s" % device_api)
     logger.debug("Got bus list: %s" % bus_api)
