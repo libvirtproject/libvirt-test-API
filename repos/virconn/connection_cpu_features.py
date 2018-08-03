@@ -124,11 +124,11 @@ def compare_test(conn, host_cpu, logger):
 
     for cpu in gen_cpu_invalidsets(host_cpu):
         try:
-            if conn.compareCPU(cpu) != libvirt.VIR_CPU_COMPARE_ERROR:
-                logger.error("Compare host cpu with invalid cpu failed, Failed xml:")
-                logger.error(cpu)
-                return 1
+            compare_msg = conn.compareCPU(cpu)
+            logger.info("compare result: %s" % compare_msg)
         except Exception as e:
+            logger.error("err msg: %s" % e)
+            logger.error("cpu xml: %s" % cpu)
             continue
     logger.info("Compare host cpu with invalid cpu successful")
     return 0
