@@ -300,8 +300,11 @@ def set_video_xml(video, xmlstr):
     if video == "qxl":
         video_model = ("<model type='qxl' ram='65536' vram='65536' "
                        "vgamem='16384' heads='1' primary='yes'/>")
-        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' "
+        xmlstr = xmlstr.replace("<model type='VIDEO' vram='16384' "
                                 "heads='1'/>", video_model)
+    else:
+        xmlstr = xmlstr.replace("VIDEO", video)
+
     return xmlstr
 
 

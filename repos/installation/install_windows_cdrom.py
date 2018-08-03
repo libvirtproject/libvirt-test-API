@@ -315,7 +315,7 @@ def install_windows_cdrom(params):
         cdkey = ""
 
     windows_unattended_path = os.path.join(HOME_PATH,
-                                           "repos/domain/windows_unattended")
+                                           "repos/installation/windows_unattended")
 
     logger.debug('install source:\n    %s' % iso_file)
     logger.info('prepare pre-installation environment...')

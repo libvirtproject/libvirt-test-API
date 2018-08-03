@@ -4,10 +4,10 @@
   <vcpu>VCPU</vcpu>
   <os>
     <type machine="GUESTMACHINE">hvm</type>
-    <kernel>KERNEL</kernel>
-    <initrd>INITRD</initrd>
-    <cmdline>ks=KS</cmdline>
+    <boot dev="network"/>
     <boot dev="hd"/>
+    <loader>/usr/share/seabios/bios.bin</loader>
+    <bios userserial='yes' rebootTimeout='-1'/>
   </os>
   <features>
     <acpi/>
@@ -24,19 +24,19 @@
       <source file='DISKPATH'/>
       <target bus='HDDRIVER' dev='DEV'/>
     </disk>
-    <interface type="network">
-      <source network="default"/>
-      <mac address='MACADDR'/>
-      <model type='NICDRIVER'/>
-    </interface>
+  <interface type="network">
+    <source network="pxeboot"/>
+    <mac address='MACADDR'/>
+    <model type='NICDRIVER'/>
+  </interface>
     <console/>
     <input bus="ps2" type="mouse"/>
     <graphics port="-1" autoport="yes" type="GRAPHIC"/>
     <video>
-      <model type='cirrus' vram='16384' heads='1'/>
+      <model type='VIDEO' vram='16384' heads='1'/>
     </video>
     <channel type='unix'>
-      <source mode='bind' path='/var/lib/libvirt/qemu/channel/target/GUESTNAME.agent'/>
+      <source mode='bind' path='/var/lib/libvirt/qemu/GUESTNAME.agent'/>
       <target type='virtio' name='org.qemu.guest_agent.0'/>
     </channel>
   </devices>

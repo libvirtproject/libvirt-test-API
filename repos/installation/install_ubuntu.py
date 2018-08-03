@@ -147,7 +147,7 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
         ret = process.run("cp -rf %s/.disk %s" % (mount_point, new_dir + "/custom"), shell=True, ignore_status=True)
         prepare_ks(ks, guestos, hddriver, new_dir + "/custom/install/ks.cfg", logger)
         os.remove(new_dir + "/custom/isolinux/isolinux.cfg")
-        shutil.copy(HOME_PATH + "/repos/domain/isolinux/ubuntu/isolinux.cfg",
+        shutil.copy(HOME_PATH + "/repos/installation/isolinux/ubuntu/isolinux.cfg",
                     new_dir + "/custom/isolinux/")
         MAKE_ISO = "mkisofs -o %s/custom.iso -J -r -v -R -b \
                     isolinux/isolinux.bin -c isolinux/boot.cat \
@@ -166,7 +166,7 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
 
         isolinux_location = new_dir + "/custom/boot/" + guestarch + "/loader/"
         os.remove(isolinux_location + "isolinux.cfg")
-        shutil.copy(HOME_PATH + "/repos/domain/isolinux/suse/isolinux.cfg",
+        shutil.copy(HOME_PATH + "/repos/installation/isolinux/suse/isolinux.cfg",
                     isolinux_location)
         logger.info("Making the custom.iso file")
         if guestarch == "i386":

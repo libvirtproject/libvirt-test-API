@@ -1,0 +1,55 @@
+<domain type='kvm'>
+  <name>GUESTNAME</name>
+  <uuid>UUID</uuid>
+  <memory unit='KiB'>MEMORY</memory>
+  <currentMemory unit='KiB'>MEMORY</currentMemory>
+  <vcpu>VCPU</vcpu>
+  <os>
+    <type arch='GUESTARCH' machine="GUESTMACHINE">hvm</type>
+    <boot dev='hd'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
+  <clock offset='utc'/>
+  <on_poweroff>ON_POWEROFF</on_poweroff>
+  <on_reboot>ON_REBOOT</on_reboot>
+  <on_crash>ON_CRASH</on_crash>
+  <devices>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='IMAGEFORMAT' cache='none'/>
+      <source file='DISKPATH'/>
+      <target dev='vda' bus='HDDRIVER'/>
+    </disk>
+    <interface type='network'>
+      <mac address='MACADDR'/>
+      <model type='NICDRIVER'/>
+      <source network='default'/>
+    </interface>
+    <serial type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target type='serial' port='0'/>
+    </console>
+    <input type='mouse' bus='ps2'/>
+    <graphics type='GRAPHIC' port='-1' autoport='yes' passwd='VNCPASSWD'/>
+    <sound model='ich6'>
+    </sound>
+    <video>
+      <model type='VIDEO' vram='9216' heads='1'/>
+    </video>
+    <memballoon model='virtio'>
+    </memballoon>
+    <pm>
+        <suspend-to-mem enabled='yes'/>
+        <suspend-to-disk enabled='yes'/>
+    </pm>
+    <channel type='unix'>
+        <target type='virtio' name='org.qemu.guest_agent.0'/>
+        <address type='virtio-serial' controller='0' bus='0' port='1'/>
+    </channel>
+  </devices>
+</domain>

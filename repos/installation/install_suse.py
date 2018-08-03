@@ -28,7 +28,7 @@ optional_params = {
                    'macaddr': '52:54:00:97:e4:28',
                    'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
                    'type': 'define',
-                   'xml': 'xmls/kvm_linux_guest_install_ubuntu.xml',
+                   'xml': 'xmls/install_suse.xml',
                    'guestmachine': 'pseries',
                    'networksource': 'default',
                    'bridgename': 'virbr0',
@@ -165,7 +165,7 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
         commands.getstatusoutput("cp -rf %s/.disk %s" % (mount_point, new_dir + "/custom"))
         prepare_ks(ks, guestos, hddriver, new_dir + "/custom/install/ks.cfg", logger)
         os.remove(new_dir + "/custom/isolinux/isolinux.cfg")
-        shutil.copy(HOME_PATH + "/repos/domain/isolinux/ubuntu/isolinux.cfg",
+        shutil.copy(HOME_PATH + "/repos/installation/isolinux/ubuntu/isolinux.cfg",
                     new_dir + "/custom/isolinux/")
         MAKE_ISO = "mkisofs -o %s/custom.iso -J -r -v -R -b \
                     isolinux/isolinux.bin -c isolinux/boot.cat \
@@ -185,7 +185,7 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
 
         isolinux_location = new_dir + "/custom/boot/" + guestarch + "/loader/"
         os.remove(isolinux_location + "isolinux.cfg")
-        shutil.copy(HOME_PATH + "/repos/domain/isolinux/suse/isolinux.cfg",
+        shutil.copy(HOME_PATH + "/repos/installation/isolinux/suse/isolinux.cfg",
                     isolinux_location)
         logger.info("Making the custom.iso file")
         if guestarch == "i386":

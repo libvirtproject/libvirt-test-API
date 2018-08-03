@@ -149,7 +149,7 @@ def check_domain_state(conn, guestname, logger):
         domobj.undefine()
 
 
-def install_linux_net_remote(params):
+def install_linux_net_remote_ppc(params):
     """install a new virtual machine"""
     # Initiate and check parameters
     logger = params['logger']
@@ -172,7 +172,9 @@ def install_linux_net_remote(params):
     video = params.get('video', 'qxl')
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
-        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
+        xmlstr = xmlstr.replace("<model type='VIDEO' vram='16384' heads='1'/>", video_model)
+    else:
+        xmlstr = xmlstr.replace("VIDEO", video)
 
     logger.info('the video type of VM is %s' % video)
 
@@ -463,7 +465,7 @@ def install_linux_net_remote(params):
     return 0
 
 
-def install_linux_net_remote_clean(params):
+def install_linux_net_remote_ppc_clean(params):
     """ clean testing environment """
     logger = params['logger']
     guestname = params.get('guestname')
