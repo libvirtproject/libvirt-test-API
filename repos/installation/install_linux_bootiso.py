@@ -10,7 +10,7 @@ from src.exception import TestError
 
 from src import sharedmod
 from utils import process
-from repos.domain import install_common
+from repos.installation import install_common
 from six.moves import urllib
 
 

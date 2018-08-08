@@ -6,7 +6,7 @@ from libvirt import libvirtError
 
 from src import sharedmod
 from utils import utils
-from repos.domain import install_common
+from repos.installation import install_common
 
 required_params = ('guestname',)
 optional_params = {}

@@ -6,7 +6,7 @@ import time
 
 from src import sharedmod
 from libvirt import libvirtError
-from repos.domain import install_common
+from repos.installation import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {'memory': 1048576,

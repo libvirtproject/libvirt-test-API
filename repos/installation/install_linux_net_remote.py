@@ -6,7 +6,7 @@ import time
 
 from src import sharedmod
 from utils import utils, process
-from repos.domain import install_common
+from repos.installation import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch', 'netmethod')
 optional_params = {'memory': 2097152,

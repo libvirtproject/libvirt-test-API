@@ -10,7 +10,7 @@ import tempfile
 from src import sharedmod
 from src import env_parser
 from utils import utils, process
-from repos.domain import install_common
+from repos.installation import install_common
 from utils.utils import version_compare
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""

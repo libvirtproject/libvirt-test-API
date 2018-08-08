@@ -6,7 +6,7 @@ import time
 import shutil
 
 from src import sharedmod
-from repos.domain import install_common
+from repos.installation import install_common
 from utils import utils, process
 
 required_params = ('guestname', 'guestos', 'guestarch',)

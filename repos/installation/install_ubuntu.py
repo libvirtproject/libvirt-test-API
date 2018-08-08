@@ -8,7 +8,7 @@ import shutil
 
 import libvirt
 from libvirt import libvirtError
-from repos.domain import install_common
+from repos.installation import install_common
 
 from src import sharedmod
 from src import env_parser
