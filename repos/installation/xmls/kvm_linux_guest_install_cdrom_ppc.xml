@@ -1,13 +1,11 @@
 <domain type="kvm">
   <name>GUESTNAME</name>
+  <uuid>UUID</uuid>
   <memory>MEMORY</memory>
   <vcpu>VCPU</vcpu>
   <os>
     <type machine="GUESTMACHINE">hvm</type>
-    <kernel>KERNEL</kernel>
-    <initrd>INITRD</initrd>
-    <cmdline>ks=KS</cmdline>
-    <boot dev="hd"/>
+    <boot dev="cdrom"/>
   </os>
   <features>
     <acpi/>
@@ -24,20 +22,24 @@
       <source file='DISKPATH'/>
       <target bus='HDDRIVER' dev='DEV'/>
     </disk>
-    <interface type='direct'>
+    <disk device="cdrom" type="file">
+      <source file='CUSTOMISO'/>
+      <target bus="scsi" dev="sda"/>
+      <readonly/>
+    </disk>
+    <interface type="network">
+      <source network="NETWORKSOURCE"/>
       <mac address='MACADDR'/>
-      <source dev='INTERFACE' mode='bridge'/>
-      <target dev='macvtap0'/>
       <model type='NICDRIVER'/>
     </interface>
     <console/>
     <input bus="ps2" type="mouse"/>
     <graphics port="-1" autoport="yes" type="GRAPHIC"/>
     <video>
-      <model type='VIDEO' vram='16384' heads='1'/>
+      <model type='vga' vram='16384' heads='1'/>
     </video>
     <channel type='unix'>
-      <source mode='bind' path='/var/lib/libvirt/qemu/GUESTNAME.agent'/>
+      <source mode='bind' path='/var/lib/libvirt/qemu/channel/target/GUESTNAME.agent'/>
       <target type='virtio' name='org.qemu.guest_agent.0'/>
     </channel>
   </devices>

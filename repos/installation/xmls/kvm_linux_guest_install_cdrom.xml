@@ -36,7 +36,7 @@
     <input bus="ps2" type="mouse"/>
     <graphics port="-1" autoport="yes" type="GRAPHIC"/>
     <video>
-      <model type='cirrus' vram='16384' heads='1'/>
+      <model type='VIDEO' vram='16384' heads='1'/>
     </video>
     <channel type='unix'>
       <source mode='bind' path='/var/lib/libvirt/qemu/channel/target/GUESTNAME.agent'/>

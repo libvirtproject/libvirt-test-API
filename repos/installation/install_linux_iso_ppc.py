@@ -28,7 +28,7 @@ optional_params = {
                    'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'type': 'define',
-                   'xml': 'xmls/kvm_linux_guest_install_iso.xml',
+                   'xml': 'xmls/kvm_linux_guest_install_iso_ppc.xml',
                    'guestmachine': 'pseries',
                    'graphic': 'spice',
                    'video': 'qxl',
