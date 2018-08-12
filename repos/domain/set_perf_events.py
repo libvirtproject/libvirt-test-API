@@ -147,6 +147,11 @@ def set_perf_events(params):
         if (err_str in e.get_error_message() and e.get_error_code() == 38):
             return 0
 
+        # For some cpu don't support some perf event
+        err_str = ("unable to open host cpu perf event for")
+        if (err_str in e.get_error_message()):
+            return 0
+
         return 1
 
     if check_events(events, params_list, guestname, flags, domstate, dom, logger):

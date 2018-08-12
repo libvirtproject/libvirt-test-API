@@ -3,14 +3,18 @@
   <memory>MEMORY</memory>
   <vcpu>VCPU</vcpu>
   <os>
-    <type machine='GUESTMACHINE'>hvm</type>
-    <kernel>KERNEL</kernel>
-    <initrd>INITRD</initrd>
-    <cmdline>netsetup=dhcp autoyast=AUTOYAST</cmdline>
+    <type machine="GUESTMACHINE">hvm</type>
     <boot dev='cdrom'/>
   </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
   <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
   <on_reboot>destroy</on_reboot>
+  <on_crash>destroy</on_crash>
   <devices>
     <disk type='file' device='disk'>
       <driver name='qemu' type='IMAGEFORMAT'/>
@@ -19,19 +23,22 @@
     </disk>
     <disk type='file' device='cdrom'>
       <source file='CUSTOMISO'/>
-      <target dev='sdb' bus='scsi'/>
+      <target dev='hdc' bus='ide'/>
       <readonly/>
+    </disk>
+    <disk type='file' device='floppy'>
+      <driver name='qemu' type='raw'/>
+      <source file='FLOPPY'/>
+      <target dev='fda' bus='fdc'/>
     </disk>
     <interface type='network'>
       <source network='default'/>
-      <mac address='MACADDR'/>
       <model type='NICDRIVER'/>
+      <mac address="MACADDR"/>
     </interface>
-    <graphics type='vnc' port='-1'/>
-    <serial type='pty'/>
-    <console type='pty'/>
-    <video>
-      <model type='vga'/>
-    </video>
+    <console/>
+    <input bus="ps2" type="mouse"/>
+    <graphics keymap="en-us" port="-1" type="GRAPHIC"/>
   </devices>
 </domain>
+

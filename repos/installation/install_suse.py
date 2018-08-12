@@ -2,38 +2,38 @@
 # Install a linux domain from CDROM
 # The iso file may be locked by other proces, and cause the failure of installation
 import os
-import sys
 import re
 import time
-import commands
 import shutil
-import urllib
 
 import libvirt
 from libvirt import libvirtError
+from repos.installation import install_common
 
 from src import sharedmod
 from src import env_parser
-from utils import utils
+from utils import utils, process
+from six.moves import urllib
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
-    'memory': 1048576,
-    'vcpu': 1,
-    'disksize': 10,
-    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
-    'imageformat': 'raw',
+                   'memory': 1048576,
+                   'vcpu': 1,
+                   'disksize': 10,
+                   'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
+                   'imageformat': 'raw',
                    'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
                    'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
                    'type': 'define',
                    'xml': 'xmls/install_suse.xml',
-                   'guestmachine': 'pseries',
+                   'guestmachine': 'pc',
                    'networksource': 'default',
                    'bridgename': 'virbr0',
                    'graphic': "spice",
-                   'disksymbol': 'sdb'
+                   'disksymbol': 'sdb',
+                   'video': 'qxl'
 }
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
@@ -51,7 +51,7 @@ def cleanup(mount, logger):
     if os.path.isdir(mount):
         if os.path.ismount(mount):
             logger.info("Path %s is still mounted, please verify" % mount)
-            commands.getstatusoutput("umount -l  %s" % mount)
+            ret = process.run("umount -l  %s" % mount, shell=True, ignore_status=True)
             logger.info("the floppy mount point folder exists, remove it")
             shutil.rmtree(mount)
         else:
@@ -65,7 +65,7 @@ def prepare_ks(ks, guestos, hddriver, ks_path, logger):
     """Prepare the ks file for suse installation
        virtio bus use the vda instead of sda in ide or scsi bus
     """
-    urllib.urlretrieve(ks, ks_path)
+    urllib.request.urlretrieve(ks, ks_path)
     logger.info("the url of kickstart is %s" % ks)
     if (hddriver == "virtio" or hddriver == "lun") and "suse" in guestos:
         with open(ks_path, "r+") as f:
@@ -83,24 +83,24 @@ def prepare_floppy(ks_path, mount_point, floppy_path, logger):
     if os.path.exists(floppy_path):
         os.remove(floppy_path)
     create_cmd = 'dd if=/dev/zero of=%s bs=1440k count=1' % floppy_path
-    (status, text) = commands.getstatusoutput(create_cmd)
-    if status:
+    ret = process.run(create_cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("failed to create floppy image")
         return 1
     format_cmd = 'mkfs.msdos -s 1 %s' % floppy_path
-    (status, text) = commands.getstatusoutput(format_cmd)
-    if status:
+    ret = process.run(format_cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("failed to format floppy image")
         return 1
     if os.path.exists(mount_point):
         logger.info("the floppy mount point folder exists, remove it")
-        commands.getstatusoutput("umount -l %s" % mount_point)
+        ret = process.run("umount -l %s" % mount_point, shell=True, ignore_status=True)
         shutil.rmtree(mount_point)
     logger.info("create mount point %s" % mount_point)
     os.makedirs(mount_point)
     mount_cmd = 'mount -o loop %s %s' % (floppy_path, mount_point)
-    (status, text) = commands.getstatusoutput(mount_cmd)
-    if status:
+    ret = process.run(mount_cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error(
             "failed to mount /tmp/floppy.img to /mnt/libvirt_floppy")
         return 1
@@ -113,7 +113,6 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
         file into it for automatic guest installation
     """
     new_dir = cache_folder + "/" + ostree.split("/")[-1].split(".iso")[0]
-
     # prepare the cache_folder
     if not os.path.exists(cache_folder):
         os.makedirs(cache_folder)
@@ -129,40 +128,23 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
     # mount point is /mnt/custom
     mount_point = "/mnt/custom"
     cleanup(mount_point, logger)
-    iso_path = new_dir + "/" + ostree.split("/")[-1]
+    local_iso = new_dir + "/" + ostree.split("/")[-1]
     logger.info("Downloading the iso file")
     cmd = "wget " + ostree + " -P " + new_dir
     utils.exec_cmd(cmd, shell=True)
 
     # copy iso file
-    mount_command = "mount -o loop %s %s" % (iso_path, mount_point)
-    (status, message) = commands.getstatusoutput(mount_command)
-    if status:
+    mount_command = "mount -o loop %s %s" % (local_iso, mount_point)
+    ret = process.run(mount_command, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("mount iso failure")
         return 1
-
-    if "suse" in guestos and "ppc" in guestarch:
-        if 'ppc64le' in guestarch:
-            shutil.copy(mount_point + '/boot/ppc64le/linux', '/var/lib/libvirt/boot/')
-            shutil.copy(mount_point + '/boot/ppc64le/initrd', '/var/lib/libvirt/boot/')
-        elif 'ppc64' in guestarch:
-            shutil.copy(mount_point + '/suseboot/linux64', '/var/lib/libvirt/boot/')
-            shutil.copy(mount_point + '/suseboot/initrd64', '/var/lib/libvirt/boot/')
-
-        (status, messageumount) = commands.getstatusoutput("umount -l %s" % mount_point)
-        if status:
-            logger.error("unmount iso failure, the fail reason is %s " % messageumount)
-            return 1
-
-        shutil.move(iso_path, new_dir + '/custom.iso')
-        return new_dir
-
     logger.info("Copying the iso file to working directory")
-    commands.getstatusoutput("cp -rf %s/* %s" % (mount_point, new_dir + "/custom"))
+    ret = process.run("cp -rf %s/* %s" % (mount_point, new_dir + "/custom"), shell=True, ignore_status=True)
 
     # prepare the custom iso
     if "ubuntu" in guestos:
-        commands.getstatusoutput("cp -rf %s/.disk %s" % (mount_point, new_dir + "/custom"))
+        ret = process.run("cp -rf %s/.disk %s" % (mount_point, new_dir + "/custom"), shell=True, ignore_status=True)
         prepare_ks(ks, guestos, hddriver, new_dir + "/custom/install/ks.cfg", logger)
         os.remove(new_dir + "/custom/isolinux/isolinux.cfg")
         shutil.copy(HOME_PATH + "/repos/installation/isolinux/ubuntu/isolinux.cfg",
@@ -172,9 +154,8 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
                     -no-emul-boot -boot-load-size 4 \
                     -boot-info-table %s"
         logger.info("Making the custom.iso file")
-        (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO % (new_dir, new_dir + "/custom"))
-
-    if "ppc" not in guestarch:
+        ret = process.run(MAKE_ISO % (new_dir, new_dir + "/custom"), shell=True, ignore_status=True)
+    else:
         prepare_ks(ks, guestos, hddriver, new_dir + "/custom/autoinst.xml", logger)
         flag = prepare_floppy(new_dir + "/custom/autoinst.xml",
                               "/mnt/floppy",
@@ -193,26 +174,26 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
                         boot/i386/loader/isolinux.bin -c boot.cat \
                         -no-emul-boot -boot-load-size 4 \
                         -boot-info-table %s'
-            (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO % (new_dir, new_dir + "/custom"))
+            ret = process.run(MAKE_ISO % (new_dir, new_dir + "/custom"), shell=True, ignore_status=True)
         else:
             MAKE_ISO = 'mkisofs -o %s/custom.iso -J -r -v -R -b \
                         boot/x86_64/loader/isolinux.bin -c boot.cat \
                         -no-emul-boot -boot-load-size 4 \
                         -boot-info-table %s'
-            (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO % (new_dir, new_dir + "/custom"))
+            ret = process.run(MAKE_ISO % (new_dir, new_dir + "/custom"), shell=True, ignore_status=True)
 
-    if statusiso:
-        logger.error(messageiso)
+    if ret.exit_status:
+        logger.error(ret.stdout)
         logger.error("makeing iso failure")
         return 1
 
-    os.remove(iso_path)
-    (status, text) = commands.getstatusoutput("umount -l /mnt/floppy")
-    if status:
+    os.remove(local_iso)
+    ret = process.run("umount -l /mnt/floppy", shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error(
             "failed to umount %s" % mount_point)
 
-    (statusumount, messageumount) = commands.getstatusoutput("umount -l %s" % mount_point)
+    ret = process.run("umount -l %s" % mount_point, shell=True, ignore_status=True)
     return new_dir
 
 
@@ -223,14 +204,12 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     xmlstr = re.sub("<disk type='file' device='floppy'>.*\n.*\n.*\n.*\n.*\n    ", '', xmlstr)
     xmlstr = xmlstr.replace("<boot dev='cdrom'/>", '<boot dev="hd"/>')
     xmlstr = re.sub("<disk type='file' device='cdrom'>.*\n.*\n.*\n.*\n.*\n    ", '', xmlstr)
-    xmlstr = re.sub("<kernel>.*</kernel>", '', xmlstr)
-    xmlstr = re.sub("<initrd>.*</initrd>", '', xmlstr)
-    xmlstr = re.sub("<cmdline>.*</cmdline>", '', xmlstr)
 
     if installtype != 'create':
         domobj.undefine()
         logger.info("undefine %s : \n" % guestname)
 
+    time.sleep(5)
     try:
         conn = domobj._conn
         domobj = conn.defineXML(xmlstr)
@@ -244,6 +223,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     logger.debug("the xml description of guest booting off harddisk is %s" %
                  xmlstr)
 
+    time.sleep(3)
     logger.info('boot guest up ...')
 
     try:
@@ -281,7 +261,7 @@ def check_domain_state(conn, guestname, logger):
     return 0
 
 
-def install_suse(params):
+def install_sues(params):
     """ install a new virtual machine """
 
     xmlstr = params['xml']
@@ -291,38 +271,36 @@ def install_suse(params):
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
     br = params.get('bridgename', 'virbr0')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    hddriver = params.get('hddriver', 'virtio')
+    seeksize = params.get('disksize', 10)
+    imageformat = params.get('imageformat', 'raw')
+    graphic = params.get('graphic', 'spice')
+    installtype = params.get('type', 'define')
+    nicdriver = params.get('nicdriver', 'virtio')
+    video = params.get('video', 'qxl')
 
-    logger.info("the name of guest is %s" % guestname)
+    logger.info("guestname: %s" % guestname)
+    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s, %s(storage)" %
+                (guestos, guestarch, nicdriver, hddriver, imageformat,
+                 graphic, video, "local"))
 
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
 
-    logger.info("the macaddress is %s" %
-                params.get('macaddr', '52:54:00:97:e4:28'))
-
-    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-
-    if 'ppc' not in guestarch:
-        tmpdiskpath = diskpath
-        if not os.path.exists(tmpdiskpath):
-            os.mkdir(tmpdiskpath)
-        diskpath = diskpath + '/' + guestname
-        xmlstr = xmlstr.replace(tmpdiskpath, diskpath)
+    xmlstr = xmlstr.replace('DISKPATH', diskpath)
 
     # prepare the image
-    hddriver = params.get('hddriver', 'virtio')
     logger.info("disk image is %s" % diskpath)
-    seeksize = params.get('disksize', 10)
-    imageformat = params.get('imageformat', 'raw')
     if hddriver != 'lun' and hddriver != "scsilun":
         logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
         disk_create = "qemu-img create -f %s %s %sG" % \
             (imageformat, diskpath, seeksize)
         logger.debug("the command line of creating disk images is '%s'" %
                      disk_create)
-        (status, message) = commands.getstatusoutput(disk_create)
-        if status != 0:
-            logger.debug(message)
+        ret = process.run(disk_create, shell=True, ignore_status=True)
+        if ret.exit_status != 0:
+            logger.debug(ret.stdout)
             return 1
         os.chown(diskpath, 107, 107)
         logger.info("creating disk images file is successful.")
@@ -361,7 +339,6 @@ def install_suse(params):
                                 "<disk type='file' device='cdrom'>")
 
     # prepare the graphic
-    graphic = params.get('graphic', 'spice')
     if graphic == 'spice':
         xmlstr = xmlstr.replace('vnc', 'spice')
     logger.info('the graphic type of VM is %s' % graphic)
@@ -374,17 +351,10 @@ def install_suse(params):
     os_arch = guestos + "_" + guestarch
 
     envparser = env_parser.Envparser(envfile)
-    ostree = envparser.get_value("guest", os_arch + "_iso")
-    ks = envparser.get_value("guest", os_arch + "_iso_ks")
-
-    xmlstr = xmlstr.replace('AUTOYAST', ks)
-
-    if 'ppc64le' in guestarch:
-        xmlstr = xmlstr.replace('KERNEL', '/var/lib/libvirt/boot/linux')
-        xmlstr = xmlstr.replace('INITRD', '/var/lib/libvirt/boot/initrd')
-    elif 'ppc' in guestarch:
-        xmlstr = xmlstr.replace('KERNEL', '/var/lib/libvirt/boot/linux64')
-        xmlstr = xmlstr.replace('INITRD', '/var/lib/libvirt/boot/initrd64')
+    ostree_path = envparser.get_value("guest", os_arch + "_iso")
+    ostree = install_common.get_path_from_url(ostree_path, '.iso')
+    ks_path = envparser.get_value("guest", os_arch + "_iso_ks")
+    ks = install_common.get_path_from_url(ks_path, '.cfg')
 
     logger.debug('install source:\n    %s' % ostree)
     logger.debug('kisckstart file:\n    %s' % ks)
@@ -412,7 +382,6 @@ def install_suse(params):
         bootcd = custom + "/custom.iso"
     xmlstr = xmlstr.replace('CUSTOMISO', bootcd)
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
-    installtype = params.get('type', 'define')
     if installtype == 'define':
         logger.info('define guest from xml description')
         try:
@@ -443,7 +412,7 @@ def install_suse(params):
             return 1
 
     interval = 0
-    while(interval < 2400):
+    while(interval < 8000):
         time.sleep(10)
         if installtype == 'define':
             try:
@@ -519,25 +488,25 @@ def install_suse_clean(params):
 
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
 
-    (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
-    if not status:
+    ret = process.run(VIRSH_QUIET_LIST % guestname, shell=True, ignore_status=True)
+    if not ret.exit_status:
         logger.info("remove guest %s, and its disk image file" % guestname)
-        (status, output) = commands.getstatusoutput(VM_STAT % guestname)
-        if status:
-            (status, output) = commands.getstatusoutput(VM_DESTROY % guestname)
-            if status:
+        ret = process.run(VM_STAT % guestname, shell=True, ignore_status=True)
+        if ret.exit_status:
+            ret = process.run(VM_DESTROY % guestname, shell=True, ignore_status=True)
+            if ret.exit_status:
                 logger.error("failed to destroy guest %s" % guestname)
-                logger.error("%s" % output)
+                logger.error("%s" % ret.stdout)
             else:
-                (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-                if status:
+                ret = process.run(VM_UNDEFINE % guestname, shell=True, ignore_status=True)
+                if ret.exit_status:
                     logger.error("failed to undefine guest %s" % guestname)
-                    logger.error("%s" % output)
+                    logger.error("%s" % ret.stdout)
         else:
-            (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-            if status:
+            ret = process.run(VM_UNDEFINE % guestname, shell=True, ignore_status=True)
+            if ret.exit_status:
                 logger.error("failed to undefine guest %s" % guestname)
-                logger.error("%s" % output)
+                logger.error("%s" % ret.stdout)
 
     if os.path.exists(diskpath + '/' + guestname):
         os.remove(diskpath + '/' + guestname)
@@ -545,7 +514,8 @@ def install_suse_clean(params):
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     envparser = env_parser.Envparser(envfile)
     ostree_search = params.get('guestos') + "_" + params.get('guestarch') + "_iso"
-    ostree = envparser.get_value("guest", ostree_search)
+    ostree_path = envparser.get_value("guest", ostree_search)
+    ostree = install_common.get_path_from_url(ostree_path, '.iso')
     cache_folder = envparser.get_value("variables", "domain_cache_folder") + "/" +\
         ostree.split("/")[-1].split(".iso")[0]
     if os.path.exists(cache_folder):
