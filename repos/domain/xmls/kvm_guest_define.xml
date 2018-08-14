@@ -36,8 +36,6 @@
     </console>
     <input type='mouse' bus='ps2'/>
     <graphics type='GRAPHIC' port='-1' autoport='yes' passwd='VNCPASSWD'/>
-    <sound model='ich6'>
-    </sound>
     <video>
       <model type='VIDEO' vram='9216' heads='1'/>
     </video>

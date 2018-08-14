@@ -9,6 +9,7 @@ from libvirt import libvirtError
 from src import sharedmod
 from repos.domain.domain_common import guest_clean
 from utils.utils import version_compare
+from utils import utils
 
 required_params = ('guestname', 'alias_type', 'user_alias')
 optional_params = {'xml': 'xmls/detach_device_alias.xml',}
@@ -34,12 +35,28 @@ def detach_device_alias(params):
     guestname = params['guestname']
     alias_type = params['alias_type']
     user_alias = params['user_alias']
-    xmlstr = params.get('xml', 'xmls/kvm_guest_define.xml')
+    xmlstr = params.get('xml', 'xmls/detach_device_alias.xml')
 
     if not version_compare("libvirt-python", 4, 4, 0, logger):
         logger.info("Current libvirt-python don't support "
                     "detachDeviceAlias().")
         return 0
+
+    if utils.isPower():
+        guestarch = "ppc64le"
+        guestmachine = "pseries"
+        video = "vga"
+        graphic = "vnc"
+    else:
+        guestarch = "x86_64"
+        guestmachine = "pc"
+        video = "qxl"
+        graphic = "spice"
+
+    xmlstr = xmlstr.replace('GUESTARCH', guestarch)
+    xmlstr = xmlstr.replace('GUESTMACHINE', guestmachine)
+    xmlstr = xmlstr.replace('VIDEO', video)
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
 
     user_alias_str = "ua-" + user_alias
     logger.info("alias type: %s" % alias_type)

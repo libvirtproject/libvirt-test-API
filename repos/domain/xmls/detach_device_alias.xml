@@ -4,15 +4,13 @@
   <memory>2096152</memory>
   <vcpu>2</vcpu>
   <os>
-    <type arch='x86_64' machine='pc'>hvm</type>
+    <type arch='GUESTARCH' machine='GUESTMACHINE'>hvm</type>
     <boot dev='hd'/>
   </os>
   <features>
     <acpi/>
     <apic/>
     <pae/>
-    <vmport state='on'/>
-    <smm state='on'/>
   </features>
   <clock offset="utc"/>
   <on_poweroff>destroy</on_poweroff>
@@ -31,13 +29,13 @@
     </interface>
     <console/>
     <input bus="ps2" type="mouse"/>
-    <graphics keymap="en-us" port="-1" autoport="yes" type="vnc"/>
+    <graphics keymap="en-us" port="-1" autoport="yes" type="GRAPHIC"/>
     <channel type='unix'>
       <source mode='bind' path='/var/lib/libvirt/qemu/channel/target/GUESTNAME.agent'/>
       <target type='virtio' name='org.qemu.guest_agent.0'/>
     </channel>
     <video>
-      <model type='cirrus' vram='16384' heads='1'/>
+      <model type='VIDEO' vram='16384' heads='1'/>
     </video>
   </devices>
 </domain>

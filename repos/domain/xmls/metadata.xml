@@ -42,11 +42,9 @@
       <target type='serial' port='0'/>
     </console>
     <input type='mouse' bus='ps2'/>
-    <graphics type='vnc' port='-1' autoport='yes'/>
-    <sound model='ich6'>
-    </sound>
+    <graphics type='GRAPHIC' port='-1' autoport='yes'/>
     <video>
-      <model type='cirrus' vram='9216' heads='1'/>
+      <model type='VIDEO' vram='9216' heads='1'/>
     </video>
     <memballoon model='virtio'>
     </memballoon>
