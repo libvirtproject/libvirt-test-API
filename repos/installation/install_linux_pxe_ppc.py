@@ -26,7 +26,7 @@ optional_params = {
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
                    'type': 'define',
-                   'xml': 'xmls/kvm_linux_guest_install_pxe.xml',
+                   'xml': 'xmls/install_pxe_ppc.xml',
                    'graphic': "spice",
                    'video': 'qxl',
                    'guestmachine': 'pseries',
