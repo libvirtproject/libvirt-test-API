@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import time
-import xml.dom.minidom
 
 from libvirt import libvirtError
 from utils import utils

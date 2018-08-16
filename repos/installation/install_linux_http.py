@@ -1,11 +1,9 @@
 #! /usr/bin/env python
 # Install a linux domain from network
 
-import re
 import time
 
 from src import sharedmod
-from libvirt import libvirtError
 from repos.installation import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch',)

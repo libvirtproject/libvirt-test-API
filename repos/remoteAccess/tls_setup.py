@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import re
-import sys
-import pexpect
-import string
 import shutil
 import time
 

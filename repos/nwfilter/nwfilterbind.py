@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-import os
 import time
-import lxml.etree
 
 from libvirt import libvirtError
 from src import sharedmod

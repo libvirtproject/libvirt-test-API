@@ -150,7 +150,7 @@ def hypervisor_connecting_test(uri, unix_sock_group, auth_unix_ro, auth_unix_rw,
         cmd = "chown %s:%s %s" % (TESTING_USER, unix_sock_group, TICKET_CACHE)
         ret, out = utils.exec_cmd(cmd, shell=True)
         if ret:
-            logger.error("change %s owner failed." % path)
+            logger.error("change %s owner failed." % TICKET_CACHE)
             return 1
 
     try:

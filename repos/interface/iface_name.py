@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 
-import os
-import sys
-import re
-
 from utils import process
 
 required_params = ()

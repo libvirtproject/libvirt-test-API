@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # Detach a node device from host
 
-import os
-import re
-import sys
-
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod

@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # test securityLabel() and securityLabelList() API for libvirt
 
-import libvirt
-
 from libvirt import libvirtError
+
 from src import sharedmod
 from utils import utils
 

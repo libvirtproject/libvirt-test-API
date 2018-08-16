@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 # Re-attach a node device to host
 
-import os
 import re
-import sys
 import time
 
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod

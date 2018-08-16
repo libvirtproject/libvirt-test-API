@@ -1,8 +1,6 @@
 #!/usr/bin/evn python
 # To test domain scheduler parameters
 
-import os
-import sys
 import time
 import libvirt
 

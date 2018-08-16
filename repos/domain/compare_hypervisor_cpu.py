@@ -2,7 +2,7 @@
 # test compareHypervisorCPU()
 
 import libvirt
-import re
+
 from libvirt import libvirtError
 from xml.dom import minidom
 

@@ -3,9 +3,8 @@
 # If the guest should not be updated when this test
 # was performed set parameter 'updated' to 0
 
-import libvirt
-
 from libvirt import libvirtError
+
 from src import sharedmod
 
 required_params = ('guestname',)

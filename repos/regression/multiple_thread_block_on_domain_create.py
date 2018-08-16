@@ -2,18 +2,13 @@
 # To test RHBZ 672226
 
 import os
-import sys
-import re
 import commands
-import shutil
 import urllib
-import getpass
 from threading import Thread
 
 import libvirt
 from libvirt import libvirtError
 
-from src import sharedmod
 from utils import utils
 from src import env_parser
 

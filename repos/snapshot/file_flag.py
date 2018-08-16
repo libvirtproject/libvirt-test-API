@@ -1,13 +1,7 @@
 #!/usr/bin/env python
 # Create a flag file in the guest OS
 
-import os
-import sys
-import re
 import time
-
-import libvirt
-from libvirt import libvirtError
 
 from src import sharedmod
 from utils import utils

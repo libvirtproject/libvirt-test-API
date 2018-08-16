@@ -6,7 +6,6 @@
 
 import libvirt
 import signal
-import os
 
 from libvirt import libvirtError
 from exception import TestError

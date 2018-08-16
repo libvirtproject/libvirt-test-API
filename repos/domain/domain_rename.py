@@ -2,12 +2,11 @@
 
 import libvirt
 import time
-import threading
+
 from libvirt import libvirtError
 
 from repos.libvirtd.restart import restart
 from src import sharedmod
-from utils import utils
 
 required_params = ('guestname', )
 optional_params = {'newname': '', 'negative': 'no'}

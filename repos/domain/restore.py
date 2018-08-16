@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # Restore domain from a saved statefile
 
-import os
-import re
-import sys
-
 import libvirt
 from libvirt import libvirtError
 

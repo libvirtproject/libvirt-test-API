@@ -2,7 +2,6 @@
 # Install a linux domain from CDROM
 # The iso file may be locked by other proces, and cause the failure of installation
 import os
-import sys
 import re
 import time
 import commands

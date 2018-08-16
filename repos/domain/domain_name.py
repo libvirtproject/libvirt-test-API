@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # To test "virsh domname" command
 
-import os
-import sys
-import re
-
 from utils import process
 
 required_params = ()

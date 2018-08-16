@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 # To test domain cpu topology
 
-import os
-import re
-import sys
 import time
-from xml.dom import minidom
 
-import libvirt
+from xml.dom import minidom
 from libvirt import libvirtError
 
 from src import sharedmod

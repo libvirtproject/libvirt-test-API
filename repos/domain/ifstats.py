@@ -1,13 +1,10 @@
 #!/usr/bin/evn python
 # To get domain interface statistics
 
-import os
-import re
-import sys
-import time
 import libvirt
 
 from libvirt import libvirtError
+
 from src import sharedmod
 from utils import utils
 from utils.utils import get_xml_value

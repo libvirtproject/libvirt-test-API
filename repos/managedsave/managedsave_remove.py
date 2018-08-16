@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # Save domain as a statefile
 
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod

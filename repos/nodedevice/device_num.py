@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # Test nodedev numbers
 
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
-from utils import utils, process
+from utils import process
 
 required_params = ()
 optional_params = {}

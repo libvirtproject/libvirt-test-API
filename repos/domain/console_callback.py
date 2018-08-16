@@ -6,7 +6,6 @@
 # event callback and counting.
 
 import libvirt
-import os
 import time
 import re
 
@@ -57,7 +56,7 @@ def stream_callback(stream, events, opaque):
     if events == 1:
         try:
             received_data = stream.recv(1024)
-        except:
+        except Exception as e:
             return
         logger.info("write from stream to stdio: \n %s" % received_data)
     elif events == 2:
@@ -94,7 +93,6 @@ def check_domain_kernel_line(guestname, username, password, logger):
     while timeout:
         ipaddr = utils.mac_to_ip(mac, 180)
         if not ipaddr:
-            logger.info(str(timeout) + "s left")
             time.sleep(10)
             timeout -= 10
         else:

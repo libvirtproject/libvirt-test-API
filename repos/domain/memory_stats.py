@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # Test get domain memory stats
 
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod

@@ -5,8 +5,8 @@ import re
 import libvirt
 
 from libvirt import libvirtError
+
 from src import sharedmod
-from src.exception import TestError
 from utils import process
 
 required_params = ('guestname', 'mac')

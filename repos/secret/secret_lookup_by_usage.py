@@ -46,7 +46,7 @@ def secret_lookup_by_usage(params):
         type = libvirt.VIR_SECRET_USAGE_TYPE_CEPH
     elif usagetype == "iscsi":
         type = libvirt.VIR_SECRET_USAGE_TYPE_ISCSI
-    elif usgaetype == "none":
+    elif usagetype == "none":
         type = libvirt.VIR_SECRET_USAGE_TYPE_NONE
     else:
         logger.error("Don't support type %s." % usagetype)

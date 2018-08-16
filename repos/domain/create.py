@@ -2,11 +2,10 @@
 # Create domain from xml
 
 import os
-import re
-import sys
 import time
 import shutil
 import libvirt
+
 from libvirt import libvirtError
 
 from src import sharedmod

@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # Attach interface to domain
 
-import os
-import re
-import sys
-
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod

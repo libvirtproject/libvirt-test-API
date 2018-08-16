@@ -2,7 +2,6 @@
 
 import libvirt
 import pexpect
-import string
 import time
 
 from utils import utils

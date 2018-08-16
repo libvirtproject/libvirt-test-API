@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # volume wipe testing
 
-import os
-
 from src import sharedmod
 from libvirt import libvirtError
 from utils import utils, process

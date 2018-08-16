@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 # Detach a disk from domain
 
-import os
-import re
-import sys
 import time
 
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
 from utils import utils
-
 from repos.domain.start import start
 
 required_params = ('guestname', 'hddriver')

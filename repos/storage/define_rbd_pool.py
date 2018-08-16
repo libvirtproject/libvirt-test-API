@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # Define storage pool of 'rbd' type
 
-import os
-
 from libvirt import libvirtError
 from src import sharedmod
 from repos.storage import storage_common

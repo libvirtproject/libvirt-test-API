@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # Test tuning host node memory parameters
 
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod

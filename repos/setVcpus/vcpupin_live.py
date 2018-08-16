@@ -2,9 +2,8 @@
 # Test domain vcpu pin with flag VIR_DOMAIN_AFFECT_LIVE, check
 # vcpu subprocess status under domain task list on host.
 
-import re
-
 import libvirt
+
 from libvirt import libvirtError
 
 from src import sharedmod

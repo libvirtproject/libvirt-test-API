@@ -5,7 +5,6 @@
 import os
 import mimetypes
 
-import libvirt
 from src import sharedmod
 
 required_params = ('guestname', 'filename',)

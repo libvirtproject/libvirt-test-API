@@ -2,9 +2,8 @@
 # Test set domain numa parameters with flag VIR_DOMAIN_AFFECT_LIVE
 # and check
 
-from xml.dom import minidom
-
 import libvirt
+
 from libvirt import libvirtError
 
 from src import sharedmod

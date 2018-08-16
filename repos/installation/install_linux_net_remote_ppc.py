@@ -2,15 +2,12 @@
 # Install a linux domain from network
 
 import os
-import sys
 import re
 import time
 import commands
-import shutil
 import urllib
-
-
 import libvirt
+
 from libvirt import libvirtError
 
 from src import sharedmod
@@ -64,17 +61,6 @@ def get_interface(logger):
 
     interface = out.split('\n')
     return interface[0]
-
-
-def get_remote_hypervisor_uri(hostip, user, password):
-    (ret1, out1) = utils.remote_exec_pexpect(hostip, user, password, 'lsmod|grep kvm')
-    (ret2, out2) = utils.remote_exec_pexpect(hostip, user, password, 'ls /proc|grep xen')
-    if strip(out1) != "":
-        return "qemu+ssh://%s/system" % hostip
-    elif strip == "xen":
-        return "xen+ssh://%s" % hostip
-    else:
-        return "No hypervisor running"
 
 
 def prepare_boot_guest(domobj, xmlstr, guestname, logger, installtype, installmethod):

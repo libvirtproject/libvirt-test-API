@@ -22,7 +22,7 @@ def hostname(params):
     logger.info("the output of " + "\"" + VIRSH_HOSTNAME + "\"" + " is %s" % virsh_ret)
 
     ret = process.run("hostname", shell=True, ignore_status=True)
-    if status:
+    if ret.exit_status:
         logger.error("executing " + "\"" + "hostname" + "\"" + " failed")
         return 1
 

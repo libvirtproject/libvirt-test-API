@@ -2,8 +2,6 @@
 # Test set domain max memory with API setMaxMemory.
 
 from xml.dom import minidom
-
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod

@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 # Detach interface from domain
 
-import os
-import re
-import sys
-import time
-
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod

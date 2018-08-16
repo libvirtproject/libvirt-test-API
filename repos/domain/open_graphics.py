@@ -2,14 +2,12 @@
 # Test domain's openGraphics API
 
 import time
-import os
 import socket
-import select
 import libvirt
 import threading
 
 from libvirt import libvirtError
-from src import sharedmod
+
 from utils import utils
 
 required_params = ('guestname',)

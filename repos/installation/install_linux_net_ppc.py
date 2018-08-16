@@ -2,10 +2,8 @@
 # Install a linux domain from network
 
 import os
-import sys
 import re
 import time
-import shutil
 import tempfile
 
 import libvirt

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # Test storagePoolLookupByTargetPath() API
 
-import os
-
 from libvirt import libvirtError
 from src import sharedmod
 from utils.utils import version_compare

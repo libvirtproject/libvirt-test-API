@@ -5,7 +5,7 @@ import shutil
 import libvirt
 
 from libvirt import libvirtError
-from src import sharedmod, env_parser
+from src import env_parser
 from utils import utils
 
 required_params = ('guestname',)

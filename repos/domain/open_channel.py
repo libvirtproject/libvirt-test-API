@@ -7,9 +7,8 @@ import libvirt
 import time
 
 from libvirt import libvirtError
-from src import sharedmod
 
-from utils import utils
+from src import sharedmod
 
 required_params = ('guestname',)
 optional_params = {'channel': None}

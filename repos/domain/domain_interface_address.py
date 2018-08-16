@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # To test domain's interfaceAddresses API
 
-import libvirt
-from libvirt import libvirtError
 import re
-import socket
+import libvirt
+
+from libvirt import libvirtError
 
 from src import sharedmod
 from utils import utils

@@ -2,7 +2,6 @@
 # test listAllInterfaces() API
 
 import os
-import libvirt
 
 from libvirt import libvirtError
 from src import sharedmod

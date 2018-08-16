@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-import os
 import time
 import libvirt
 
 from libvirt import libvirtError
 from src import sharedmod
-from utils import process, utils
+from utils import utils
 from repos.domain import domain_common
 
 required_params = ('portdev',)

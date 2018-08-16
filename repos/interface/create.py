@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-import os
-import re
-import sys
-
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod
@@ -34,7 +29,6 @@ def check_create_interface(ifacename):
     hostip = utils.get_ip_address(ifacename)
     logger.debug("interface %s ip address: %s" % (ifacename, hostip))
     ping_cmd = "ping -c 4 -q %s" % hostip
-    stat, ret = commands.getstatusoutput(ping_cmd)
     ret = process.run(ping_cmd, shell=True, ignore_status=True)
     logger.debug("ping cmd: exit status=%s, out=%s" % (ret.exit_status, ret.stdout))
     if ret.exit_status == 0:

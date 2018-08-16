@@ -1,13 +1,8 @@
 #!/usr/bin/env python
 
-import re
-import time
-import libvirt
 
 from libvirt import libvirtError
 from src import sharedmod
-from utils import utils
-from repos.snapshot.common import check_domain_image
 from repos.snapshot.common import convert_flags
 
 required_params = ('guestname', 'snapshotname', 'flags')

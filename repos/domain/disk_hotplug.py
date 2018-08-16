@@ -2,17 +2,14 @@
 # Loop attach/detach a disk through xml on domain using all
 # supported flags
 
-import os
 import re
-import sys
 import time
-
 import libvirt
+
 from libvirt import libvirtError
 
 from src import sharedmod
 from utils import utils, process
-
 from repos.domain.start import start
 
 config_dir = '/etc/libvirt/qemu/'

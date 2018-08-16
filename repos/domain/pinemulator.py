@@ -2,8 +2,6 @@
 """ Query or change the pinning of domain's emulator threads to
   host physical CPUs."""
 
-
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod

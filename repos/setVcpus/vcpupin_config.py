@@ -2,10 +2,9 @@
 # Test domain vcpu pin with flag VIR_DOMAIN_AFFECT_CONFIG, check
 # domain config xml with vcpupin configuration.
 
-import re
-from xml.dom import minidom
-
 import libvirt
+
+from xml.dom import minidom
 from libvirt import libvirtError
 
 from src import sharedmod

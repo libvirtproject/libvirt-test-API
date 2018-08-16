@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import libvirt
-from libvirt import libvirtError
 import lxml
 import lxml.etree
+
+from libvirt import libvirtError
+from src import sharedmod
 
 required_params = ()
 optional_params = {'uri': None, 'flags': None}

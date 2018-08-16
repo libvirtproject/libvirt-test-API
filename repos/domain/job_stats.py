@@ -8,7 +8,7 @@ import functools
 
 from libvirt import libvirtError
 from src import sharedmod
-from utils.utils import parse_flags, version_compare, wait_for
+from utils.utils import parse_flags, version_compare
 from utils import utils, process
 from repos.domain import domain_common
 

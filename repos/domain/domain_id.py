@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # To test "virsh domid" command
 
-import os
-import sys
-import re
-
-import libvirt
 from src import sharedmod
 from utils import process
 

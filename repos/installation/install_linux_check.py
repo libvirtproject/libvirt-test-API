@@ -3,8 +3,6 @@
 
 import os
 import time
-import math
-
 import libvirt
 
 from src import sharedmod

@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # To test domain memory ballooning
 
-import os
-import sys
-import re
 import time
 import math
-from xml.dom import minidom
-
 import libvirt
+
+from xml.dom import minidom
 from libvirt import libvirtError
 
 from src import sharedmod

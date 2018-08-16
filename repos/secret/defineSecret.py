@@ -47,7 +47,7 @@ def check_defineSecret(secret_params, secretobj):
             secret_xml['tlsname'] = (XMLFile.getElementsByTagName('name')[0]).\
                 childNodes[0].data
     else:
-        logger.error("unexpected secret usage type: %s" % usage_type)
+        logger.error("unexpected secret usage type: %s" % secret_params['usage_type'])
         return 1
 
     for i in list(secret_xml.keys()):
@@ -85,7 +85,7 @@ def defineSecret(params):
             logger.info("Current libvirt-python don't support 'tls'.")
             return 0
     else:
-        logger.error("unexpected secret usage type: %s" % usage_type)
+        logger.error("unexpected secret usage type: %s" % secret_params['usage_type'])
         return 1
 
     xmlstr = xmlstr.replace('EPHEMERAL', secret_params['ephemeral'])

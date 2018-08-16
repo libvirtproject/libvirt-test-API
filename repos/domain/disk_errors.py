@@ -2,7 +2,7 @@
 # get and check errors on block devices
 
 import time
-import libvirt
+
 from libvirt import libvirtError
 
 from src import sharedmod

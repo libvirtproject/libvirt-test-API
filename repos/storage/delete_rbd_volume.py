@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import libvirt
 from libvirt import libvirtError
 
 from src import sharedmod

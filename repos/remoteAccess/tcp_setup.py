@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 # To test connection via tcp protocol
 
-import os
-import re
-import sys
-
 import libvirt
+
 from libvirt import libvirtError
 
-from src import sharedmod
 from utils import utils
 
 required_params = ('target_machine',

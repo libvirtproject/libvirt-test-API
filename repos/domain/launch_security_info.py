@@ -1,4 +1,3 @@
-import libvirt
 
 from libvirt import libvirtError
 

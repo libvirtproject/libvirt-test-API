@@ -2,11 +2,9 @@
 # Install a linux domain from CDROM
 
 import os
-import sys
 import re
 import time
 import commands
-import shutil
 import urllib
 import tempfile
 

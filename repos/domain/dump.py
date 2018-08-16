@@ -2,12 +2,11 @@
 # To test core dump of a domain
 
 import os
-import re
-import sys
 import time
 import libvirt
 
 from libvirt import libvirtError
+
 from src import sharedmod
 from utils import utils, process
 

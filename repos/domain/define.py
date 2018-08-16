@@ -1,13 +1,9 @@
 #!/usr/bin/evn python
 
 import os
-import re
-import sys
-import string
-import pexpect
 import shutil
-
 import libvirt
+
 from libvirt import libvirtError
 
 from src import sharedmod

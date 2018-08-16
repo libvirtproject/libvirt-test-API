@@ -4,13 +4,12 @@
 # flag should be sperated with '|'
 # when no flag is given, will test with flag = 0
 
-from xml.dom import minidom
-
 import re
 import libvirt
+
+from xml.dom import minidom
 from libvirt import libvirtError
 
-from src import sharedmod
 
 required_params = ('guestname', 'metadata_type',)
 optional_params = {'flags': 'current',
