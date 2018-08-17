@@ -138,3 +138,18 @@ def create_with_files_clean(params):
     for i in range(len(files)):
         ret = utils.del_file("/tmp/libvirt-test-api-create-file-%d" % i, logger)
     ret = utils.del_file("/tmp/libvirt_passfile_check", logger)
+
+    conn = libvirt.open("lxc:///")
+    dom = conn.lookupByName(guestname)
+    guest_state = dom.info()[0]
+    if guest_state == libvirt.VIR_DOMAIN_RUNNING:
+        logger.debug("destroy guest: %s." % guestname)
+        time.sleep(5)
+        dom.destroyFlags()
+        time.sleep(3)
+        dom.undefine()
+        time.sleep(3)
+    elif guest_state == libvirt.VIR_DOMAIN_SHUTOFF:
+        time.sleep(5)
+        dom.undefine()
+        time.sleep(3)

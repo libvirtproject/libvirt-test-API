@@ -198,6 +198,15 @@ def create_xml_with_files_clean(params):
 
     conn = libvirt.open("lxc:///")
     dom = conn.lookupByName(guestname)
-    if dom.isActive():
+    guest_state = dom.info()[0]
+    if guest_state == libvirt.VIR_DOMAIN_RUNNING:
         logger.debug("destroy guest: %s." % guestname)
-        dom.destroy()
+        time.sleep(5)
+        dom.destroyFlags()
+        time.sleep(3)
+        dom.undefine()
+        time.sleep(3)
+    elif guest_state == libvirt.VIR_DOMAIN_SHUTOFF:
+        time.sleep(5)
+        dom.undefine()
+        time.sleep(3)
