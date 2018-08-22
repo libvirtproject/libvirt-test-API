@@ -261,7 +261,7 @@ def check_domain_state(conn, guestname, logger):
     return 0
 
 
-def install_sues(params):
+def install_suse(params):
     """ install a new virtual machine """
 
     xmlstr = params['xml']
