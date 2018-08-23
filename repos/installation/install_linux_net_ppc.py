@@ -118,33 +118,36 @@ def install_linux_net_ppc(params):
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
     xmlstr = params['xml']
+    nicdriver = params.get('nicdriver', 'virtio')
+    hddriver = params.get('hddriver', 'virtio')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    storage = params.get('storage', 'local')
+    seeksize = params.get('disksize', 20)
+    imageformat = params.get('imageformat', 'qcow2 -o compat=1.1')
+    graphic = params.get('graphic', 'spice')
+    video = params.get('video', 'qxl')
+    installtype = params.get('type', 'define')
+
+    logger.info("guestname: %s" % guestname)
+    params_info = "%s, %s, "  % (guestos, guestarch)
+    params_info += "%s(network), %s(disk), " % (nicdriver, hddriver)
+    params_info += "%s, %s, " % (imageformat, graphic)
+    params_info += "%s, %s" % (video, storage)
+    logger.info("%s" % params_info)
 
     installmethod = params.get('netmethod', 'http')
-
-    logger.info("the name of guest is %s" % guestname)
     logger.info("the installation method is %s" % installmethod)
 
-    graphic = params.get('graphic', 'spice')
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    logger.info('the graphic type of VM is %s' % graphic)
 
-    video = params.get('video', 'qxl')
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='VIDEO' vram='16384' heads='1'/>", video_model)
     else:
         xmlstr = xmlstr.replace("VIDEO", video)
 
-    logger.info('the video type of VM is %s' % video)
-
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
-
-    logger.info("the macaddress is %s" %
-                params.get('macaddr', '52:54:00:97:e4:28'))
-
-    diskpath = params.get('diskpath')
-    storage = params.get('storage', 'local')
 
     mountpath = '/var/lib/libvirt/images'
     if diskpath is None:
@@ -166,9 +169,6 @@ def install_linux_net_ppc(params):
     logger.info("disk image is %s" % diskpath)
     xmlstr = xmlstr.replace(params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api'), diskpath)
 
-    seeksize = params.get('disksize', 10)
-    imageformat = params.get('imageformat', 'qcow2 -o compat=1.1')
-    logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
     disk_create = "qemu-img create -f %s %s %sG" % \
         (imageformat, diskpath, seeksize)
     logger.debug("the command line of creating disk images is '%s'" %
@@ -182,7 +182,6 @@ def install_linux_net_ppc(params):
     os.chown(diskpath, 107, 107)
     logger.info("creating disk images file is successful.")
 
-    hddriver = params.get('hddriver', 'virtio')
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
     elif hddriver == 'ide':

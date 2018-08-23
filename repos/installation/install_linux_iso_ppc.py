@@ -18,9 +18,9 @@ from utils import utils
 
 required_params = ('guestname', 'guestos', 'guestarch')
 optional_params = {
-                   'memory': 1048576,
+                   'memory': 2048576,
                    'vcpu': 1,
-                   'disksize': 10,
+                   'disksize': 20,
                    'imageformat': 'qcow2',
                    'qcow2version': 'v3',
                    'hddriver': 'virtio',
@@ -128,8 +128,21 @@ def install_linux_iso_ppc(params):
     guestarch = params.get('guestarch')
     nicdriver = params.get('nicdriver', 'virtio')
     xmlstr = params['xml']
+    hddriver = params.get('hddriver', 'virtio')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    storage = params.get('storage', 'local')
+    seeksize = params.get('disksize', 20)
+    imageformat = params.get('imageformat', 'qcow2')
+    graphic = params.get('graphic', 'spice')
+    video = params.get('video', 'qxl')
+    installtype = params.get('type', 'define')
 
-    logger.info("the name of guest is %s" % guestname)
+    logger.info("guestname: %s" % guestname)
+    params_info = "%s, %s, "  % (guestos, guestarch)
+    params_info += "%s(network), %s(disk), " % (nicdriver, hddriver)
+    params_info += "%s, %s, " % (imageformat, graphic)
+    params_info += "%s, %s" % (video, storage)
+    logger.info("%s" % params_info)
 
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
@@ -139,9 +152,6 @@ def install_linux_iso_ppc(params):
 
     sourcehost = params.get('sourcehost')
     sourcepath = params.get('sourcepath')
-
-    diskpath = params.get('diskpath')
-    storage = params.get('storage', 'local')
 
     mountpath = '/var/lib/libvirt/images'
     if diskpath is None:
@@ -157,11 +167,8 @@ def install_linux_iso_ppc(params):
     if storage is 'iscsi':
         utils.setup_iscsi(sourcehost, sourcepath, mountpath, logger)
 
-    hddriver = params.get('hddriver', 'virtio')
     if hddriver != "lun" and hddriver != "scsilun":
         logger.info("disk image is %s" % diskpath)
-        seeksize = params.get('disksize', 10)
-        imageformat = params.get('imageformat', 'qcow2')
         qcow2version = params.get('qcow2version', 'v3')
         logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
         # qcow2version includes "v3","v3_lazy_refcounts"
@@ -214,18 +221,13 @@ def install_linux_iso_ppc(params):
         xmlstr = xmlstr.replace('SDX', disksymbol)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
 
-    graphic = params.get('graphic', 'spice')
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    logger.info('the graphic type of VM is %s' % graphic)
 
-    video = params.get('video', 'qxl')
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='VIDEO' vram='16384' heads='1'/>", video_model)
     else:
         xmlstr = xmlstr.replace("VIDEO", video)
-
-    logger.info('the video type of VM is %s' % video)
 
     # Checking the nicdriver define
     if nicdriver == 'virtio' or nicdriver == 'e1000' or nicdriver == 'rtl8139' or nicdriver == 'spapr-vlan':

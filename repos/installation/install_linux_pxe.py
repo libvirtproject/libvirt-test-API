@@ -75,7 +75,7 @@ def prepare_install(default_file, logger):
     logger.info("%s" % cmd)
     ret = process.run(cmd, shell=True, ignore_status=True)
 
-    xmlpath = os.path.join(HOME_PATH, 'repos/domain/xmls/pxeboot.xml')
+    xmlpath = os.path.join(HOME_PATH, 'repos/installation/xmls/pxeboot.xml')
     cmd = "virsh net-define %s" % xmlpath
     logger.info("%s" % cmd)
     ret = process.run(cmd, shell=True, ignore_status=True)

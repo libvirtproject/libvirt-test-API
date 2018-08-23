@@ -151,22 +151,29 @@ def install_linux_net_remote_ppc(params):
     user = params.get('user', 'root')
     password = params.get('password', 'redhat')
 
+    nicdriver = params.get('nicdriver', 'virtio')
+    hddriver = params.get('hddriver', 'virtio')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    seeksize = params.get('disksize', 20)
+    imageformat = params.get('imageformat', 'qcow2')
     graphic = params.get('graphic', 'spice')
-    xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    logger.info('the graphic type of VM is %s' % graphic)
-
     video = params.get('video', 'qxl')
+    installtype = params.get('type', 'define')
+
+    logger.info("guestname: %s" % guestname)
+    params_info = "%s, %s, "  % (guestos, guestarch)
+    params_info += "%s(network), %s(disk), " % (nicdriver, hddriver)
+    params_info += "%s, %s, " % (imageformat, graphic)
+    params_info += "%s, %s" % (video, 'local')
+    logger.info("%s" % params_info)
+
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='VIDEO' vram='16384' heads='1'/>", video_model)
     else:
         xmlstr = xmlstr.replace("VIDEO", video)
 
-    logger.info('the video type of VM is %s' % video)
-
-    diskpath = params.get('diskpath', "/var/lib/libvirt/images/libvirt-test-api")
-
-    logger.info("the name of guest is %s" % guestname)
     logger.info("the installation method is %s" % installmethod)
     # Remote or local installation
     if hostip == "127.0.0.1":
@@ -193,11 +200,8 @@ def install_linux_net_remote_ppc(params):
     # Seize the path and command
     # Beware of that the generation will replace the DISKPATH automatically
     xmlstr = xmlstr.replace(diskpath, "DISKPATH")
-    hddriver = params.get('hddriver', 'virtio')
     if hddriver != 'lun' and hddriver != 'scsilun':
         logger.info("disk image is %s" % diskpath)
-        seeksize = params.get('disksize', 6)
-        imageformat = params.get('imageformat', 'qcow2')
         logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
         disk_create = "qemu-img create -f %s %s %sG" % \
             (imageformat, diskpath, seeksize)

@@ -113,9 +113,9 @@ def prepare_conf_ppc(ostree, kscfg, newest, envparser):
 
 
 def prepare_network_ppc(ostree, logger):
-    xmlpath = os.path.join(HOME_PATH, 'repos/domain/xmls/pxeboot.xml')
+    xmlpath = os.path.join(HOME_PATH, 'repos/installation/xmls/pxeboot.xml')
     xml_fp = open(xmlpath, 'r')
-    tmppath = os.path.join(HOME_PATH, 'repos/domain/xmls/tmp.xml')
+    tmppath = os.path.join(HOME_PATH, 'repos/installation/xmls/tmp.xml')
     tmp_fp = open(tmppath, 'w')
     prodlist = ['RHEL', 'RHEL-ALT']
 
@@ -176,7 +176,7 @@ def prepare_install(default_file, logger):
     if status != 0:
         logger.error(text)
 
-    xmlpath = os.path.join(HOME_PATH, 'repos/domain/xmls/pxeboot.xml')
+    xmlpath = os.path.join(HOME_PATH, 'repos/installation/xmls/pxeboot.xml')
     cmd = "virsh net-define %s" % xmlpath
     logger.info("%s" % cmd)
     (status, text) = commands.getstatusoutput(cmd)
@@ -259,35 +259,34 @@ def install_linux_pxe_ppc(params):
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
     xmlstr = params['xml']
-
-    logger.info("the name of guest is %s" % guestname)
-
+    nicdriver = params.get('nicdriver', 'virtio')
+    hddriver = params.get('hddriver', 'virtio')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    seeksize = params.get('disksize', 20)
+    imageformat = params.get('imageformat', 'qcow2')
     graphic = params.get('graphic', 'spice')
-    xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    logger.info('the graphic type of VM is %s' % graphic)
-
     video = params.get('video', 'qxl')
+    installtype = params.get('type', 'define')
+
+    logger.info("guestname: %s" % guestname)
+    params_info = "%s, %s, "  % (guestos, guestarch)
+    params_info += "%s(network), %s(disk), " % (nicdriver, hddriver)
+    params_info += "%s, %s, " % (imageformat, graphic)
+    params_info += "%s, %s" % (video, 'local')
+    logger.info("%s" % params_info)
+
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='VIDEO' vram='16384' heads='1'/>", video_model)
     else:
         xmlstr = xmlstr.replace("VIDEO", video)
 
-    logger.info('the video type of VM is %s' % video)
-
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
 
-    logger.info("the macaddress is %s" %
-                params.get('macaddr', '52:54:00:97:e4:28'))
-
-    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     logger.info("disk image is %s" % diskpath)
     clean_env(diskpath, logger)
-    seeksize = params.get('disksize', 10)
-    imageformat = params.get('imageformat', 'qcow2')
-    logger.info("create disk image with size %sG, format %s" %
-                (seeksize, imageformat))
     disk_create = "qemu-img create -f %s %s %sG" % (imageformat,
                                                     diskpath, seeksize)
     logger.debug("the command line of creating disk images is '%s'" %
@@ -301,7 +300,6 @@ def install_linux_pxe_ppc(params):
     os.chown(diskpath, 107, 107)
     logger.info("creating disk images file is successful.")
 
-    hddriver = params.get('hddriver', 'virtio')
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
     elif hddriver == 'ide':

@@ -17,11 +17,11 @@ from utils import utils
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
-    'memory': 1048576,
-    'vcpu': 1,
-    'disksize': 10,
-    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
-    'imageformat': 'raw',
+                   'memory': 1048576,
+                   'vcpu': 1,
+                   'disksize': 10,
+                   'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
+                   'imageformat': 'raw',
                    'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
@@ -290,16 +290,24 @@ def install_suse_ppc(params):
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
     br = params.get('bridgename', 'virbr0')
+    nicdriver = params.get('nicdriver', 'virtio')
+    hddriver = params.get('hddriver', 'virtio')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    seeksize = params.get('disksize', 20)
+    imageformat = params.get('imageformat', 'qcow2')
+    graphic = params.get('graphic', 'spice')
+    video = params.get('video', 'qxl')
+    installtype = params.get('type', 'define')
 
-    logger.info("the name of guest is %s" % guestname)
+    logger.info("guestname: %s" % guestname)
+    params_info = "%s, %s, "  % (guestos, guestarch)
+    params_info += "%s(network), %s(disk), " % (nicdriver, hddriver)
+    params_info += "%s, %s, " % (imageformat, graphic)
+    params_info += "%s, %s" % (video, 'local')
+    logger.info("%s" % params_info)
 
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
-
-    logger.info("the macaddress is %s" %
-                params.get('macaddr', '52:54:00:97:e4:28'))
-
-    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
 
     if 'ppc' not in guestarch:
         tmpdiskpath = diskpath
@@ -309,12 +317,8 @@ def install_suse_ppc(params):
         xmlstr = xmlstr.replace(tmpdiskpath, diskpath)
 
     # prepare the image
-    hddriver = params.get('hddriver', 'virtio')
     logger.info("disk image is %s" % diskpath)
-    seeksize = params.get('disksize', 10)
-    imageformat = params.get('imageformat', 'raw')
     if hddriver != 'lun' and hddriver != "scsilun":
-        logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
         disk_create = "qemu-img create -f %s %s %sG" % \
             (imageformat, diskpath, seeksize)
         logger.debug("the command line of creating disk images is '%s'" %
@@ -360,10 +364,8 @@ def install_suse_ppc(params):
                                 "<disk type='file' device='cdrom'>")
 
     # prepare the graphic
-    graphic = params.get('graphic', 'spice')
     if graphic == 'spice':
         xmlstr = xmlstr.replace('vnc', 'spice')
-    logger.info('the graphic type of VM is %s' % graphic)
 
     # prepare the custom iso
     logger.info("get system environment information")
@@ -411,7 +413,6 @@ def install_suse_ppc(params):
         bootcd = custom + "/custom.iso"
     xmlstr = xmlstr.replace('CUSTOMISO', bootcd)
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
-    installtype = params.get('type', 'define')
     if installtype == 'define':
         logger.info('define guest from xml description')
         try:

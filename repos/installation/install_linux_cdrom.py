@@ -339,21 +339,27 @@ def install_linux_cdrom(params):
     guestarch = params.get('guestarch')
     bridge = params.get('bridgename', 'virbr0')
     xmlstr = params['xml']
+    nicdriver = params.get('nicdriver', 'virtio')
+    hddriver = params.get('hddriver', 'virtio')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    seeksize = params.get('disksize', 10)
+    imageformat = params.get('imageformat', 'raw')
+    graphic = params.get('graphic', 'spice')
+    video = params.get('video', 'qxl')
+    installtype = params.get('type', 'define')
 
-    logger.info("the name of guest is %s" % guestname)
+    logger.info("guestname: %s" % guestname)
+    params_info = "%s, %s, "  % (guestos, guestarch)
+    params_info += "%s(network), %s(disk), " % (nicdriver, hddriver)
+    params_info += "%s, %s, " % (imageformat, graphic)
+    params_info += "%s, %s" % (video, 'local')
+    logger.info("%s" % params_info)
 
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
 
-    logger.info("the macaddress is %s" %
-                params.get('macaddr', '52:54:00:97:e4:28'))
-
-    hddriver = params.get('hddriver', 'virtio')
-    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     if hddriver != "lun" and hddriver != 'scsilun':
         logger.info("disk image is %s" % diskpath)
-        seeksize = params.get('disksize', 10)
-        imageformat = params.get('imageformat', 'raw')
         logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
         disk_create = ("qemu-img create -f %s %s %sG"
                        % (imageformat, diskpath, seeksize))
@@ -399,11 +405,9 @@ def install_linux_cdrom(params):
         xmlstr = xmlstr.replace('SDX', disksymbol)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
 
-    graphic = params.get('graphic', 'spice')
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
     logger.info('the graphic type of VM is %s' % graphic)
 
-    video = params.get('video', 'qxl')
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
@@ -472,7 +476,6 @@ def install_linux_cdrom(params):
     xmlstr = xmlstr.replace('CUSTOMISO', bootcd + '/' + custom_iso)
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
 
-    installtype = params.get('type', 'define')
     if installtype == 'define':
         logger.info('define guest from xml description')
         try:
