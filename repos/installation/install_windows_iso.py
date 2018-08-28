@@ -216,7 +216,7 @@ def install_windows_iso(params):
     # Hard disk type
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
-        if version_compare("virtio-win", 1, 9, 4, logger):
+        if not version_compare("virtio-win", 1, 9, 6, logger):
             if guestarch == "x86_64":
                 if guestos == "win10":
                     xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_64)
@@ -238,7 +238,7 @@ def install_windows_iso(params):
         xmlstr = xmlstr.replace('DEV', 'sda')
     elif hddriver == 'sata':
         xmlstr = xmlstr.replace('DEV', 'sda')
-        if version_compare("virtio-win", 1, 9, 4, logger):
+        if not version_compare("virtio-win", 1, 9, 6, logger):
             if guestarch == "x86_64":
                 if guestos == "win10":
                     xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_64)
