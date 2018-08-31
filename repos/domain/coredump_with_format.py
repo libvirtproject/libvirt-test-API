@@ -13,6 +13,7 @@ except ImportError:
 from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
+from repos.domain.domain_common import check_fileflag
 
 required_params = ('guestname', 'topath', 'dumpformat', 'flags',)
 optional_params = {}
@@ -145,24 +146,12 @@ def get_fileflags(topath, logger):
     (status, output) = utils.exec_cmd(GET_CMD % topath, shell=True)
     if status == 0 and len(output) == 1:
         logger.info("The flags of saved file %s " % output[0])
-        fileflags = output[0][-5]
+        fileflags = output[0]
     else:
         logger.error("Fail to get the flags of saved file")
         return 1
 
     thread.exit_thread()
-
-
-def check_fileflag(fileflags, logger):
-    """
-      Check the file flags of file if include O_DIRECT
-    """
-    if int(fileflags) == 4:
-        logger.info("File flags include O_DIRECT: Pass")
-        return True
-    else:
-        logger.error("File flags doesn't include O_DIRECT: Fail")
-        return False
 
 
 def coredump_with_format(params):
@@ -239,9 +228,16 @@ def coredump_with_format(params):
             if not check_domain_state(vmstate, flags, logger):
                 return 1
             if bypass_f is True:
-                if not check_fileflag(fileflags, logger):
+                # Check the file flags of file if include O_DIRECT
+                if utils.isPower():
+                    com_flags = "0600001"
+                else:
+                    com_flags = "0140001"
+                if check_fileflag(fileflags, com_flags, logger):
+                    logger.info("Bypass file system cache successfully")
+                else:
+                    logger.error("Bypass file system cache failed")
                     return 1
-
     except libvirtError as e:
         logger.error("API error message: %s" % e.get_error_message())
         return 1

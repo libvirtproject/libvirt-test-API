@@ -204,6 +204,10 @@ def cpu_affinity(params):
     domain_name = params['guestname']
     vcpu = params['vcpu']
 
+    if utils.isPower():
+        logger.info("This case need update for ppc arch.")
+        return 0
+
     logger.info("the name of virtual machine is %s" % domain_name)
     logger.info("the vcpu given is %s" % vcpu)
 

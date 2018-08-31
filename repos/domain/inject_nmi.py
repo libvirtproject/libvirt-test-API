@@ -34,6 +34,10 @@ def inject_nmi(params):
     guestname = params['guestname']
     logger = params['logger']
 
+    if utils.isPower():
+        logger.info("Don't support injectNMI() on ppc machine.")
+        return 0
+
     try:
         conn = sharedmod.libvirtobj['conn']
         domobj = conn.lookupByName(guestname)

@@ -52,6 +52,10 @@ def pinemulator(params):
     guestname = params['guestname']
     cpulist = params['cpulist']
 
+    if utils.isPower():
+        logger.info("This case need update for ppc arch.")
+        return 0
+
     logger.info("the name of virtual machine is %s" % guestname)
     logger.info("the given cpulist is %s" % cpulist)
 
@@ -66,8 +70,6 @@ def pinemulator(params):
     if not cpumap:
         logger.error("cpulist: Invalid format")
         return 1
-
-
 
     try:
         domobj = conn.lookupByName(guestname)
