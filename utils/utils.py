@@ -687,7 +687,7 @@ def get_remote_kernel(hostname, username, password):
     i = 0
     while i < 3:
         i += 1
-        kernel = remote_exec(hostname, username, password, cmd)
+        kernel = remote_exec_pexpect(hostname, username, password, cmd)
         if kernel:
             break
         else:

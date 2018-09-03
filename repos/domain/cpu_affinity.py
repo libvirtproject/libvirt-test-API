@@ -144,7 +144,7 @@ def vcpu_affinity_check(domain_name, vcpu, expected_pinned_cpu, hypervisor):
         if int(major) > 5:
             cmd = "rpm -q qemu-kvm-rhev"
             ret = process.run(cmd, shell=True, ignore_status=True)
-            if int(minor) == 8 or (int(major) == 7 and int(minor) == 6 and not ret.exit_status):
+            if int(major) == 8 or (int(major) == 7 and int(minor) == 6 and not ret.exit_status):
                 cmd = ("virsh qemu-monitor-command %s --hmp info cpus|grep '#%s'|cut -d '=' -f2"
                        % (domain_name, vcpu))
             else:
