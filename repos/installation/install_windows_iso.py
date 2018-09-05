@@ -21,6 +21,8 @@ VM_UNDEFINE = "virsh undefine %s"
 #virtio win disk driver
 VIRTIO_WIN_64 = "/usr/share/virtio-win/virtio-win_amd64.vfd"
 VIRTIO_WIN_32 = "/usr/share/virtio-win/virtio-win_x86.vfd"
+VIRTIO_WIN_SERVERS_64 = "/usr/share/virtio-win/virtio-win_servers_amd64.vfd"
+VIRTIO_WIN_SERVERS_32 = "/usr/share/virtio-win/virtio-win_servers_x86.vfd"
 VIRTIO_WIN10_64 = "/usr/share/virtio-win/virtio-win_w10_amd64.vfd"
 VIRTIO_WIN10_32 = "/usr/share/virtio-win/virtio-win_w10_x86.vfd"
 #virtio win net driver
@@ -42,7 +44,6 @@ optional_params = {'memory': 1048576,
                    'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
                    'xml': 'xmls/kvm_windows_guest_install_cdrom.xml',
                    'guestmachine': 'pc',
-                   'driverpath': '/usr/share/virtio-win/virtio-win_amd64.vfd',
                    'graphic': 'spice',
                    'video': 'qxl',
                    'storage': 'local',
@@ -162,6 +163,38 @@ def prepare_floppy_image(guestname, guestos, guestarch,
     return 0
 
 
+def set_win_driver(xmlstr, guestos, guestarch, logger):
+    if not version_compare("virtio-win", 1, 9, 6, logger):
+        if guestarch == "x86_64":
+            if guestos == "win10":
+                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN10_64)
+            else:
+                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_64)
+        else:
+            if guestos == "win10":
+                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN10_32)
+            else:
+                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_32)
+    else:
+        win_list = ["win7", "win8", "win8u1", "win10"]
+        win_servers_list = ["win2003", "win2008", "win2008R2", "win2012", "win2012R2", "win2016"]
+        if guestarch == "x86_64":
+            if guestos in win_list:
+                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_64)
+            elif guestos in win_servers_list:
+                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_SERVERS_64)
+            else:
+                logger.error("%s don't in windows list." % guestos)
+        else:
+            if guestos in win_list:
+                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_32)
+            elif guestos in win_servers_list:
+                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_SERVERS_32)
+            else:
+                logger.error("%s don't in windows list." % guestos)
+    return xmlstr
+
+
 def install_windows_iso(params):
     """ install a windows guest virtual machine by using iso file """
     # Initiate and check parameters
@@ -216,44 +249,14 @@ def install_windows_iso(params):
     # Hard disk type
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
-        if not version_compare("virtio-win", 1, 9, 6, logger):
-            if guestarch == "x86_64":
-                if guestos == "win10":
-                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_64)
-                else:
-                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
-            else:
-                if guestos == "win10":
-                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_32)
-                else:
-                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
-        else:
-            if guestarch == "x86_64":
-                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
-            else:
-                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
+        xmlstr = set_win_driver(xmlstr, guestos, guestarch, logger)
     elif hddriver == 'ide':
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
         xmlstr = xmlstr.replace('DEV', 'sda')
     elif hddriver == 'sata':
         xmlstr = xmlstr.replace('DEV', 'sda')
-        if not version_compare("virtio-win", 1, 9, 6, logger):
-            if guestarch == "x86_64":
-                if guestos == "win10":
-                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_64)
-                else:
-                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
-            else:
-                if guestos == "win10":
-                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN10_32)
-                else:
-                    xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
-        else:
-            if guestarch == "x86_64":
-                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
-            else:
-                xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
+        xmlstr = set_win_driver(xmlstr, guestos, guestarch, logger)
     elif hddriver == 'lun':
         xmlstr = xmlstr.replace("'lun'", "'virtio'")
         xmlstr = xmlstr.replace('DEV', 'vda')
@@ -270,10 +273,7 @@ def install_windows_iso(params):
         iscsi_path = install_common.get_iscsi_disk_path(sourcehost, sourcepath)
         xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='%s'" % iscsi_path)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
-        if guestarch == "x86_64":
-            xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
-        else:
-            xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
+        xmlstr = set_win_driver(xmlstr, guestos, guestarch, logger)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
@@ -306,7 +306,6 @@ def install_windows_iso(params):
     xmlstr = xmlstr.replace('FLOPPY', FLOOPY_IMG)
 
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
-
     conn = sharedmod.libvirtobj['conn']
     if not install_common.start_guest(conn, installtype, xmlstr, logger):
         logger.error("fail to define domain %s" % guestname)
