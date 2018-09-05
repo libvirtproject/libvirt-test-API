@@ -249,14 +249,12 @@ def install_windows_iso(params):
     # Hard disk type
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
-        xmlstr = set_win_driver(xmlstr, guestos, guestarch, logger)
     elif hddriver == 'ide':
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
         xmlstr = xmlstr.replace('DEV', 'sda')
     elif hddriver == 'sata':
         xmlstr = xmlstr.replace('DEV', 'sda')
-        xmlstr = set_win_driver(xmlstr, guestos, guestarch, logger)
     elif hddriver == 'lun':
         xmlstr = xmlstr.replace("'lun'", "'virtio'")
         xmlstr = xmlstr.replace('DEV', 'vda')
@@ -273,7 +271,7 @@ def install_windows_iso(params):
         iscsi_path = install_common.get_iscsi_disk_path(sourcehost, sourcepath)
         xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='%s'" % iscsi_path)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
-        xmlstr = set_win_driver(xmlstr, guestos, guestarch, logger)
+    xmlstr = set_win_driver(xmlstr, guestos, guestarch, logger)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
