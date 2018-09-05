@@ -27,7 +27,8 @@ ALL_FEATURES = ['fpu', 'vme', 'de', 'pse', 'tsc', 'msr', 'pae', 'mce', 'cx8',
                 'fma4', 'tce', 'cvt16', 'nodeid_msr', 'tbm', 'topoext',
                 'perfctr_core', 'perfctr_nb', 'fsgsbase', 'bmi1', 'hle',
                 'avx2', 'smep', 'bmi2', 'erms', 'invpcid', 'rtm', 'rdseed',
-                'adx', 'smap', 'invtsc']
+                'adx', 'smap', 'invtsc', 'cmt', 'mbm_local', 'mbm_total',
+                'tsc_adjust', 'xsaveopt']
 
 
 def get_host_cpu(conn):
@@ -81,10 +82,11 @@ def baseline_test(conn, host_cpu, logger):
     sub_sub_features = get_cpu_feature_set(sub_subset_of_host_cpu)
     baseline_features = get_cpu_feature_set(baseline)
 
-    if sub_sub_features != baseline_features:
-        logger.error("Generate baseline cpu failed")
-        logger.error("Expect: %s, Got: %s" % (str(sub_sub_features), str(baseline)))
-        return 1
+    for i in baseline_features:
+        if i not in sub_sub_features:
+            logger.error("Generate baseline cpu failed")
+            logger.error("Expect: %s, Got: %s" % (str(sub_sub_features), str(baseline)))
+            return 1
     logger.info("Generate baseline cpu success")
 
     expand_baseline = conn.baselineCPU([host_cpu, subset_of_host_cpu,
