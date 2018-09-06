@@ -140,6 +140,12 @@ def balloon_memory(params):
     params.pop('logger')
     domname = params['guestname']
     memorypair = params['memorypair']
+
+    if utils.isPower():
+        # in get_remote_memory(): cat /proc/meminfo | grep DirectMap | awk '{print $2}'
+        logger.info("Don't support 'DirectMap' on ppc arch which lead to check memory failed.")
+        return 0
+
     minmem = int(memorypair.split(',')[0]) * 1024
     logger.info("the minimum memory is %s" % minmem)
     maxmem = int(memorypair.split(',')[1]) * 1024

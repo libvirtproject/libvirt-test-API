@@ -8,7 +8,7 @@ import libvirt
 
 from libvirt import libvirtError
 from src import sharedmod
-from utils import process
+from utils import process, utils
 
 required_params = (
     'guestname',
@@ -109,8 +109,12 @@ def memory_params_live(params):
         ret_pos = domobj.memoryParameters(flags)
         logger.info("%s memory parameters is %s" % (guestname, ret_pos))
 
+        if utils.isPower():
+            fabs_value = 128
+        else:
+            fabs_value = 3
         for i in list(param_dict.keys()):
-            if math.fabs(ret_pos[i] - param_dict[i]) > 3:
+            if math.fabs(ret_pos[i] - param_dict[i]) > fabs_value:
                 logger.error("%s value is not as expected" % i)
                 return 1
 
@@ -122,7 +126,7 @@ def memory_params_live(params):
             return 1
 
         for i in list(param_dict.keys()):
-            if math.fabs(param_dict[i] - ret[i]) > 3:
+            if math.fabs(param_dict[i] - ret[i]) > fabs_value:
                 logger.error("%s value not match with cgroup setting" % i)
                 return 1
 

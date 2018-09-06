@@ -66,6 +66,11 @@ def set_memory_live(params):
     username = params['username']
     password = params['password']
 
+    if utils.isPower():
+        # in get_remote_memory(): cat /proc/meminfo | grep DirectMap | awk '{print $2}'
+        logger.info("Don't support 'DirectMap' on ppc arch which lead to check memory failed.")
+        return 0
+
     logger.info("the name of virtual machine is %s" % guestname)
     logger.info("the given memory value is %s" % memory)
 

@@ -683,16 +683,15 @@ def get_remote_memory(hostname, username, password, mem_type="DirectMap"):
 def get_remote_kernel(hostname, username, password):
     """Get kernel info of specified host"""
     cmd = "uname -r"
-    kernel = None
     i = 0
     while i < 3:
         i += 1
-        kernel = remote_exec_pexpect(hostname, username, password, cmd)
-        if kernel:
+        ret, out = remote_exec_pexpect(hostname, username, password, cmd)
+        if out:
             break
         else:
             continue
-    return kernel
+    return out
 
 
 def install_package(package=''):

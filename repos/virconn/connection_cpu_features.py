@@ -107,6 +107,9 @@ def baseline_test(conn, host_cpu, logger):
 
 
 def compare_test(conn, host_cpu, logger):
+    if utils.isPower():
+        logger.info("Don't support compareCPU() on ppc arch.")
+        return 0
     if conn.compareCPU(host_cpu) != libvirt.VIR_CPU_COMPARE_IDENTICAL:
         logger.error("Compare host cpu with host cpu failed")
         return 1
