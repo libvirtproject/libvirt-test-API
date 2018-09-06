@@ -163,19 +163,21 @@ def domain_blkinfo(params):
     try:
         logger.info("the output of domain blockinfo is:")
         block_info = domobj.blockInfo(blockdev, 0)
+        logger.info("Capacity  : %d " % block_info[0])
+        logger.info("Allocation: %d " % block_info[1])
+        logger.info("Physical  : %d " % block_info[2])
         # Add to test
         for count in range(0, 100):
+            logger.info("count: %s" % count)
             if block_info[1] != block_info[2]:
                 time.sleep(3)
                 block_info = domobj.blockInfo(blockdev, 0)
             else:
-                logger.debug("count: %s" % count)
+                logger.info("test Capacity  : %d " % block_info[0])
+                logger.info("test Allocation: %d " % block_info[1])
+                logger.info("test Physical  : %d " % block_info[2])
                 break
         # End to test
-        logger.info("Capacity  : %d " % block_info[0])
-        logger.info("Allocation: %d " % block_info[1])
-        logger.info("Physical  : %d " % block_info[2])
-
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
