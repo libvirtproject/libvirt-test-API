@@ -5,7 +5,7 @@ import libvirt
 import re
 from libvirt import libvirtError
 from xml.dom import minidom
-
+from utils import utils
 from src import sharedmod
 
 required_params = ()
