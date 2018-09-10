@@ -22,6 +22,7 @@ def get_output(command, logger):
     if ret.exit_status:
         logger.error("executing " + "\"" + command + "\"" + " failed")
         logger.error(ret.stdout)
+    logger.debug("out: %s" % ret.stdout)
     return ret.exit_status, ret.stdout
 
 
@@ -119,12 +120,17 @@ def check_block_data(blockdev, blkdata, logger):
             if abs(blkdata[1] / total_size - alloc_size / total_size) < fragment_rate:
                 logger.info("Allocation check for qcow2 sucessed.")
             else:
-                logger.error("Allocation check for qcow2 sucessed.")
-                logger.error("Expect a number near %d, got: %d"
+                """
+                libvirt/src/libvirt-domain.c:
+                For QEMU domains, the allocation and physical virDomainBlockInfo
+                values returned will generally be the same, except when using a
+                non raw, block backing device, such as qcow2 for an active domain.
+                When the persistent domain is not active, QEMU will return the
+                default which is the same value for allocation and physical.
+                """
+                logger.info("The allocation and physical values are different.")
+                logger.info("Expect a number near %d, got: %d"
                              % (alloc_size, blkdata[1]))
-                return 1
-
-
         elif block_size_b == blkdata[1] and int(block_size_b) == blkdata[2]:
             logger.info("Allocation and Physical value's checking succeeded")
         else:
