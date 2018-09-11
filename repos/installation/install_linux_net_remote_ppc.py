@@ -164,7 +164,7 @@ def install_linux_net_remote_ppc(params):
     params_info = "%s, %s, "  % (guestos, guestarch)
     params_info += "%s(network), %s(disk), " % (nicdriver, hddriver)
     params_info += "%s, %s, " % (imageformat, graphic)
-    params_info += "%s, %s" % (video, 'local')
+    params_info += "%s, %s(storage)" % (video, 'local')
     logger.info("%s" % params_info)
 
     xmlstr = xmlstr.replace('GRAPHIC', graphic)

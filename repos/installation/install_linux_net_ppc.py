@@ -132,7 +132,7 @@ def install_linux_net_ppc(params):
     params_info = "%s, %s, "  % (guestos, guestarch)
     params_info += "%s(network), %s(disk), " % (nicdriver, hddriver)
     params_info += "%s, %s, " % (imageformat, graphic)
-    params_info += "%s, %s" % (video, storage)
+    params_info += "%s, %s(storage)" % (video, storage)
     logger.info("%s" % params_info)
 
     installmethod = params.get('netmethod', 'http')
