@@ -85,7 +85,7 @@ def restore_flags(params):
         if utils.isPower():
             com_flags = "0600000"
         else:
-            com_flags = "0140001"
+            com_flags = "0140000"
         if check_fileflag(fileflags[0], com_flags, logger):
             logger.info("Bypass file system cache successfully")
         else:
