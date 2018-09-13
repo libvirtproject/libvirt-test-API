@@ -71,25 +71,25 @@ def group_sasl_set(unix_sock_group, auth_unix_ro, auth_unix_rw, logger):
 
     # add unix socket group
 
-    libvirt_group_add = "groupadd %s" % unix_sock_group
-    libvirt_group_del = "groupdel %s" % unix_sock_group
+    libvirt_group_add = "groupadd -f %s" % unix_sock_group
+    libvirt_group_del = "groupdel -f %s" % unix_sock_group
     group_check = "grep %s /etc/group" % unix_sock_group
     (status, output) = utils.exec_cmd(group_check, shell=True)
     # if the group already exists, remove it
     if len(output):
         (status, output) = utils.exec_cmd(libvirt_group_del, shell=True)
         if status:
-            logger.error("Fail to delete %s group" % unix_sock_group)
+            logger.error("Fail to delete %s group: %s" % (unix_sock_group, output))
             return 1
 
         (status, output) = utils.exec_cmd(libvirt_group_add, shell=True)
         if status:
-            logger.error("Fail to add %s group" % unix_sock_group)
+            logger.error("Fail to add %s group: %s" % (unix_sock_group, output))
             return 1
     else:
         status, output = get_output(libvirt_group_add, 0, logger)
         if status:
-            logger.error("failed to add %s group" % unix_sock_group)
+            logger.error("failed to add %s group: %s" % (unix_sock_group, output))
             return 1
 
     # add "testapi" as the testing user
@@ -259,16 +259,16 @@ def unix_perm_sasl_clean(params):
             logger.error("out: %s" % out)
 
     # delete "testapi" user
-    libvirt_user_del = "userdel %s" % TESTING_USER
+    libvirt_user_del = "userdel -f %s" % TESTING_USER
     status, output = get_output(libvirt_user_del, 0, logger)
     if status:
-        logger.error("failed to del %s user into group %s" % TESTING_USER)
+        logger.error("failed to del %s user: %s" % (TESTING_USER, output))
 
     # delete unix socket group
-    libvirt_group_del = "groupdel %s" % unix_sock_group
+    libvirt_group_del = "groupdel -f %s" % unix_sock_group
     status, output = get_output(libvirt_group_del, 0, logger)
     if status:
-        logger.error("failed to del %s group" % unix_sock_group)
+        logger.error("failed to del %s group: %s" % (unix_sock_group, output))
 
     # delete sasl user
     if auth_unix_ro == 'sasl' or auth_unix_rw == 'sasl':

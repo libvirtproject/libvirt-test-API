@@ -122,6 +122,14 @@ def get_local_hostname():
     return socket.gethostname()
 
 
+def get_local_ip():
+    """ get local ip address """
+    cmd = "hostname -i"
+    result = process.run(cmd, shell=True, ignore_status=True)
+    ip = result.stdout.split()[1]
+    return ip
+
+
 def get_libvirt_version(ver=''):
     """ get Libvirt version """
     cmd = "rpm -q libvirt|head -1"

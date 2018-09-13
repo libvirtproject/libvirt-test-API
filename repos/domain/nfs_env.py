@@ -15,7 +15,7 @@ def nfs_env(params):
     nfs_path = params['nfs_path']
     mount_path = params['mount_path']
 
-    server_ip = utils.get_local_hostname()
+    server_ip = utils.get_local_ip()
     if not nfs.nfs_setup(server_ip, target_machine, username, password,
                          nfs_path, mount_path, logger):
         return 1
