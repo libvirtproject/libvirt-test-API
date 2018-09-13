@@ -4,7 +4,6 @@
 import os
 import re
 import time
-import commands
 import urllib
 import libvirt
 
@@ -12,7 +11,8 @@ from libvirt import libvirtError
 
 from src import sharedmod
 from src import env_parser
-from utils import utils
+from utils import utils, process
+from repos.domain import domain_common
 
 required_params = ('guestname', 'guestos', 'guestarch', 'netmethod')
 optional_params = {'memory': 2097152,
@@ -37,11 +37,6 @@ optional_params = {'memory': 2097152,
                    'rhelalt': '',
                    }
 
-VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
-VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
-VM_DESTROY = "virsh destroy %s"
-VM_UNDEFINE = "virsh undefine %s"
-
 BOOT_DIR = "/var/lib/libvirt/boot"
 VMLINUZ = os.path.join(BOOT_DIR, 'vmlinuz')
 INITRD = os.path.join(BOOT_DIR, 'initrd.img')
@@ -53,9 +48,9 @@ def get_interface(logger):
     cmd = ("ip addr show | grep \'state UP\' | awk \'{print $2}\'"
            "| cut -d\':\' -f1")
     logger.info(cmd)
-    ret, out = commands.getstatusoutput(cmd)
-    logger.info("get interface: %s" % out)
-    if ret == 1:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    logger.info("get interface: %s" % ret.stdout)
+    if ret.exit_status == 1:
         logger.error("fail to get interface.")
         return 1
 
@@ -209,16 +204,17 @@ def install_linux_net_remote_ppc(params):
                      disk_create)
 
         if hostip == "127.0.0.1":
-            (status, message) = commands.getstatusoutput(disk_create)
+            ret = process.run(disk_create, shell=True, ignore_status=True)
             os.chown(diskpath, 107, 107)
+            if ret.exit_status != 0:
+                logger.debug(ret.stdout)
+                return 1
         else:
-            (status, message) = utils.remote_exec_pexpect(hostip, user, password, disk_create)
+            ret, stdout = utils.remote_exec_pexpect(hostip, user, password, disk_create)
             chowncommand = "chown 107:107" + diskpath
-
-        # Authorize the file and directory
-        if status != 0:
-            logger.debug(message)
-            return 1
+            if ret != 0:
+                logger.debug(stdout)
+                return 1
 
         logger.info("creating disk images file is successful.")
 
@@ -461,26 +457,8 @@ def install_linux_net_remote_ppc_clean(params):
     guestname = params.get('guestname')
 
     diskpath = params.get('diskpath', "/var/lib/libvirt/images/libvirt-test-api")
-
-    (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
-    if not status:
-        logger.info("remove guest %s, and its disk image file" % guestname)
-        (status, output) = commands.getstatusoutput(VM_STAT % guestname)
-        if status:
-            (status, output) = commands.getstatusoutput(VM_DESTROY % guestname)
-            if status:
-                logger.error("failed to destroy guest %s" % guestname)
-                logger.error("%s" % output)
-            else:
-                (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-                if status:
-                    logger.error("failed to undefine guest %s" % guestname)
-                    logger.error("%s" % output)
-        else:
-            (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-            if status:
-                logger.error("failed to undefine guest %s" % guestname)
-                logger.error("%s" % output)
+    conn = libvirt.open()
+    domain_common.guest_clean(conn, guestname, logger)
 
     if os.path.exists(diskpath):
         os.remove(diskpath)

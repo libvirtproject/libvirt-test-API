@@ -4,7 +4,6 @@
 import os
 import re
 import time
-import commands
 import shutil
 import urllib
 
@@ -13,7 +12,8 @@ from libvirt import libvirtError
 
 from src import sharedmod
 from src import env_parser
-from utils import utils
+from utils import utils, process
+from repos.domain import domain_common
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
@@ -35,11 +35,6 @@ optional_params = {
                    'disksymbol': 'sdb'
 }
 
-VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
-VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
-VM_DESTROY = "virsh destroy %s"
-VM_UNDEFINE = "virsh undefine %s"
-
 HOME_PATH = os.getcwd()
 
 
@@ -50,7 +45,8 @@ def cleanup(mount, logger):
     if os.path.isdir(mount):
         if os.path.ismount(mount):
             logger.info("Path %s is still mounted, please verify" % mount)
-            commands.getstatusoutput("umount -l  %s" % mount)
+            cmd = "umount -l  %s" % mount
+            ret = process.run(cmd, shell=True, ignore_status=True)
             logger.info("the floppy mount point folder exists, remove it")
             shutil.rmtree(mount)
         else:
@@ -81,25 +77,26 @@ def prepare_floppy(ks_path, mount_point, floppy_path, logger):
     """
     if os.path.exists(floppy_path):
         os.remove(floppy_path)
-    create_cmd = 'dd if=/dev/zero of=%s bs=1440k count=1' % floppy_path
-    (status, text) = commands.getstatusoutput(create_cmd)
-    if status:
+    cmd = 'dd if=/dev/zero of=%s bs=1440k count=1' % floppy_path
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("failed to create floppy image")
         return 1
-    format_cmd = 'mkfs.msdos -s 1 %s' % floppy_path
-    (status, text) = commands.getstatusoutput(format_cmd)
-    if status:
+    cmd = 'mkfs.msdos -s 1 %s' % floppy_path
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("failed to format floppy image")
         return 1
     if os.path.exists(mount_point):
         logger.info("the floppy mount point folder exists, remove it")
-        commands.getstatusoutput("umount -l %s" % mount_point)
+        cmd = "umount -l %s" % mount_point
+        ret = process.run(cmd, shell=True, ignore_status=True)
         shutil.rmtree(mount_point)
     logger.info("create mount point %s" % mount_point)
     os.makedirs(mount_point)
-    mount_cmd = 'mount -o loop %s %s' % (floppy_path, mount_point)
-    (status, text) = commands.getstatusoutput(mount_cmd)
-    if status:
+    cmd = 'mount -o loop %s %s' % (floppy_path, mount_point)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error(
             "failed to mount /tmp/floppy.img to /mnt/libvirt_floppy")
         return 1
@@ -134,9 +131,9 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
     utils.exec_cmd(cmd, shell=True)
 
     # copy iso file
-    mount_command = "mount -o loop %s %s" % (iso_path, mount_point)
-    (status, message) = commands.getstatusoutput(mount_command)
-    if status:
+    cmd = "mount -o loop %s %s" % (iso_path, mount_point)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
         logger.error("mount iso failure")
         return 1
 
@@ -148,20 +145,23 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
             shutil.copy(mount_point + '/suseboot/linux64', '/var/lib/libvirt/boot/')
             shutil.copy(mount_point + '/suseboot/initrd64', '/var/lib/libvirt/boot/')
 
-        (status, messageumount) = commands.getstatusoutput("umount -l %s" % mount_point)
-        if status:
-            logger.error("unmount iso failure, the fail reason is %s " % messageumount)
+        cmd = "umount -l %s" % mount_point
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        if ret.exit_status:
+            logger.error("unmount iso failure: %s " % ret.stdout)
             return 1
 
         shutil.move(iso_path, new_dir + '/custom.iso')
         return new_dir
 
     logger.info("Copying the iso file to working directory")
-    commands.getstatusoutput("cp -rf %s/* %s" % (mount_point, new_dir + "/custom"))
+    cmd = "cp -rf %s/* %s/custom" % (mount_point, new_dir)
+    ret = process.run(cmd, shell=True, ignore_status=True)
 
     # prepare the custom iso
     if "ubuntu" in guestos:
-        commands.getstatusoutput("cp -rf %s/.disk %s" % (mount_point, new_dir + "/custom"))
+        cmd = cmd = "cp -rf %s/.disk %s/custom" % (mount_point, new_dir)
+        ret = process.run(cmd, shell=True, ignore_status=True)
         prepare_ks(ks, guestos, hddriver, new_dir + "/custom/install/ks.cfg", logger)
         os.remove(new_dir + "/custom/isolinux/isolinux.cfg")
         shutil.copy(HOME_PATH + "/repos/installation/isolinux/ubuntu/isolinux.cfg",
@@ -171,8 +171,8 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
                     -no-emul-boot -boot-load-size 4 \
                     -boot-info-table %s"
         logger.info("Making the custom.iso file")
-        (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO % (new_dir, new_dir + "/custom"))
-
+        cmd = MAKE_ISO % (new_dir, new_dir + "/custom")
+        ret = process.run(cmd, shell=True, ignore_status=True)
     if "ppc" not in guestarch:
         prepare_ks(ks, guestos, hddriver, new_dir + "/custom/autoinst.xml", logger)
         flag = prepare_floppy(new_dir + "/custom/autoinst.xml",
@@ -192,26 +192,29 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
                         boot/i386/loader/isolinux.bin -c boot.cat \
                         -no-emul-boot -boot-load-size 4 \
                         -boot-info-table %s'
-            (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO % (new_dir, new_dir + "/custom"))
+            cmd = MAKE_ISO % (new_dir, new_dir + "/custom")
+            ret = process.run(cmd, shell=True, ignore_status=True)
         else:
             MAKE_ISO = 'mkisofs -o %s/custom.iso -J -r -v -R -b \
                         boot/x86_64/loader/isolinux.bin -c boot.cat \
                         -no-emul-boot -boot-load-size 4 \
                         -boot-info-table %s'
-            (statusiso, messageiso) = commands.getstatusoutput(MAKE_ISO % (new_dir, new_dir + "/custom"))
+            cmd = MAKE_ISO % (new_dir, new_dir + "/custom")
+            ret = process.run(cmd, shell=True, ignore_status=True)
 
-    if statusiso:
-        logger.error(messageiso)
+    if ret.exit_status:
+        logger.error(ret.stdout)
         logger.error("makeing iso failure")
         return 1
 
     os.remove(iso_path)
-    (status, text) = commands.getstatusoutput("umount -l /mnt/floppy")
-    if status:
-        logger.error(
-            "failed to umount %s" % mount_point)
+    cmd = "umount -l /mnt/floppy"
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
+        logger.error("failed to umount %s" % mount_point)
 
-    (statusumount, messageumount) = commands.getstatusoutput("umount -l %s" % mount_point)
+    cmd = "umount -l %s" % mount_point
+    ret = process.run(cmd, shell=True, ignore_status=True)
     return new_dir
 
 
@@ -323,9 +326,9 @@ def install_suse_ppc(params):
             (imageformat, diskpath, seeksize)
         logger.debug("the command line of creating disk images is '%s'" %
                      disk_create)
-        (status, message) = commands.getstatusoutput(disk_create)
-        if status != 0:
-            logger.debug(message)
+        ret = process.run(disk_create, shell=True, ignore_status=True)
+        if ret.exit_status != 0:
+            logger.debug(ret.stdout)
             return 1
         os.chown(diskpath, 107, 107)
         logger.info("creating disk images file is successful.")
@@ -518,26 +521,8 @@ def install_suse_ppc_clean(params):
     guestname = params.get('guestname')
 
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-
-    (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
-    if not status:
-        logger.info("remove guest %s, and its disk image file" % guestname)
-        (status, output) = commands.getstatusoutput(VM_STAT % guestname)
-        if status:
-            (status, output) = commands.getstatusoutput(VM_DESTROY % guestname)
-            if status:
-                logger.error("failed to destroy guest %s" % guestname)
-                logger.error("%s" % output)
-            else:
-                (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-                if status:
-                    logger.error("failed to undefine guest %s" % guestname)
-                    logger.error("%s" % output)
-        else:
-            (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-            if status:
-                logger.error("failed to undefine guest %s" % guestname)
-                logger.error("%s" % output)
+    conn = libvirt.open()
+    domain_common.guest_clean(conn, guestname, logger)
 
     if os.path.exists(diskpath + '/' + guestname):
         os.remove(diskpath + '/' + guestname)

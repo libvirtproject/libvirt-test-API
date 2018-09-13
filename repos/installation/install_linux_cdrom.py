@@ -4,7 +4,6 @@
 import os
 import re
 import time
-import commands
 import shutil
 import urllib
 
@@ -14,7 +13,8 @@ from src.exception import TestError
 
 from src import sharedmod
 from src import env_parser
-from utils import utils
+from utils import utils, process
+from repos.domain import domain_common
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
@@ -39,11 +39,6 @@ optional_params = {
                    'rhelnewest': '',
                    'rhelalt': '',
 }
-
-VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
-VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
-VM_DESTROY = "virsh destroy %s"
-VM_UNDEFINE = "virsh undefine %s"
 
 HOME_PATH = os.getcwd()
 
@@ -72,10 +67,10 @@ def mk_kickstart_iso(kscfg, guestos, logger):
     os.makedirs(boot_iso_dir)
 
     logger.debug("mount " + boot_iso)
-    (ret, msg) = commands.getstatusoutput("mount -t iso9660 -o loop %s %s"
-                                          % (boot_iso, boot_iso_dir))
-    if ret != 0:
-        raise RuntimeError('Failed to start making custom iso: ' + msg)
+    cmd = "mount -t iso9660 -o loop %s %s" % (boot_iso, boot_iso_dir)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        raise RuntimeError('Failed to start making custom iso: ' + ret.stdout)
 
     logger.debug("copy original iso files to custom work directory")
     shutil.copytree(boot_iso_dir, custom_iso_dir)
@@ -86,11 +81,14 @@ def mk_kickstart_iso(kscfg, guestos, logger):
         for i in files:
             os.chmod(os.path.join(root, i), 511)
 
-    (ret, msg) = commands.getstatusoutput("umount %s" % boot_iso_dir)
-    if ret != 0:
-        raise RuntimeError('Failed umounting boot iso: ' + msg)
+    cmd = "umount %s" % boot_iso_dir
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        raise RuntimeError('Failed umounting boot iso: ' + ret.stdout)
 
-    vlmid = commands.getoutput("isoinfo -d -i %s |grep 'Volume id:'" % boot_iso)
+    cmd = "isoinfo -d -i %s |grep 'Volume id:'" % boot_iso
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    vlmid = ret.stdout.split(":")[1]
     logger.debug("vlmid :" + vlmid)
 
     logger.debug("editing config files")
@@ -213,9 +211,9 @@ def mk_kickstart_iso(kscfg, guestos, logger):
                            '-boot-load-size 4 -boot-info-table -o %s/%s .'
                            % (cwd, custom_iso))
 
-    (ret, msg) = commands.getstatusoutput(mkisofs_command)
-    if ret != 0:
-        raise RuntimeError("Failed to make custom_iso, error %d: %s!" % (ret, msg))
+    ret = process.run(mkisofs_command, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        raise RuntimeError("Failed to make custom_iso, error %d: %s!" % (ret.exit_status, ret.stdout))
 
     # clean up
     remove_all(boot_iso_dir)
@@ -365,9 +363,9 @@ def install_linux_cdrom(params):
                        % (imageformat, diskpath, seeksize))
         logger.debug("the command line of creating disk images is '%s'"
                      % disk_create)
-        (status, message) = commands.getstatusoutput(disk_create)
-        if status != 0:
-            logger.debug(message)
+        ret = process.run(disk_create, shell=True, ignore_status=True)
+        if ret.exit_status != 0:
+            logger.debug(ret.stdout)
             logger.info("creating disk images file is fail")
             return 1
 
@@ -467,8 +465,7 @@ def install_linux_cdrom(params):
         else:
             cmd = ('wget -N %s -P %s' % (bootaddr, bootcd))
             custom_iso = bootaddr.split('/')[-1]
-            (status, out) = commands.getstatusoutput(cmd)
-
+            ret = process.run(cmd, shell=True, ignore_status=True)
     except TestError, err:
         logger.error("Failed to prepare boot cdrom!")
         return 1
@@ -590,26 +587,8 @@ def install_linux_cdrom_clean(params):
     guestname = params.get('guestname')
 
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-
-    (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
-    if not status:
-        logger.info("remove guest %s, and its disk image file" % guestname)
-        (status, output) = commands.getstatusoutput(VM_STAT % guestname)
-        if status:
-            (status, output) = commands.getstatusoutput(VM_DESTROY % guestname)
-            if status:
-                logger.error("failed to destroy guest %s" % guestname)
-                logger.error("%s" % output)
-            else:
-                (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-                if status:
-                    logger.error("failed to undefine guest %s" % guestname)
-                    logger.error("%s" % output)
-        else:
-            (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-            if status:
-                logger.error("failed to undefine guest %s" % guestname)
-                logger.error("%s" % output)
+    conn = libvirt.open()
+    domain_common.guest_clean(conn, guestname, logger)
     if os.path.exists(diskpath):
         os.remove(diskpath)
 

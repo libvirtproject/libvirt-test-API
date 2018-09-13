@@ -4,7 +4,6 @@
 import os
 import re
 import time
-import commands
 import urllib
 import tempfile
 
@@ -13,7 +12,8 @@ from libvirt import libvirtError
 
 from src import sharedmod
 from src import env_parser
-from utils import utils
+from utils import utils, process
+from repos.domain import domain_common
 
 
 required_params = ('guestname', 'guestos', 'guestarch')
@@ -38,11 +38,6 @@ optional_params = {
                    'storage': 'local',
                    'rhelnewest': '',
 }
-
-VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
-VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
-VM_DESTROY = "virsh destroy %s"
-VM_UNDEFINE = "virsh undefine %s"
 
 BOOT_DIR = "/var/lib/libvirt/boot"
 VMLINUZ = os.path.join(BOOT_DIR, 'vmlinuz')
@@ -183,9 +178,9 @@ def install_linux_iso_ppc(params):
         logger.debug("the command line of creating disk images is '%s'" %
                      disk_create)
 
-        (status, message) = commands.getstatusoutput(disk_create)
-        if status != 0:
-            logger.debug(message)
+        ret = process.run(disk_create, shell=True, ignore_status=True)
+        if ret.exit_status != 0:
+            logger.debug(ret.stdout)
             return 1
 
         logger.info("creating disk images file is successful.")
@@ -467,25 +462,8 @@ def install_linux_iso_ppc_clean(params):
         os.remove(isopath)
 
     diskpath = params.get('diskpath', "/var/lib/libvirt/images/libvirt-test-api")
-    (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
-    if not status:
-        logger.info("remove guest %s, and its disk image file" % guestname)
-        (status, output) = commands.getstatusoutput(VM_STAT % guestname)
-        if status:
-            (status, output) = commands.getstatusoutput(VM_DESTROY % guestname)
-            if status:
-                logger.error("failed to destroy guest %s" % guestname)
-                logger.error("%s" % output)
-            else:
-                (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-                if status:
-                    logger.error("failed to undefine guest %s" % guestname)
-                    logger.error("%s" % output)
-        else:
-            (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-            if status:
-                logger.error("failed to undefine guest %s" % guestname)
-                logger.error("%s" % output)
+    conn = libvirt.open()
+    domain_common.guest_clean(conn, guestname, logger)
 
     if os.path.exists(diskpath):
         os.remove(diskpath)

@@ -4,7 +4,6 @@
 import os
 import re
 import time
-import commands
 import urllib
 import shutil
 
@@ -13,7 +12,8 @@ from libvirt import libvirtError
 
 from src import sharedmod
 from src import env_parser
-from utils import utils
+from utils import utils, process
+from repos.domain import domain_common
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
@@ -34,11 +34,6 @@ optional_params = {
                    'rhelalt': '',
                   }
 
-VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
-VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
-VM_DESTROY = "virsh destroy %s"
-VM_UNDEFINE = "virsh undefine %s"
-
 HOME_PATH = os.getcwd()
 
 TFTPPATH = "/var/lib/tftpboot"
@@ -52,20 +47,20 @@ def clean_env(diskpath, logger):
         shutil.rmtree(TFTPPATH)
 
     cmd = "virsh net-list --all | grep \'pxeboot\'"
-    (status, output) = commands.getstatusoutput(cmd)
-    if not status:
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if not ret.exit_status:
         logger.info("remove network pxeboot")
         cmd = "virsh net-destroy pxeboot"
-        (status, output) = commands.getstatusoutput(cmd)
-        if status:
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        if ret.exit_status:
             logger.error("failed to destroy network pxeboot")
-            logger.error("%s" % output)
+            logger.error("%s" % ret.stdout)
         else:
             cmd = "virsh net-undefine pxeboot"
-            (status, output) = commands.getstatusoutput(cmd)
-            if status:
+            ret = process.run(cmd, shell=True, ignore_status=True)
+            if ret.exit_status:
                 logger.error("failed to undefine network pxeboot")
-                logger.error("%s" % output)
+                logger.error("%s" % ret.stdout)
 
 
 def prepare_conf_ppc(ostree, kscfg, newest, envparser):
@@ -99,7 +94,7 @@ def prepare_conf_ppc(ostree, kscfg, newest, envparser):
         arch = re.search(r'ppc.*?/', ostree).group()[:-1]
         bootaddr = envparser.get_value('guest', 'rhel_alt7_' + arch + '_boot')
         cmd = 'wget -N ' + bootaddr + ' -P ' + TFTPPATH + '/boot/grub/'
-        (status, out) = commands.getstatusoutput(cmd)
+        ret = process.run(cmd, shell=True, ignore_status=True)
     elif 'RHEL' in newest:
         if 'RHEL-6' in ostree:
             bootaddr = envparser.get_value('guest', 'rhel6_ppc64_boot')
@@ -108,8 +103,7 @@ def prepare_conf_ppc(ostree, kscfg, newest, envparser):
             arch = re.search(r'ppc.*?/', ostree).group()[:-1]
             bootaddr = envparser.get_value('guest', 'rhel7_' + arch + '_boot')
             cmd = 'wget -N ' + bootaddr + ' -P ' + TFTPPATH + '/boot/grub/'
-
-        (status, out) = commands.getstatusoutput(cmd)
+        ret = process.run(cmd, shell=True, ignore_status=True)
 
 
 def prepare_network_ppc(ostree, logger):
@@ -131,14 +125,14 @@ def prepare_network_ppc(ostree, logger):
     shutil.move(tmppath, xmlpath)
 
     cmd = "virsh net-define %s" % xmlpath
-    (status, text) = commands.getstatusoutput(cmd)
-    if status != 0:
-        logger.error(text)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        logger.error(ret.stdout)
 
     cmd = "virsh net-start pxeboot"
-    (status, text) = commands.getstatusoutput(cmd)
-    if status != 0:
-        logger.error(text)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        logger.error(ret.stdout)
 
 
 def prepare_kernel_ppc(ostree, logger):
@@ -149,9 +143,9 @@ def prepare_kernel_ppc(ostree, logger):
     wget_paramter = "-m -np -nH --cut-dirs=6 -R 'index.html*' -P "
     wget_command = 'wget ' + wget_paramter + TFTPPATH + ' ' + conf_path
     logger.debug('%s' % (wget_command))
-    (status, out) = commands.getstatusoutput(wget_command)
-    if status != 0:
-        logger.error(out)
+    ret = process.run(wget_command, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        logger.error(ret.stdout)
 
     ppc_path = urllib.urlopen(ostree + '/ppc/').geturl()
     if 'RHEL-6' in ostree:
@@ -160,9 +154,9 @@ def prepare_kernel_ppc(ostree, logger):
         wget_paramter = "-m -np -nH --cut-dirs=6 -R 'index.html*' -A initrd.img,vmlinuz -P "
     wget_command = 'wget ' + wget_paramter + TFTPPATH + ' ' + ppc_path
     logger.debug('%s' % (wget_command))
-    (status, out) = commands.getstatusoutput(wget_command)
-    if status != 0:
-        logger.error(out)
+    ret = process.run(wget_command, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        logger.error(ret.stdout)
 
 
 def prepare_install(default_file, logger):
@@ -172,22 +166,22 @@ def prepare_install(default_file, logger):
 
     cmd = "wget " + default_file + " -P " + TFTPPATH + "/pxelinux.cfg/"
     logger.info("%s" % cmd)
-    (status, text) = commands.getstatusoutput(cmd)
-    if status != 0:
-        logger.error(text)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        logger.error(ret.stdout)
 
     xmlpath = os.path.join(HOME_PATH, 'repos/installation/xmls/pxeboot.xml')
     cmd = "virsh net-define %s" % xmlpath
     logger.info("%s" % cmd)
-    (status, text) = commands.getstatusoutput(cmd)
-    if status != 0:
-        logger.error(text)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        logger.error(ret.stdout)
 
     cmd = "virsh net-start pxeboot"
     logger.info("%s" % cmd)
-    (status, text) = commands.getstatusoutput(cmd)
-    if status != 0:
-        logger.error(text)
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        logger.error(ret.stdout)
 
 
 def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
@@ -292,9 +286,9 @@ def install_linux_pxe_ppc(params):
     logger.debug("the command line of creating disk images is '%s'" %
                  disk_create)
 
-    (status, message) = commands.getstatusoutput(disk_create)
-    if status != 0:
-        logger.debug(message)
+    ret = process.run(disk_create, shell=True, ignore_status=True)
+    if ret.exit_status != 0:
+        logger.debug(ret.stdout)
         return 1
 
     os.chown(diskpath, 107, 107)
@@ -463,25 +457,7 @@ def install_linux_pxe_ppc_clean(params):
     guestname = params.get('guestname')
 
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-
-    (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
-    if not status:
-        logger.info("remove guest %s, and its disk image file" % guestname)
-        (status, output) = commands.getstatusoutput(VM_STAT % guestname)
-        if status:
-            (status, output) = commands.getstatusoutput(VM_DESTROY % guestname)
-            if status:
-                logger.error("failed to destroy guest %s" % guestname)
-                logger.error("%s" % output)
-            else:
-                (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-                if status:
-                    logger.error("failed to undefine guest %s" % guestname)
-                    logger.error("%s" % output)
-        else:
-            (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-            if status:
-                logger.error("failed to undefine guest %s" % guestname)
-                logger.error("%s" % output)
+    conn = libvirt.open()
+    domain_common.guest_clean(conn, guestname, logger)
 
     clean_env(diskpath, logger)
