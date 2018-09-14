@@ -54,7 +54,7 @@ def get_interface(logger):
         logger.error("fail to get interface.")
         return 1
 
-    interface = out.split('\n')
+    interface = ret.stdout.split('\n')
     return interface[0]
 
 
