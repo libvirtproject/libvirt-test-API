@@ -658,7 +658,7 @@ def remote_exec(hostname, username, password, cmd):
             return -1
 
 
-def get_remote_vcpus(hostname, username, password):
+def get_remote_vcpus(hostname, username, password, logger):
     """Get cpu number of specified host"""
     cmd = "cat /proc/cpuinfo | grep processor | wc -l"
     (ret, out) = remote_exec_pexpect(hostname, username, password, cmd)

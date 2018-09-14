@@ -80,18 +80,19 @@ def install_linux_check(params):
 
     # Creat file and read file in guest.
     logger.info("check point2: creat and read dirctory/file in guest")
-    if utils.create_dir(ipaddr, "root", "redhat") == 0:
-        logger.info("create dir - /tmp/test successfully")
-        if utils.write_file(ipaddr, "root", "redhat") == 0:
-            logger.info("write and read file: /tmp/test/test.log successfully")
+    if not utils.isPower() and not utils.isRelease("8", logger):
+        if utils.create_dir(ipaddr, "root", "redhat") == 0:
+            logger.info("create dir - /tmp/test successfully")
+            if utils.write_file(ipaddr, "root", "redhat") == 0:
+                logger.info("write and read file: /tmp/test/test.log successfully")
+            else:
+                logger.error("Error: fail to write/read file - /tmp/test/test.log")
+                Test_Result = 1
+                return Test_Result
         else:
-            logger.error("Error: fail to write/read file - /tmp/test/test.log")
+            logger.error("Error: fail to create dir - /tmp/test")
             Test_Result = 1
             return Test_Result
-    else:
-        logger.error("Error: fail to create dir - /tmp/test")
-        Test_Result = 1
-        return Test_Result
 
     # Check whether vcpu equals the value set in guest config xml
     logger.info("check point3: check cpu number in guest equals to \
@@ -99,7 +100,7 @@ def install_linux_check(params):
     vcpunum_expect = int(utils.get_num_vcpus(domain_name))
     logger.info("vcpu number in domain config xml - %s is %s" %
                 (domain_name, vcpunum_expect))
-    vcpunum_actual = int(utils.get_remote_vcpus(ipaddr, "root", "redhat"))
+    vcpunum_actual = int(utils.get_remote_vcpus(ipaddr, "root", "redhat", logger))
     logger.info("The actual vcpu number in guest - %s is %s" %
                 (domain_name, vcpunum_actual))
     if vcpunum_expect == vcpunum_actual:
