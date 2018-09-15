@@ -79,8 +79,8 @@ def install_linux_check(params):
         return Test_Result
 
     # Creat file and read file in guest.
-    logger.info("check point2: creat and read dirctory/file in guest")
     if not utils.isPower() and not utils.isRelease("8", logger):
+        logger.info("check point2: creat and read dirctory/file in guest")
         if utils.create_dir(ipaddr, "root", "redhat") == 0:
             logger.info("create dir - /tmp/test successfully")
             if utils.write_file(ipaddr, "root", "redhat") == 0:
@@ -95,22 +95,23 @@ def install_linux_check(params):
             return Test_Result
 
     # Check whether vcpu equals the value set in guest config xml
-    logger.info("check point3: check cpu number in guest equals to \
-                 the value set in domain config xml")
-    vcpunum_expect = int(utils.get_num_vcpus(domain_name))
-    logger.info("vcpu number in domain config xml - %s is %s" %
-                (domain_name, vcpunum_expect))
-    vcpunum_actual = int(utils.get_remote_vcpus(ipaddr, "root", "redhat", logger))
-    logger.info("The actual vcpu number in guest - %s is %s" %
-                (domain_name, vcpunum_actual))
-    if vcpunum_expect == vcpunum_actual:
-        logger.info("The actual vcpu number in guest is \
-                     equal to the setting your domain config xml")
-    else:
-        logger.error("Error: The actual vcpu number in guest is \
-                      NOT equal to the setting your domain config xml")
-        Test_Result = 1
-        return Test_Result
+    if not utils.isPower() and not utils.isRelease("8", logger):
+        logger.info("check point3: check cpu number in guest equals to \
+                     the value set in domain config xml")
+        vcpunum_expect = int(utils.get_num_vcpus(domain_name))
+        logger.info("vcpu number in domain config xml - %s is %s" %
+                    (domain_name, vcpunum_expect))
+        vcpunum_actual = int(utils.get_remote_vcpus(ipaddr, "root", "redhat", logger))
+        logger.info("The actual vcpu number in guest - %s is %s" %
+                    (domain_name, vcpunum_actual))
+        if vcpunum_expect == vcpunum_actual:
+            logger.info("The actual vcpu number in guest is \
+                         equal to the setting your domain config xml")
+        else:
+            logger.error("Error: The actual vcpu number in guest is \
+                          NOT equal to the setting your domain config xml")
+            Test_Result = 1
+            return Test_Result
 
     # Check whether mem in guest is equal to the value set in domain config xml
     if not utils.isPower():
@@ -139,18 +140,19 @@ def install_linux_check(params):
 
     # Check nic and blk driver in guest
     if 'kvm' in virt_type or 'xenfv' in virt_type:
-        logger.info("check point5: check nic and blk driver in guest is \
-                     expected as your config:")
-        if utils.validate_remote_nic_type(ipaddr, "root", "redhat",
-                                          nic_type, logger) == 0 and \
-           utils.validate_remote_blk_type(ipaddr, "root", "redhat",
-                                          blk_type, logger) == 0:
-            logger.info("nic type - %s and blk type - %s check successfully" %
-                        (nic_type, blk_type))
-        else:
-            logger.error("Error: nic type - %s or blk type - %s check failed" %
-                         (nic_type, blk_type))
-            Test_Result = 1
-            return Test_Result
+        if not utils.isPower() and not utils.isRelease("8", logger):
+            logger.info("check point5: check nic and blk driver in guest is \
+                        expected as your config:")
+            if utils.validate_remote_nic_type(ipaddr, "root", "redhat",
+                                              nic_type, logger) == 0 and \
+                utils.validate_remote_blk_type(ipaddr, "root", "redhat",
+                                               blk_type, logger) == 0:
+                logger.info("nic type - %s and blk type - %s check successfully" %
+                            (nic_type, blk_type))
+            else:
+                logger.error("Error: nic type - %s or blk type - %s check failed" %
+                             (nic_type, blk_type))
+                Test_Result = 1
+                return Test_Result
 
     return Test_Result
