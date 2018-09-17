@@ -164,18 +164,7 @@ def prepare_floppy_image(guestname, guestos, guestarch,
 
 
 def set_win_driver(xmlstr, guestos, guestarch, logger):
-    if not version_compare("virtio-win", 1, 9, 6, logger):
-        if guestarch == "x86_64":
-            if guestos == "win10":
-                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN10_64)
-            else:
-                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_64)
-        else:
-            if guestos == "win10":
-                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN10_32)
-            else:
-                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_32)
-    else:
+    if version_compare("virtio-win", 1, 9, 6, logger):
         win_list = ["win7", "win8", "win8u1", "win10"]
         win_servers_list = ["win2003", "win2008", "win2008R2", "win2012", "win2012R2", "win2016"]
         if guestarch == "x86_64":
@@ -192,6 +181,22 @@ def set_win_driver(xmlstr, guestos, guestarch, logger):
                 xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_SERVERS_32)
             else:
                 logger.error("%s don't in windows list." % guestos)
+    elif version_compare("virtio-win", 1, 9, 4, logger):
+        if guestarch == "x86_64":
+            if guestos == "win10":
+                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN10_64)
+            else:
+                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_64)
+        else:
+            if guestos == "win10":
+                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN10_32)
+            else:
+                xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_32)
+    elif version_compare("virtio-win", 1, 9, 3, logger):
+        if guestarch == "x86_64":
+            xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_64)
+        else:
+            xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_32)
     return xmlstr
 
 

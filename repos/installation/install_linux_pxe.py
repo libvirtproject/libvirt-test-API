@@ -120,7 +120,7 @@ def install_linux_pxe(params):
     else:
         release_ver = install_common.get_value_from_global("other", "release_ver")
         location = utils.get_local_hostname()
-        if "pek2" in location:
+        if "pek2" in location or "nay" in location:
             if "RHEL-ALT" in rhelnewest:
                 version = rhelnewest.split("/")[6].split("-")[2]
             else:

@@ -64,7 +64,7 @@ def set_xml(rhelnewest, xmlstr, installmethod, guestos, guestarch, logger):
         netsource = "default"
     elif installmethod == "nfs":
         ostree = install_common.get_ostree(rhelnewest, guestos, guestarch, logger)
-        if "pek2" in location:
+        if "pek2" in location or "nay" in location:
             ks = install_common.get_kscfg(rhelnewest, guestos, guestarch, "local_nfs", logger)
         else:
             ks = install_common.get_kscfg(rhelnewest, guestos, guestarch, "remote_nfs", logger)

@@ -106,7 +106,7 @@ def get_iso_link(rhelnewest, guestos, guestarch, logger):
                    (rhelnewest, guestarch, repo_name, guestarch))
     else:
         os_arch = guestos + "_" + guestarch
-        if "pek2" in location:
+        if "pek2" in location or "nay" in location:
             isolink = local_url + get_value_from_global("guest", os_arch + "_iso")
         else:
             isolink = remote_url + get_value_from_global("guest", os_arch + "_iso")
@@ -120,7 +120,7 @@ def get_release_ostree(guestos, guestarch):
     location = utils.get_local_hostname()
     os_arch = guestos + "_" + guestarch
     ostree = ""
-    if "pek2" in location:
+    if "pek2" in location or "nay" in location:
         ostree = local_url + get_value_from_global("guest", os_arch)
     else:
         ostree = remote_url + get_value_from_global("guest", os_arch)
