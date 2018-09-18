@@ -4,11 +4,14 @@
 import time
 import libvirt
 import binascii
+import os
+import signal
 
 from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 from utils.utils import get_xml_value
+from repos.domain import domain_common
 
 required_params = ('guestname',)
 optional_params = {}
@@ -72,3 +75,25 @@ def block_peek(params):
         return 1
 
     return 0
+
+
+def block_peek_clean(params):
+    logger = params['logger']
+    guestname = params['guestname']
+    conn = libvirt.open()
+    cmd = "ps aux | awk '/\/usr\/libexec\/qemu-kvm -name guest=%s/{print $2}'" % guestname
+    ret, out = utils.exec_cmd(cmd, shell=True)
+    if ret:
+        logger.error("cmd failed: %s" % cmd)
+        logger.error("ret: %s, out: %s" % (ret, out))
+        return 1
+    os.kill(int(out[0]), signal.SIGTERM)
+    dom = conn.lookupByName(guestname)
+    while True:
+        if dom.info()[0] == 4:
+            time.sleep(5)
+        else:
+            break
+    logger.info("Kill guest successful.")
+    domain_common.guest_clean(conn, guestname, logger)
+
