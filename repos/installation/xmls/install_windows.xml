@@ -27,13 +27,12 @@
       <target bus="ide" dev="hdc"/>
       <readonly/>
     </disk>
-    <disk type="file" device='floppy'>
-      <driver name='qemu' type='raw'/>
-      <source file='DRIVERPATH'/>
-      <target dev='fda' bus='fdc'/>
+    <disk device="floppy" type="file">
+      <source file="DRIVERPATH"/>
+      <target bus="fdc" dev="fda"/>
     </disk>
     <disk device="floppy" type="file">
-      <source file='FLOPPY'/>
+      <source file="WIN_UNATTENDED"/>
       <target bus="fdc" dev="fdb"/>
       <readonly/>
     </disk>

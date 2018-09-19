@@ -8,15 +8,9 @@ import shutil
 import tempfile
 
 from src import sharedmod
-from src import env_parser
 from utils import utils, process
 from repos.installation import install_common
 from utils.utils import version_compare
-
-VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
-VM_STAT = "virsh --quiet list --all| grep \"\\b%s\\b\"|grep off"
-VM_DESTROY = "virsh destroy %s"
-VM_UNDEFINE = "virsh undefine %s"
 
 #virtio win disk driver
 VIRTIO_WIN_64 = "/usr/share/virtio-win/virtio-win_amd64.vfd"
@@ -26,13 +20,13 @@ VIRTIO_WIN_SERVERS_32 = "/usr/share/virtio-win/virtio-win_servers_x86.vfd"
 VIRTIO_WIN10_64 = "/usr/share/virtio-win/virtio-win_w10_amd64.vfd"
 VIRTIO_WIN10_32 = "/usr/share/virtio-win/virtio-win_w10_x86.vfd"
 #virtio win net driver
-#VIRTIO_WIN_ISO = "/usr/share/virtio-win/virtio-win.iso"
+VIRTIO_WIN_ISO = "/usr/share/virtio-win/virtio-win.iso"
 
-FLOOPY_IMG = "/tmp/floppy.img"
+WIN_UNATTENDED_IMG = "/tmp/win_unattended.img"
 HOME_PATH = os.getcwd()
 
 required_params = ('guestname', 'guestos', 'guestarch',)
-optional_params = {'memory': 1048576,
+optional_params = {'memory': 2048576,
                    'vcpu': 1,
                    'disksize': 20,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
@@ -42,7 +36,7 @@ optional_params = {'memory': 1048576,
                    'macaddr': '52:54:00:97:e4:28',
                    'type': 'define',
                    'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
-                   'xml': 'xmls/kvm_windows_guest_install_cdrom.xml',
+                   'xml': 'xmls/install_windows.xml',
                    'guestmachine': 'pc',
                    'graphic': 'spice',
                    'video': 'qxl',
@@ -76,39 +70,44 @@ def prepare_iso(iso_file):
     return iso_local_path
 
 
-def prepare_floppy_image(guestname, guestos, guestarch,
-                         windows_unattended_path, cdkey, FLOOPY_IMG):
-    """Making corresponding floppy images for the given guestname
-    """
-    if os.path.exists(FLOOPY_IMG):
-        os.remove(FLOOPY_IMG)
+def prepare_win_unattended(guestname, guestos, guestarch, envparser, logger):
+    if "win7" in guestos or "win2008" in guestos:
+        cdkey = envparser.get_value("guest", "%s_%s_key" % (guestos, guestarch))
+    else:
+        cdkey = ""
 
-    create_cmd = 'dd if=/dev/zero of=%s bs=1440k count=1' % FLOOPY_IMG
-    ret = process.run(create_cmd, shell=True, ignore_status=True)
+    windows_unattended_path = os.path.join(HOME_PATH,
+                                           "repos/installation/windows_unattended")
+
+    if os.path.exists(WIN_UNATTENDED_IMG):
+        os.remove(WIN_UNATTENDED_IMG)
+
+    cmd = 'dd if=/dev/zero of=%s bs=1440k count=1' % WIN_UNATTENDED_IMG
+    ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
-        logger.error("failed to create floppy image")
+        logger.error("failed to create windows unattended image.")
         return 1
 
-    format_cmd = 'mkfs.msdos -s 1 %s' % FLOOPY_IMG
-    ret = process.run(format_cmd, shell=True, ignore_status=True)
+    cmd = 'mkfs.msdos -s 1 %s' % WIN_UNATTENDED_IMG
+    ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
-        logger.error("failed to format floppy image")
+        logger.error("failed to format windows unattended image")
         return 1
 
-    floppy_mount = "/mnt/libvirt_floppy"
-    if os.path.exists(floppy_mount):
-        logger.info("the floppy mount point folder exists, remove it")
-        shutil.rmtree(floppy_mount)
+    unattended_mount = "/tmp/test_api_windows_unattended"
+    if os.path.exists(unattended_mount):
+        logger.info("the windows unattended mount point folder exists, remove it")
+        shutil.rmtree(unattended_mount)
 
-    logger.info("create mount point %s" % floppy_mount)
-    os.makedirs(floppy_mount)
+    logger.info("create mount point %s" % unattended_mount)
+    os.makedirs(unattended_mount)
 
     try:
-        mount_cmd = 'mount -o loop %s %s' % (FLOOPY_IMG, floppy_mount)
+        mount_cmd = 'mount -o loop %s %s' % (WIN_UNATTENDED_IMG, unattended_mount)
         ret = process.run(mount_cmd, shell=True, ignore_status=True)
         if ret.exit_status:
             logger.error(
-                "failed to mount /tmp/floppy.img to /mnt/libvirt_floppy")
+                "failed to mount %s to %s" % (WIN_UNATTENDED_IMG, unattended_mount))
             return 1
 
         win_os = ['win2008', 'win7', 'vista', 'win8', 'win2012', 'win10', 'win2016']
@@ -121,12 +120,12 @@ def prepare_floppy_image(guestname, guestos, guestarch,
             dest_fname = "winnt.sif"
             setup_file = 'winnt.bat'
             setup_file_path = os.path.join(windows_unattended_path, setup_file)
-            setup_file_dest = os.path.join(floppy_mount, setup_file)
+            setup_file_dest = os.path.join(unattended_mount, setup_file)
             shutil.copyfile(setup_file_path, setup_file_dest)
             source = os.path.join(windows_unattended_path, "%s_%s.sif" %
                                   (guestos, guestarch))
 
-        dest = os.path.join(floppy_mount, dest_fname)
+        dest = os.path.join(unattended_mount, dest_fname)
 
         unattended_contents = open(source).read()
         dummy_cdkey_re = r'\bLIBVIRT_TEST_CDKEY\b'
@@ -136,34 +135,65 @@ def prepare_floppy_image(guestname, guestos, guestarch,
 
         logger.debug("Unattended install %s contents:" % dest_fname)
 
-        if guestos == "win8u1":
-            driverpath = "Win8.1"
+        win_arch = ""
+        if guestarch == "x86_64":
+            win_arch = "amd64"
         else:
-            driverpath = guestos[0].upper() + guestos[1:]
+            if utils.isRelease("8", logger):
+                win_arch = "x86"
+            else:
+                win_arch = "i386"
+
+        driverpath = ""
+        drivernet = ""
+        win_list = {"win7": "w7",
+                    "win8": "w8",
+                    "win8u1": "w8.1",
+                    "win10": "w10",
+                    "win2008": "2k8",
+                    "win2008R2": "2k8R2",
+                    "win2003": "2k3",
+                    "win2012": "2k12",
+                    "win2012R2": "2k12R2",
+                    "win2016": "2k16"}
+        if utils.isRelease("8", logger):
+            driverpath = "E:\\viostor\\" + win_list[guestos] + "\\" + win_arch
+            drivernet = "E:\\NetKVM\\" + win_list[guestos] + "\\" + win_arch
+        else:
+            drivernet = "A:\\"
+            if guestos == "win8u1":
+                driverpath = "A:\\" + win_arch + "\Win8.1"
+            else:
+                driverpath = "A:\\" + win_arch + "\\" + guestos[0].upper() + guestos[1:]
 
         unattended_contents = unattended_contents.replace('PATHOFDRIVER', driverpath)
+        unattended_contents = unattended_contents.replace('DRIVERNET', drivernet)
         open(dest, 'w').write(unattended_contents)
         logger.debug(unattended_contents)
 
     finally:
-        cmd = "mount | grep '/mnt/libvirt_floppy'"
+        cmd = "mount | grep %s" % unattended_mount
         ret = process.run(cmd, shell=True, ignore_status=True)
         if ret.exit_status == 0:
-            umount_cmd = 'umount %s' % floppy_mount
-            ret = process.run(umount_cmd, shell=True, ignore_status=True)
+            cmd = 'umount %s' % unattended_mount
+            ret = process.run(cmd, shell=True, ignore_status=True)
             if ret.exit_status:
-                logger.error("umount failed: %s" % umount_cmd)
+                logger.error("umount failed: %s" % cmd)
                 return 1
 
-        cleanup(floppy_mount)
+        cleanup(unattended_mount)
 
-    os.chmod(FLOOPY_IMG, 0o755)
-    logger.info("Boot floppy created successfuly")
+    os.chmod(WIN_UNATTENDED_IMG, 0o755)
+    logger.info("Boot windows unattended created successfuly")
 
     return 0
 
 
 def set_win_driver(xmlstr, guestos, guestarch, logger):
+    if utils.isRelease("8", logger):
+        xmlstr = xmlstr.replace("DRIVERPATH", VIRTIO_WIN_ISO)
+        return xmlstr
+
     if version_compare("virtio-win", 1, 9, 6, logger):
         win_list = ["win7", "win8", "win8u1", "win10"]
         win_servers_list = ["win2003", "win2008", "win2008R2", "win2012", "win2012R2", "win2016"]
@@ -226,6 +256,10 @@ def install_windows_iso(params):
     options = [guestname, guestos, guestarch, nicdriver, hddriver, imageformat, graphic, video, diskpath, seeksize, storage]
     install_common.prepare_env(options, logger)
 
+    if utils.isRelease("8", logger) and guestos == "win2008":
+        logger.info("virtio-win don't support win2008 on RHEL 8.")
+        return 0
+
     mountpath = tempfile.mkdtemp()
     diskpath = install_common.setup_storage(params, mountpath, logger)
     xmlstr = xmlstr.replace('/var/lib/libvirt/images/libvirt-test-api', diskpath)
@@ -279,34 +313,20 @@ def install_windows_iso(params):
     xmlstr = set_win_driver(xmlstr, guestos, guestarch, logger)
 
     logger.info("get system environment information")
-    envfile = os.path.join(HOME_PATH, 'global.cfg')
-    logger.info("the environment file is %s" % envfile)
-
-    # Get iso file based on guest os and arch from global.cfg
-    envparser = env_parser.Envparser(envfile)
+    envparser = install_common.get_env_parser()
     iso_url = envparser.get_value("guest", guestos + '_' + guestarch)
     iso_file = install_common.get_path_from_url(iso_url, ".iso")
-
-    if "win7" in guestos or "win2008" in guestos:
-        cdkey = envparser.get_value("guest", "%s_%s_key" % (guestos, guestarch))
-    else:
-        cdkey = ""
-
-    windows_unattended_path = os.path.join(HOME_PATH,
-                                           "repos/installation/windows_unattended")
-
     logger.debug('install source: %s' % iso_file)
-    logger.info('prepare pre-installation environment...')
 
+    logger.info('prepare pre-installation environment...')
     iso_local_path = prepare_iso(iso_file)
     xmlstr = xmlstr.replace('WINDOWSISO', iso_local_path)
 
-    status = prepare_floppy_image(guestname, guestos, guestarch,
-                                  windows_unattended_path, cdkey, FLOOPY_IMG)
+    status = prepare_win_unattended(guestname, guestos, guestarch, envparser, logger)
     if status:
-        logger.error("making floppy image failed")
+        logger.error("making windows unattended image failed")
         return 1
-    xmlstr = xmlstr.replace('FLOPPY', FLOOPY_IMG)
+    xmlstr = xmlstr.replace('WIN_UNATTENDED', WIN_UNATTENDED_IMG)
 
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
     conn = sharedmod.libvirtobj['conn']
@@ -339,8 +359,7 @@ def install_windows_iso_clean(params):
     install_common.clean_guest(guestname, logger)
     install_common.remove_all(diskpath, logger)
 
-    envfile = os.path.join(HOME_PATH, 'global.cfg')
-    envparser = env_parser.Envparser(envfile)
+    envparser = install_common.get_env_parser()
     iso_url = envparser.get_value("guest", guestos + '_' + guestarch)
     iso_file = install_common.get_path_from_url(iso_url, ".iso")
     iso_local_path = prepare_iso(iso_file)
@@ -351,5 +370,5 @@ def install_windows_iso_clean(params):
     if os.path.exists(iso_local_path_1):
         os.remove(iso_local_path_1)
 
-    if os.path.exists(FLOOPY_IMG):
-        os.remove(FLOOPY_IMG)
+    if os.path.exists(WIN_UNATTENDED_IMG):
+        os.remove(WIN_UNATTENDED_IMG)

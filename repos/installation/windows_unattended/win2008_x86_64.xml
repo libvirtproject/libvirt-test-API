@@ -8,13 +8,13 @@
                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
                         <DriverPaths>
                                 <PathAndCredentials wcm:keyValue="1" wcm:action="add">
-                                        <Path>A:\amd64\PATHOFDRIVER</Path>
+                                        <Path>PATHOFDRIVER</Path>
                                 </PathAndCredentials>
                                 <PathAndCredentials wcm:keyValue="2" wcm:action="add">
-                                        <Path>A:\amd64\PATHOFDRIVER</Path>
+                                        <Path>PATHOFDRIVER</Path>
                                 </PathAndCredentials>
                                 <PathAndCredentials wcm:keyValue="3" wcm:action="add">
-                                        <Path>A:\amd64\PATHOFDRIVER</Path>
+                                        <Path>PATHOFDRIVER</Path>
                                 </PathAndCredentials>
                         </DriverPaths>
                 </component>

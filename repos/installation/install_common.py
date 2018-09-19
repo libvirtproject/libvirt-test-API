@@ -360,14 +360,14 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, installmethod, lo
     """
     if installmethod == "bootiso" or installmethod == "pxe":
         xmlstr = xmlstr.replace('<boot dev="cdrom"/>', '<boot dev="hd"/>')
-        xmlstr = re.sub('<disk device="cdrom".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
+        xmlstr = re.sub('<disk device="cdrom".*</disk>\n', '', xmlstr, flags=re.DOTALL)
     elif installmethod == "net":
         xmlstr = re.sub("<kernel>.*</kernel>\n", "", xmlstr)
         xmlstr = re.sub("<initrd>.*</initrd>\n", "", xmlstr)
         xmlstr = re.sub("<cmdline>.*</cmdline>\n", "", xmlstr)
     elif installmethod == "iso":
         xmlstr = xmlstr.replace('<boot dev="cdrom"/>', '<boot dev="hd"/>')
-        xmlstr = re.sub('<disk device="cdrom".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
+        xmlstr = re.sub('<disk device="cdrom".*</disk>\n', '', xmlstr, flags=re.DOTALL)
         xmlstr = re.sub("<kernel>.*</kernel>\n", "", xmlstr)
         xmlstr = re.sub("<initrd>.*</initrd>\n", "", xmlstr)
         xmlstr = re.sub('<cmdline>.*</cmdline>', '', xmlstr)
@@ -555,3 +555,9 @@ def get_vmlinuz_initrd(ostree, xmlstr, logger):
 def remove_vmlinuz_initrd(logger):
     remove_all(VMLINUZ, logger)
     remove_all(INITRD, logger)
+
+
+def get_env_parser():
+    home_path = os.getcwd()
+    envfile = os.path.join(home_path, 'global.cfg')
+    return env_parser.Envparser(envfile)
