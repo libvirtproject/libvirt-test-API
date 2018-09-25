@@ -113,9 +113,11 @@ def prepare_win_unattended(guestname, guestos, guestarch, envparser, logger):
         win_os = ['win2008', 'win7', 'vista', 'win8', 'win2012', 'win10', 'win2016']
         if any(os in guestos for os in win_os):
             dest_fname = "autounattend.xml"
-            source = os.path.join(windows_unattended_path, "%s_%s.xml" %
-                                  (guestos, guestarch))
-
+            if guestos == 'win7' and utils.isRelease("8", logger):
+                source = os.path.join(windows_unattended_path, "%s_%s_rhel8.xml" % (guestos, guestarch))
+            else:
+                source = os.path.join(windows_unattended_path, "%s_%s.xml" %
+                                      (guestos, guestarch))
         elif '2003' in guestos or 'xp' in guestos:
             dest_fname = "winnt.sif"
             setup_file = 'winnt.bat'
