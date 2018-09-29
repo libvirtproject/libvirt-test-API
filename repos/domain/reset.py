@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import time
+import functools
 
 from libvirt import libvirtError
 from src import sharedmod
@@ -60,9 +61,9 @@ def reset(params):
         logger.error("fail to reset domain")
         return 1
 
-    time.sleep(40)
-    new_times = get_num_row(domobj, logger, username, password, ip)
+    new_times = utils.wait_for(functools.partial(get_num_row, domobj, logger, username, password, ip), 600)
     if new_times is None:
+        logger.error('get reboot number failed.')
         return 1
     if new_times != old_times + 1:
         logger.error("fail to reset guest")

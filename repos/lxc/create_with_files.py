@@ -146,9 +146,11 @@ def create_with_files_clean(params):
         logger.debug("destroy guest: %s." % guestname)
         time.sleep(5)
         dom.destroyFlags()
-        time.sleep(3)
-        dom.undefine()
-        time.sleep(3)
+        define_list = conn.listDefinedDomains()
+        if guestname in define_list:
+            time.sleep(3)
+            dom.undefine()
+            time.sleep(3)
     elif guest_state == libvirt.VIR_DOMAIN_SHUTOFF:
         time.sleep(5)
         dom.undefine()
