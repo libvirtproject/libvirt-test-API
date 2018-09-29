@@ -72,7 +72,10 @@ def group_sasl_set(unix_sock_group, auth_unix_ro, auth_unix_rw, logger):
     # add unix socket group
 
     libvirt_group_add = "groupadd -f %s" % unix_sock_group
-    libvirt_group_del = "groupdel -f %s" % unix_sock_group
+    if utils.isRelease("7", logger):
+        libvirt_group_del = "groupdel %s" % unix_sock_group
+    else:
+        libvirt_group_del = "groupdel -f %s" % unix_sock_group
     group_check = "grep %s /etc/group" % unix_sock_group
     (status, output) = utils.exec_cmd(group_check, shell=True)
     # if the group already exists, remove it

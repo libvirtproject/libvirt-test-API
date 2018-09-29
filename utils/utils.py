@@ -126,7 +126,7 @@ def get_local_ip():
     """ get local ip address """
     cmd = "hostname -i"
     result = process.run(cmd, shell=True, ignore_status=True)
-    ip = result.stdout.split()[1]
+    ip = result.stdout.split()[0]
     return ip
 
 
