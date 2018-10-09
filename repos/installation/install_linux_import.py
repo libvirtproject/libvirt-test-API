@@ -32,7 +32,7 @@ optional_params = {
 HOME_PATH = os.getcwd()
 
 
-def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
+def prepare_boot_guest(domobj, xmlstr, guestname, installtype, diskpath, logger):
     """ After guest installation is over, undefine the guest with
         bootting off cdrom, to define the guest to boot off harddisk.
     """
@@ -57,6 +57,24 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
                  xmlstr)
 
     logger.info('boot guest up ...')
+    time.sleep(5)
+    # Add for test following error:
+    #   internal error: process exited while connecting to monitor: 2018-10-09T05:34:38.865865Z
+    #   qemu-kvm: -drive file=/tmp/snapshot_netfs/libvirt-test-api,format=qcow2,if=none,id=drive-virtio-disk0:
+    #   Failed to get "write" lock
+    #   Is another process using the image?, error code is 1
+    if diskpath == "/var/lib/libvirt/snapshot_nfs/libvirt-test-api":
+        cmd = "lsof | grep %s" % diskpath
+        ret, out = utils.exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("cmd: %s" % cmd)
+            logger.error("out: %s" % out)
+        cmd = "lslocks | grep %s" % diskpath
+        ret, out = utils.exec_cmd(cmd, shell=True)
+        if ret:
+            logger.error("cmd: %s" % cmd)
+            logger.error("out: %s" % out)
+    #End test
 
     try:
         domobj.create()
@@ -169,7 +187,7 @@ def install_linux_import(params):
                          % (e.get_error_message(), e.get_error_code()))
             logger.error("fail to define domain %s" % guestname)
             return 1
-        ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger)
+        ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, diskpath, logger)
         if ret:
             logger.info("booting guest vm off harddisk failed")
             return 1
@@ -190,7 +208,7 @@ def install_linux_import(params):
 
         if guestname not in guest_names:
             logger.info("define the vm and boot it up")
-            ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger)
+            ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, diskpath, logger)
             if ret:
                 logger.info("booting guest vm off harddisk failed")
                 return 1

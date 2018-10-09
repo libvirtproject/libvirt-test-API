@@ -147,14 +147,15 @@ def nfs_setup(server_ip, remote_ip, username, password, nfs_path, mount_path, lo
         logger.error("%s failed: %s." % (cmd, ret.stdout))
         return False
 
-    if not remote_mount(server_ip, remote_ip, username, password, nfs_path, mount_path, logger):
-        logger.error("remote mount failed.")
-        return False
-    cmd = "setsebool virt_use_nfs 1 -P"
-    ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
-    if ret:
-        logger.error("%s failed: %s." % (cmd, out))
-        return False
+    if remote_ip is not None:
+        if not remote_mount(server_ip, remote_ip, username, password, nfs_path, mount_path, logger):
+            logger.error("remote mount failed.")
+            return False
+        cmd = "setsebool virt_use_nfs 1 -P"
+        ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
+        if ret:
+            logger.error("%s failed: %s." % (cmd, out))
+            return False
     return True
 
 
@@ -162,7 +163,8 @@ def nfs_clean(remote_ip, username, password, nfs_path, mount_path, logger):
     if not local_nfs_clean(nfs_path, mount_path, logger):
         logger.error("nfs server clean failed.")
         return False
-    if not remote_umount(remote_ip, username, password, mount_path, logger):
-        logger.error("remote umount failed.")
-        return False
+    if remote_ip is not None:
+        if not remote_umount(remote_ip, username, password, mount_path, logger):
+            logger.error("remote umount failed.")
+            return False
     return True
