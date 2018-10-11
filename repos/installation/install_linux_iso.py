@@ -15,7 +15,7 @@ required_params = ('guestname', 'guestos', 'guestarch')
 optional_params = {
                    'memory': 2097152,
                    'vcpu': 1,
-                   'disksize': 10,
+                   'disksize': 20,
                    'imageformat': 'qcow2',
                    'qcow2version': 'v3',
                    'hddriver': 'virtio',
@@ -99,7 +99,7 @@ def install_linux_iso(params):
     guestarch = params.get('guestarch')
     bridge = params.get('bridgename', 'virbr0')
     xmlstr = params['xml']
-    seeksize = params.get('disksize', 10)
+    seeksize = params.get('disksize', 20)
     nicdriver = params.get('nicdriver', 'virtio')
     hddriver = params.get('hddriver', 'virtio')
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')

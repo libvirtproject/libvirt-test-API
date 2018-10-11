@@ -142,14 +142,16 @@ def get_ostree(rhelnewest, guestos, guestarch, logger):
     if rhelnewest is None:
         ostree = get_release_ostree(guestos, guestarch)
     else:
-        release_ver = get_value_from_global("other", "release_ver")
+        release_ver_list = get_value_from_global("other", "release_ver").split()
         location = utils.get_local_hostname()
         version = get_version(rhelnewest)
-        if version in release_ver:
-            guestos = "rhel" + version.replace('.', 'u')
-            ostree = get_release_ostree(guestos, guestarch)
-        else:
-            ostree = rhelnewest + "/%s/os" % guestarch
+        for release_ver in release_ver_list:
+            if version == release_ver:
+                guestos = "rhel" + version.replace('.', 'u')
+                ostree = get_release_ostree(guestos, guestarch)
+                logger.info("Install source: %s" % ostree)
+                return ostree
+        ostree = rhelnewest + "/%s/os" % guestarch
     logger.info("Install source: %s" % ostree)
     return ostree
 
@@ -160,16 +162,18 @@ def get_kscfg(rhelnewest, guestos, guestarch, installmethod, logger):
     if rhelnewest is None:
         kscfg = get_value_from_global("guest", os_arch + "_%s_ks" % installmethod)
     else:
-        release_ver = get_value_from_global("other", "release_ver")
+        release_ver_list = get_value_from_global("other", "release_ver").split()
         location = utils.get_local_hostname()
         version = get_version(rhelnewest)
-        if version in release_ver:
-            guestos = "rhel" + version.replace('.', 'u')
-            os_arch = guestos + "_" + guestarch
-            kscfg = get_value_from_global("guest", os_arch + "_%s_ks" % installmethod)
-        else:
-            kscfg = get_value_from_global("guest", "rhel%s_newest_%s_%s_ks" %
-                                          (version.split(".")[0], guestarch, installmethod))
+        for release_ver in release_ver_list:
+            if version == release_ver:
+                guestos = "rhel" + version.replace('.', 'u')
+                os_arch = guestos + "_" + guestarch
+                kscfg = get_value_from_global("guest", os_arch + "_%s_ks" % installmethod)
+                logger.info('Kisckstart file: %s' % kscfg)
+                return kscfg
+        kscfg = get_value_from_global("guest", "rhel%s_newest_%s_%s_ks" %
+                                      (version.split(".")[0], guestarch, installmethod))
     logger.info('Kisckstart file: %s' % kscfg)
     return kscfg
 

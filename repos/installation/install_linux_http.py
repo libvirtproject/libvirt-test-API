@@ -7,9 +7,9 @@ from src import sharedmod
 from repos.installation import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch',)
-optional_params = {'memory': 1048576,
+optional_params = {'memory': 3048576,
                    'vcpu': 1,
-                   'disksize': 10,
+                   'disksize': 20,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'imageformat': 'qcow2',
                    'hddriver': 'virtio',
@@ -34,7 +34,7 @@ def install_linux_http(params):
     guestarch = params.get('guestarch')
     xmlstr = params['xml']
     nicdriver = params.get('nicdriver', 'virtio')
-    seeksize = params.get('disksize', 10)
+    seeksize = params.get('disksize', 20)
     hddriver = params.get('hddriver', 'virtio')
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     imageformat = params.get('imageformat', 'qcow2')

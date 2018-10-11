@@ -17,7 +17,7 @@ from six.moves import urllib
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {'memory': 4194304,
                    'vcpu': 1,
-                   'disksize': 10,
+                   'disksize': 20,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'imageformat': 'qcow2',
                    'hddriver': 'virtio',
@@ -203,11 +203,15 @@ def install_linux_net_ppc(params):
     os_arch = guestos + "_" + guestarch
 
     if installmethod == 'http':
+        release_ver_flag = 0
         if rhelnewest is not None:
             version = re.search(r'RHEL.*?/', rhelnewest).group()[:-1]
             num = version.split("-")[1].split('.')[0]
-            release_ver = envparser.get_value("other", "release_ver")
-            if version.split("-")[1] in release_ver:
+            release_ver_list = envparser.get_value("other", "release_ver").split()
+            for release_ver in release_ver_list:
+                if version.split("-")[1] == release_ver:
+                    release_ver_flag = 1
+            if release_ver_flag:
                 ks = envparser.get_value("guest", os_arch + "_http_ks")
                 ostree = envparser.get_value("guest", os_arch)
             else:

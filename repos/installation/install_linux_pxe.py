@@ -12,7 +12,7 @@ from utils import utils, process
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {'memory': 2097152,
                    'vcpu': 1,
-                   'disksize': 10,
+                   'disksize': 20,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'imageformat': 'qcow2',
                    'hddriver': 'virtio',
@@ -97,7 +97,7 @@ def install_linux_pxe(params):
     hddriver = params.get('hddriver', 'virtio')
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     imageformat = params.get('imageformat', 'qcow2')
-    seeksize = params.get('disksize', 10)
+    seeksize = params.get('disksize', 20)
     graphic = params.get('graphic', 'spice')
     video = params.get('video', 'qxl')
     installtype = params.get('type', 'define')
@@ -118,7 +118,7 @@ def install_linux_pxe(params):
     if rhelnewest is None:
         default_file = install_common.get_value_from_global("guest", os_arch + "_pxe_default")
     else:
-        release_ver = install_common.get_value_from_global("other", "release_ver")
+        release_ver_list = install_common.get_value_from_global("other", "release_ver").split()
         location = utils.get_local_hostname()
         if "pek2" in location or "nay" in location:
             if "RHEL-ALT" in rhelnewest:
@@ -130,7 +130,11 @@ def install_linux_pxe(params):
                 version = rhelnewest.split("/")[4].split("-")[2]
             else:
                 version = rhelnewest.split("/")[4].split("-")[1]
-        if version in release_ver:
+        release_ver_flag = 0
+        for release_ver in release_ver_list:
+            if version == release_ver:
+                release_ver_flag = 1
+        if release_ver_flag:
             default_file = install_common.get_value_from_global("guest", os_arch + "_pxe_default")
         else:
             default_file = install_common.get_value_from_global("guest", "rhel%s_newest_%s_pxe_default" %

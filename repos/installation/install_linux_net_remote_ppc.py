@@ -17,7 +17,7 @@ from repos.domain import domain_common
 required_params = ('guestname', 'guestos', 'guestarch', 'netmethod')
 optional_params = {'memory': 2097152,
                    'vcpu': 2,
-                   'disksize': 10,
+                   'disksize': 20,
                    'imageformat': 'qcow2',
                    'hddriver': 'virtio',
                    'nicdriver': 'virtio',

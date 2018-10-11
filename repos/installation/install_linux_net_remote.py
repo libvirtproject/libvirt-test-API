@@ -11,7 +11,7 @@ from repos.installation import install_common
 required_params = ('guestname', 'guestos', 'guestarch', 'netmethod')
 optional_params = {'memory': 2097152,
                    'vcpu': 2,
-                   'disksize': 10,
+                   'disksize': 20,
                    'imageformat': 'qcow2',
                    'hddriver': 'virtio',
                    'nicdriver': 'virtio',
@@ -108,7 +108,7 @@ def install_linux_net_remote(params):
     installtype = params.get('type', 'define')
     rhelnewest = params.get("rhelnewest")
     imageformat = params.get('imageformat', 'qcow2')
-    seeksize = params.get('disksize', 10)
+    seeksize = params.get('disksize', 20)
 
     options = [guestname, guestos, guestarch, nicdriver, hddriver, imageformat, graphic, video, diskpath, seeksize, "local"]
     install_common.prepare_env(options, logger)

@@ -10,7 +10,7 @@ from utils import utils
 
 required_params = ('guestname',)
 optional_params = {
-    'memory': 1048576,
+    'memory': 2048576,
     'vcpu': 1,
     'imagepath': '/var/lib/libvirt/images/libvirt-ci.qcow2',
     'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
