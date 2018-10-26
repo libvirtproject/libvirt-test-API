@@ -564,6 +564,11 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
                 child.sendline(password)
             elif index == 2:
                 child.close()
+                # Add for test
+                if child.exitstatus == 255:
+                    time.sleep(200)
+                    (child.exitstatus, child.before) = remote_exec_pexpect(hostname, username, password, cmd, 30)
+                # End for test
                 if isinstance(child.before, str):
                     return child.exitstatus, child.before.strip()
                 else:
