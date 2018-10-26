@@ -8,6 +8,7 @@
 import libvirt
 import time
 import re
+import locale
 
 from libvirt import libvirtError
 
@@ -41,7 +42,8 @@ def stdio_callback(watch, fd, events, opaque):
     logger.info("console event value is: %s" % events)
     if events == 1:
         readbuf = "Libvirt-test-API"
-        stream.send(readbuf)
+        encoding = locale.getpreferredencoding()
+        stream.send(readbuf.encode(encoding))
         logger.info("send %d bytes from stdio to stream" % len(readbuf))
     elif events == 2:
         received_data = stream.recv(1024)
@@ -52,6 +54,7 @@ def stdio_callback(watch, fd, events, opaque):
 def stream_callback(stream, events, opaque):
     global count
     logger = opaque
+    encoding = locale.getpreferredencoding()
     logger.info("stream event value is: %s" % events)
     if events == 1:
         try:
@@ -62,16 +65,16 @@ def stream_callback(stream, events, opaque):
     elif events == 2:
         if count == 1:
             readbuf = "root\r"
-            stream.send(readbuf)
+            stream.send(readbuf.encode(encoding))
         elif count == 2:
             readbuf = "redhat\r"
-            stream.send(readbuf)
+            stream.send(readbuf.encode(encoding))
         elif count == 6:
             readbuf = 'echo "Testing" \r'
-            stream.send(readbuf)
+            stream.send(readbuf.encode(encoding))
         elif count == 7:
             readbuf = "exit\r"
-            stream.send(readbuf)
+            stream.send(readbuf.encode(encoding))
         else:
             pass
         logger.info("some bytes in stream")

@@ -238,6 +238,6 @@ def install_linux_import(params):
         logger.info("fail to power on vm %s" % guestname)
         return 1
 
-    time.sleep(60)
+    time.sleep(150)
 
     return 0

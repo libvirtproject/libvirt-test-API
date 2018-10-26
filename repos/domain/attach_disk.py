@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # Attach a disk device to domain
 
+import time
 
 from libvirt import libvirtError
 from src import sharedmod
@@ -128,6 +129,7 @@ def attach_disk(params):
     try:
         #Attach disk to domain
         domobj.attachDevice(xmlstr)
+        time.sleep(150)
         disk_num2 = utils.dev_num(guestname, "disk")
         logger.debug("update disk number to %s" % disk_num2)
 
