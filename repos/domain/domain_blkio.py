@@ -22,7 +22,7 @@ optional_params = {}
 
 
 def get_blkio_path(guestname, logger):
-    logger.info("Check" + BLKIO_PATH1 %  guestname)
+    logger.info("Check " + BLKIO_PATH1 %  guestname)
     if os.path.exists(BLKIO_PATH1 % guestname):
         return BLKIO_PATH1 % guestname
     elif os.path.exists(BLKIO_PATH2 % guestname):
@@ -30,7 +30,7 @@ def get_blkio_path(guestname, logger):
     else:
         logger.warn("CGroup path is not in expected format")
         for path in os.listdir(BLKIO_PATH_BASE):
-            logger.info("Check" + path)
+            logger.info("Check " + path)
             if re.match(BLKIO_PATH_RE % guestname, path):
                 return BLKIO_PATH_BASE + "/" + path
             if re.match(BLKIO_PATH_RE % guestname.replace('_', ''), path):
@@ -69,12 +69,24 @@ def get_device(domobj, logger):
         return ""
 
 
-def set_device_scheduler(dev, target_scheduler, logger):
+def set_device_scheduler(dev, logger):
     if not dev.startswith('/dev'):
         logger.error('Invalid device path: ' + str(dev))
     dev = dev[5:]
-    with open('/sys/block/%s/queue/scheduler' % dev, 'w') as scheduler_file:
-        scheduler_file.write(target_scheduler)
+    scheduler = "/sys/block/%s/queue/scheduler" % dev
+    cmd = "cat %s" % scheduler
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    if ret.exit_status:
+        logger.error("check scheduler file failed: %s" % ret.stdout)
+        return 1
+    if "cfq" in ret.stdout:
+        with open(scheduler, 'w') as scheduler_file:
+            scheduler_file.write("cfq")
+    elif "bfq" in ret.stdout:
+        with open(scheduler, 'w') as scheduler_file:
+            scheduler_file.write("bfq")
+    else:
+        logger.info("Don't support to set scheduler in this kernel version.")
 
 
 def check_blkio_paras(domain_blkio_path, blkio_paras, logger):
@@ -137,7 +149,7 @@ def domain_blkio(params):
     logger = params['logger']
     guestname = params['guestname']
     expected_weight = params['weight']
-    flag = 0
+    flag = 2
 
     conn = sharedmod.libvirtobj['conn']
 
@@ -176,8 +188,8 @@ def domain_blkio(params):
 
         device = get_device(domobj, logger)
         device_weight = "%s,%s" % (device, expected_weight)
-        logger.info("set scheduler to cfq first..")
-        set_device_scheduler(device, 'cfq', logger)
+        logger.info("set scheduler first..")
+        set_device_scheduler(device, logger)
         logger.info("start to set param device_weight to %s"
                     % device_weight)
         blkio_paras = {'device_weight': device_weight}

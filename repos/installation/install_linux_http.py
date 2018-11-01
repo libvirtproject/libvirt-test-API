@@ -7,7 +7,7 @@ from src import sharedmod
 from repos.installation import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch',)
-optional_params = {'memory': 3048576,
+optional_params = {'memory': 2097152,
                    'vcpu': 1,
                    'disksize': 20,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',

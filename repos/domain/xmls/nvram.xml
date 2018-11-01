@@ -1,7 +1,7 @@
 <domain type="kvm">
   <name>GUESTNAME</name>
   <uuid>05867c1a-afeb-300e-e55e-2673391ae080</uuid>
-  <memory>4048576</memory>
+  <memory>2097152</memory>
   <vcpu>2</vcpu>
   <os>
     <type arch='GUESTARCH' machine='pc-q35-rhel7.3.0'>hvm</type>

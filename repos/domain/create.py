@@ -15,7 +15,7 @@ NONE = 0
 START_PAUSED = 1
 
 required_params = ('guestname',)
-optional_params = {'memory': 1048576,
+optional_params = {'memory': 2097152,
                    'vcpu': 1,
                    'imagepath': '/var/lib/libvirt/images/libvirt-ci.qcow2',
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',

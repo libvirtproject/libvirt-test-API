@@ -26,7 +26,7 @@ WIN_UNATTENDED_IMG = "/tmp/win_unattended.img"
 HOME_PATH = os.getcwd()
 
 required_params = ('guestname', 'guestos', 'guestarch',)
-optional_params = {'memory': 2048576,
+optional_params = {'memory': 2097152,
                    'vcpu': 1,
                    'disksize': 20,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',

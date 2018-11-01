@@ -11,7 +11,7 @@ from utils import utils
 from repos.domain import domain_common
 
 required_params = ('guestname',)
-optional_params = {'memory': 1048576,
+optional_params = {'memory': 2097152,
                    'vcpu': 1,
                    'transport': '',
                    'auth_tcp': '',

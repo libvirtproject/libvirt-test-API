@@ -19,7 +19,7 @@ START_PAUSED = 1
 START_AUTODESTROY = 2
 
 required_params = ('guestname',)
-optional_params = {'memory': 1048576,
+optional_params = {'memory': 2097152,
                    'vcpu': 1,
                    'macaddr': '52:54:00:97:e4:28',
                    'uuid': 'e1d8f470-a362-11e7-a9bb-3c970e93647c',
