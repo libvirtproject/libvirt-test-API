@@ -27,7 +27,10 @@ def local_nfs_exported_clean(nfs_path):
 
 
 def local_restart_service(logger):
-    cmd = "systemctl restart nfs"
+    if utils.isRelease("8", logger):
+        cmd = "systemctl restart nfs-server"
+    else:
+        cmd = "systemctl restart nfs"
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
         logger.error("start nfs service failed: %s." % ret.stdout)

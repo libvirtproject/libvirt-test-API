@@ -45,7 +45,10 @@ def nfs_setup(root_squash, logger):
         return 1
 
     logger.info("restart nfs service")
-    cmd = "service nfs restart"
+    if utils.isRelease("8", logger):
+        cmd = "systemctl restart nfs-server"
+    else:
+        cmd = "systemctl restart nfs"
     ret, out = utils.exec_cmd(cmd, shell=True)
     if ret:
         logger.error("failed to restart nfs service")
