@@ -1705,7 +1705,7 @@ def get_version():
     ret, out = exec_cmd(cmd, shell=True)
     if ret != 0:
         return False
-    if "Server" in out[0]:
+    if "7." in out[0]:
         release = out[0].split(' ')[6]
     else:
         release = out[0].split(' ')[5]
