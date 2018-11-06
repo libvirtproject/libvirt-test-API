@@ -157,9 +157,6 @@ def install_linux_iso(params):
     if not install_common.wait_install(conn, guestname, xmlstr, installtype, "iso", logger):
         return 1
 
-    if not install_common.check_guest_ip(guestname, logger):
-        return 1
-
     time.sleep(60)
     if storage != "local":
         install_common.clean_guest(guestname, logger)

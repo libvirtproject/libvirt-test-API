@@ -155,9 +155,6 @@ def install_linux_pxe(params):
     if not install_common.wait_install(conn, guestname, xmlstr, installtype, "pxe", logger):
         return 1
 
-    if not install_common.check_guest_ip(guestname, logger, "virbr5"):
-        return 1
-
     time.sleep(60)
 
     return 0

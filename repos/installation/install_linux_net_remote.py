@@ -143,9 +143,6 @@ def install_linux_net_remote(params):
     if not install_common.wait_install(conn, guestname, xmlstr, installtype, installmethod, logger):
         return 1
 
-    if not install_common.check_guest_ip(guestname, logger):
-        return 1
-
     time.sleep(60)
     return 0
 

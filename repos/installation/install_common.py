@@ -101,9 +101,16 @@ def get_iso_link(rhelnewest, guestos, guestarch, logger):
         if local_url in rhelnewest:
             repo_name = rhelnewest.split('/')[6]
         elif remote_url in rhelnewest:
-            repo_name = rhelnewest.split('/')[4]
-        isolink = ("%s%s/iso/%s-Server-%s-dvd1.iso" %
-                   (rhelnewest, guestarch, repo_name, guestarch))
+            if utils.isRelease("8", logger):
+                repo_name = rhelnewest.split('/')[6]
+            else:
+                repo_name = rhelnewest.split('/')[4]
+        if utils.isRelease("8", logger):
+            isolink = ("%s%s/iso/%s-%s-dvd1.iso" %
+                       (rhelnewest, guestarch, repo_name, guestarch))
+        else:
+            isolink = ("%s%s/iso/%s-Server-%s-dvd1.iso" %
+                       (rhelnewest, guestarch, repo_name, guestarch))
     else:
         os_arch = guestos + "_" + guestarch
         if "pek2" in location or "nay" in location:
@@ -362,7 +369,12 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, installmethod, lo
     """ After guest installation is over, undefine the guest with
         bootting off cdrom, to define the guest to boot off harddisk.
     """
-    if installmethod == "bootiso" or installmethod == "pxe":
+    if installmethod == "pxe":
+        xmlstr = xmlstr.replace('<boot dev="network"/>', '')
+        xmlstr = xmlstr.replace('<loader>/usr/share/seabios/bios.bin</loader>', '')
+        xmlstr = xmlstr.replace("<bios userserial='yes' rebootTimeout='-1'/>", "")
+        xmlstr = xmlstr.replace('<source network="pxeboot"/>', '<source network="default"/>')
+    if installmethod == "bootiso":
         xmlstr = xmlstr.replace('<boot dev="cdrom"/>', '<boot dev="hd"/>')
         xmlstr = re.sub('<disk device="cdrom".*</disk>\n', '', xmlstr, flags=re.DOTALL)
     elif installmethod == "net":
@@ -521,6 +533,8 @@ def wait_install(conn, guestname, xmlstr, installtype, installmethod, logger, ti
             logger.error("API error message: %s, error code is %s"
                          % (e.get_error_message(), e.get_error_code()))
             logger.error("fail to start domain %s" % guestname)
+            return False
+        if not check_guest_ip(guestname, logger, 'virbr5'):
             return False
     # end to test
 
