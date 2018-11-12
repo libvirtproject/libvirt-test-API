@@ -121,13 +121,13 @@ def check_blkio_paras(domain_blkio_path, blkio_paras, logger):
         else:
             return 1
 
-        if output.split()[1] == expected_device_weight.split(',')[1]:
-            logger.info("the device_weight matches with cgroup \
-                        blkio.weight_device")
+        if len(output) != 0 and output.split()[1] == expected_device_weight.split(',')[1]:
+            logger.info("the device_weight matches with cgroup "
+                        "blkio.weight_device")
             return 0
         else:
-            logger.error("the device_weight mismatches with cgroup \
-                        blkio.weight_device")
+            logger.error("the device_weight mismatches with cgroup "
+                         "blkio.weight_device")
             return 1
 
     return 0
@@ -149,7 +149,6 @@ def domain_blkio(params):
     logger = params['logger']
     guestname = params['guestname']
     expected_weight = params['weight']
-    flag = 2
 
     conn = sharedmod.libvirtobj['conn']
 
@@ -165,7 +164,7 @@ def domain_blkio(params):
     blkio_path = get_blkio_path(guestname, logger)
 
     try:
-        blkio_paras = domobj.blkioParameters(flag)
+        blkio_paras = domobj.blkioParameters(0)
 
         logger.info("the blkio weight of %s is: %d"
                     % (guestname, blkio_paras['weight']))
@@ -177,7 +176,7 @@ def domain_blkio(params):
 
         logger.info("start to set param weight to %s" % expected_weight)
         blkio_paras = {'weight': int(expected_weight)}
-        status = domobj.setBlkioParameters(blkio_paras, flag)
+        status = domobj.setBlkioParameters(blkio_paras, 0)
         if status != 0:
             return 1
 
@@ -193,7 +192,7 @@ def domain_blkio(params):
         logger.info("start to set param device_weight to %s"
                     % device_weight)
         blkio_paras = {'device_weight': device_weight}
-        status = domobj.setBlkioParameters(blkio_paras, flag)
+        status = domobj.setBlkioParameters(blkio_paras, 2)
         if status != 0:
             return 1
 
