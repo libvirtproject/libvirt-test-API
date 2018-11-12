@@ -149,6 +149,7 @@ def domain_blkio(params):
     logger = params['logger']
     guestname = params['guestname']
     expected_weight = params['weight']
+    flag = 0
 
     conn = sharedmod.libvirtobj['conn']
 
@@ -164,7 +165,7 @@ def domain_blkio(params):
     blkio_path = get_blkio_path(guestname, logger)
 
     try:
-        blkio_paras = domobj.blkioParameters(0)
+        blkio_paras = domobj.blkioParameters(flag)
 
         logger.info("the blkio weight of %s is: %d"
                     % (guestname, blkio_paras['weight']))
@@ -176,7 +177,7 @@ def domain_blkio(params):
 
         logger.info("start to set param weight to %s" % expected_weight)
         blkio_paras = {'weight': int(expected_weight)}
-        status = domobj.setBlkioParameters(blkio_paras, 0)
+        status = domobj.setBlkioParameters(blkio_paras, flag)
         if status != 0:
             return 1
 
@@ -192,7 +193,7 @@ def domain_blkio(params):
         logger.info("start to set param device_weight to %s"
                     % device_weight)
         blkio_paras = {'device_weight': device_weight}
-        status = domobj.setBlkioParameters(blkio_paras, 2)
+        status = domobj.setBlkioParameters(blkio_paras, flag)
         if status != 0:
             return 1
 
