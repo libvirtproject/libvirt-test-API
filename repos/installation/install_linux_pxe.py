@@ -129,7 +129,10 @@ def install_linux_pxe(params):
             if "RHEL-ALT" in rhelnewest:
                 version = rhelnewest.split("/")[4].split("-")[2]
             else:
-                version = rhelnewest.split("/")[4].split("-")[1]
+                if utils.isRelease("8", logger):
+                    version = rhelnewest.split("/")[6].split("-")[1]
+                else:
+                    version = rhelnewest.split("/")[4].split("-")[1]
         release_ver_flag = 0
         for release_ver in release_ver_list:
             if version == release_ver:
