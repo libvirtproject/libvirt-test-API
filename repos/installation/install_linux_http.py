@@ -8,8 +8,8 @@ from repos.installation import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {'memory': 2097152,
-                   'vcpu': 1,
-                   'disksize': 20,
+                   'vcpu': 2,
+                   'disksize': 14,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'imageformat': 'qcow2',
                    'hddriver': 'virtio',
@@ -34,7 +34,7 @@ def install_linux_http(params):
     guestarch = params.get('guestarch')
     xmlstr = params['xml']
     nicdriver = params.get('nicdriver', 'virtio')
-    seeksize = params.get('disksize', 20)
+    seeksize = params.get('disksize', 14)
     hddriver = params.get('hddriver', 'virtio')
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     imageformat = params.get('imageformat', 'qcow2')

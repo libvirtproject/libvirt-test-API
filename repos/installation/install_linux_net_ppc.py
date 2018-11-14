@@ -16,8 +16,8 @@ from six.moves import urllib
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {'memory': 4194304,
-                   'vcpu': 1,
-                   'disksize': 20,
+                   'vcpu': 2,
+                   'disksize': 14,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'imageformat': 'qcow2',
                    'hddriver': 'virtio',
@@ -122,7 +122,7 @@ def install_linux_net_ppc(params):
     hddriver = params.get('hddriver', 'virtio')
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     storage = params.get('storage', 'local')
-    seeksize = params.get('disksize', 20)
+    seeksize = params.get('disksize', 14)
     imageformat = params.get('imageformat', 'qcow2 -o compat=1.1')
     graphic = params.get('graphic', 'spice')
     video = params.get('video', 'qxl')

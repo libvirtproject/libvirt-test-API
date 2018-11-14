@@ -18,8 +18,8 @@ from repos.domain import domain_common
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
                    'memory': 4194304,
-                   'vcpu': 1,
-                   'disksize': 10,
+                   'vcpu': 2,
+                   'disksize': 14,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'imageformat': 'qcow2',
                    'hddriver': 'virtio',
@@ -256,7 +256,7 @@ def install_linux_pxe_ppc(params):
     nicdriver = params.get('nicdriver', 'virtio')
     hddriver = params.get('hddriver', 'virtio')
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-    seeksize = params.get('disksize', 20)
+    seeksize = params.get('disksize', 14)
     imageformat = params.get('imageformat', 'qcow2')
     graphic = params.get('graphic', 'spice')
     video = params.get('video', 'qxl')

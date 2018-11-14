@@ -17,7 +17,7 @@ from repos.domain import domain_common
 required_params = ('guestname', 'guestos', 'guestarch', 'netmethod')
 optional_params = {'memory': 2097152,
                    'vcpu': 2,
-                   'disksize': 20,
+                   'disksize': 14,
                    'imageformat': 'qcow2',
                    'hddriver': 'virtio',
                    'nicdriver': 'virtio',
@@ -149,7 +149,7 @@ def install_linux_net_remote_ppc(params):
     nicdriver = params.get('nicdriver', 'virtio')
     hddriver = params.get('hddriver', 'virtio')
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-    seeksize = params.get('disksize', 20)
+    seeksize = params.get('disksize', 14)
     imageformat = params.get('imageformat', 'qcow2')
     graphic = params.get('graphic', 'spice')
     video = params.get('video', 'qxl')

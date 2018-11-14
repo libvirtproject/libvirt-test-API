@@ -19,8 +19,8 @@ from repos.domain import domain_common
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
                    'memory': 2097152,
-                   'vcpu': 1,
-                   'disksize': 20,
+                   'vcpu': 2,
+                   'disksize': 14,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'imageformat': 'qcow2',
                    'qcow2version': 'v3',
@@ -340,7 +340,7 @@ def install_linux_cdrom(params):
     nicdriver = params.get('nicdriver', 'virtio')
     hddriver = params.get('hddriver', 'virtio')
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-    seeksize = params.get('disksize', 20)
+    seeksize = params.get('disksize', 14)
     imageformat = params.get('imageformat', 'raw')
     graphic = params.get('graphic', 'spice')
     video = params.get('video', 'qxl')

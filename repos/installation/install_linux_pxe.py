@@ -11,8 +11,8 @@ from utils import utils, process
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {'memory': 2097152,
-                   'vcpu': 1,
-                   'disksize': 20,
+                   'vcpu': 2,
+                   'disksize': 14,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'imageformat': 'qcow2',
                    'hddriver': 'virtio',
@@ -97,7 +97,7 @@ def install_linux_pxe(params):
     hddriver = params.get('hddriver', 'virtio')
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     imageformat = params.get('imageformat', 'qcow2')
-    seeksize = params.get('disksize', 20)
+    seeksize = params.get('disksize', 14)
     graphic = params.get('graphic', 'spice')
     video = params.get('video', 'qxl')
     installtype = params.get('type', 'define')
