@@ -70,7 +70,7 @@ def prepare_iso(iso_file):
     return iso_local_path
 
 
-def prepare_win_unattended(guestname, guestos, guestarch, envparser, logger):
+def prepare_win_unattended(guestname, guestos, guestarch, envparser, hddriver, logger):
     if "win7" in guestos or "win2008" in guestos:
         cdkey = envparser.get_value("guest", "%s_%s_key" % (guestos, guestarch))
     else:
@@ -159,7 +159,10 @@ def prepare_win_unattended(guestname, guestos, guestarch, envparser, logger):
                     "win2012R2": "2k12R2",
                     "win2016": "2k16"}
         if utils.isRelease("8", logger):
-            driverpath = "E:\\viostor\\" + win_list[guestos] + "\\" + win_arch
+            if hddriver == "scsilun" or hddriver == "scsi":
+                driverpath = "E:\\vioscsi\\" + win_list[guestos] + "\\" + win_arch
+            else:
+                driverpath = "E:\\viostor\\" + win_list[guestos] + "\\" + win_arch
             drivernet = "E:\\NetKVM\\" + win_list[guestos] + "\\" + win_arch
         else:
             drivernet = "A:\\"
@@ -297,20 +300,20 @@ def install_windows_iso(params):
     elif hddriver == 'sata':
         xmlstr = xmlstr.replace('DEV', 'sda')
     elif hddriver == 'lun':
-        xmlstr = xmlstr.replace("'lun'", "'virtio'")
+        xmlstr = xmlstr.replace('"lun"', '"virtio"')
         xmlstr = xmlstr.replace('DEV', 'vda')
         xmlstr = xmlstr.replace('device="disk"', 'device="lun"')
         xmlstr = xmlstr.replace('disk device="lun" type="file"', 'disk device="lun" type="block"')
         iscsi_path = install_common.get_iscsi_disk_path(sourcehost, sourcepath)
-        xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='%s'" % iscsi_path)
+        xmlstr = xmlstr.replace('file="%s"' % diskpath, "dev='%s'" % iscsi_path)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
     elif hddriver == 'scsilun':
-        xmlstr = xmlstr.replace("'scsilun'", "'scsi'")
+        xmlstr = xmlstr.replace('"scsilun"', '"scsi"')
         xmlstr = xmlstr.replace('DEV', 'sda')
         xmlstr = xmlstr.replace('device="disk"', 'device="lun"')
         xmlstr = xmlstr.replace('disk device="lun" type="file"', 'disk device="lun" type="block"')
         iscsi_path = install_common.get_iscsi_disk_path(sourcehost, sourcepath)
-        xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='%s'" % iscsi_path)
+        xmlstr = xmlstr.replace('file="%s"' % diskpath, "dev='%s'" % iscsi_path)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
     xmlstr = set_win_driver(xmlstr, guestos, guestarch, logger)
 
@@ -324,7 +327,7 @@ def install_windows_iso(params):
     iso_local_path = prepare_iso(iso_file)
     xmlstr = xmlstr.replace('WINDOWSISO', iso_local_path)
 
-    status = prepare_win_unattended(guestname, guestos, guestarch, envparser, logger)
+    status = prepare_win_unattended(guestname, guestos, guestarch, envparser, hddriver, logger)
     if status:
         logger.error("making windows unattended image failed")
         return 1
