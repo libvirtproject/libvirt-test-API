@@ -40,14 +40,13 @@
 					<CreatePartitions>
 						<CreatePartition wcm:action="add">
 							<Order>1</Order>
-							<Size>20000</Size>
+							<Extend>true</Extend>
 							<Type>Primary</Type>
 						</CreatePartition>
 					</CreatePartitions>
 					<ModifyPartitions>
 						<ModifyPartition wcm:action="add">
 							<Active>true</Active>
-							<Extend>false</Extend>
 							<Format>NTFS</Format>
 							<Label>OS_Install</Label>
 							<Letter>C</Letter>
