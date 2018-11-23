@@ -215,7 +215,7 @@ def migrate(params):
             target_machine)
         return 1
 
-    process.run("ssh-add", shell=True, ignore_status=True)
+    #process.run("ssh-add", shell=True, ignore_status=True)
     check_virtlogd(target_machine, username, password, logger)
 
     dsturi = "qemu+%s://%s/system" % (transport, target_machine)
@@ -223,6 +223,7 @@ def migrate(params):
     # Connect to local hypervisor connection URI
     srcconn = sharedmod.libvirtobj['conn']
 
+    time.sleep(5)
     if auth_tcp == '':
         dstconn = libvirt.open(dsturi)
     elif auth_tcp == 'sasl':

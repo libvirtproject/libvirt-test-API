@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 import os
-from pwd import getpwnam
-
+import time
 import libvirt
-from libvirt import libvirtError
 
+from pwd import getpwnam
+from libvirt import libvirtError
 from utils import utils, process
 
 required_params = ('auth_unix_ro', 'auth_unix_rw',)
@@ -70,31 +70,29 @@ def group_sasl_set(unix_sock_group, auth_unix_ro, auth_unix_rw, logger):
     logger.info("add unix socket group and sasl authentication if we need")
 
     # add unix socket group
-
     libvirt_group_add = "groupadd -f %s" % unix_sock_group
     if utils.isRelease("7", logger):
         libvirt_group_del = "groupdel %s" % unix_sock_group
     else:
         libvirt_group_del = "groupdel -f %s" % unix_sock_group
+
     group_check = "grep %s /etc/group" % unix_sock_group
     (status, output) = utils.exec_cmd(group_check, shell=True)
     # if the group already exists, remove it
-    if len(output):
+    if not status:
+        time.sleep(2)
         (status, output) = utils.exec_cmd(libvirt_group_del, shell=True)
         if status:
             logger.error("Fail to delete %s group: %s" % (unix_sock_group, output))
             return 1
 
-        (status, output) = utils.exec_cmd(libvirt_group_add, shell=True)
-        if status:
-            logger.error("Fail to add %s group: %s" % (unix_sock_group, output))
-            return 1
-    else:
-        status, output = get_output(libvirt_group_add, 0, logger)
-        if status:
-            logger.error("failed to add %s group: %s" % (unix_sock_group, output))
-            return 1
+    time.sleep(2)
+    status, output = get_output(libvirt_group_add, 0, logger)
+    if status:
+        logger.error("failed to add %s group: %s" % (unix_sock_group, output))
+        return 1
 
+    time.sleep(2)
     # add "testapi" as the testing user
     libvirt_user_add = "useradd -g %s %s" % (unix_sock_group, TESTING_USER)
     status, output = get_output(libvirt_user_add, 0, logger)

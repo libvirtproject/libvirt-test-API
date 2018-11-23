@@ -90,6 +90,8 @@ def define(params):
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     logger.info("disk image is %s" % diskpath)
 
+    if os.path.exists(diskpath):
+        os.remove(diskpath)
     shutil.copyfile(imagepath, diskpath)
     os.chown(diskpath, 107, 107)
 
