@@ -74,19 +74,7 @@ def check_dom_state(domobj, expect_states):
 
 
 def domain_migrate(dom, target, username, passwd, logger):
-    #generate ssh key pair
-    ret = domain_common.ssh_keygen(logger)
-    if ret:
-        logger.error("failed to generate RSA key")
-        return 1
-    #setup ssh tunnel with target machine
-    ret = domain_common.ssh_tunnel(target, username, passwd, logger)
-    if ret:
-        logger.error("faild to setup ssh tunnel with target %s" % target)
-        return 1
-
-    process.run("ssh-add", shell=True, ignore_status=True)
-
+    domain_common.config_ssh(target, username, passwd, logger)
     dsturi = "qemu+ssh://%s/system" % target
 
     logger.info("start to migrate.")

@@ -73,18 +73,7 @@ def migrate_tls(params):
     guestname = params['guestname']
     poststate = params['poststate']
 
-    #generate ssh key pair
-    ret = domain_common.ssh_keygen(logger)
-    if ret:
-        logger.error("failed to generate RSA key")
-        return 1
-    #setup ssh tunnel with target machine
-    ret = domain_common.ssh_tunnel(target_machine, username, password, logger)
-    if ret:
-        logger.error("faild to setup ssh tunnel with target machine %s" % target_machine)
-        return 1
-
-    process.run("ssh-add", shell=True, ignore_status=True)
+    domain_common.config_ssh(target_machine, username, password, logger)
     target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
     dsturi = "qemu+%s://%s/system" % (transport, target_hostname)
 

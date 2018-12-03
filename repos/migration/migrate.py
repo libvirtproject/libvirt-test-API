@@ -73,18 +73,6 @@ def env_clean(srcconn, dstconn, target_machine, guestname, logger):
     dstconn.close()
     logger.info("close remote hypervisor connection")
 
-    REMOVE_SSH = "ssh %s \"rm -rf /root/.ssh/*\"" % (target_machine)
-    logger.info("remove ssh key on remote machine")
-    status, ret = exec_command(logger, REMOVE_SSH, 0)
-    if status:
-        logger.error("failed to remove ssh key")
-
-    REMOVE_LOCAL_SSH = "rm -rf /root/.ssh/*"
-    logger.info("remove local ssh key")
-    status, ret = exec_command(logger, REMOVE_LOCAL_SSH, 0)
-    if status:
-        logger.error("failed to remove local ssh key")
-
 
 def check_virtlogd(target_machine, username, password, logger):
     logger.info("check local and remote virtlogd status")
@@ -202,20 +190,7 @@ def migrate(params):
     # "shared storage is unsafe"
     #migflags |= libvirt.VIR_MIGRATE_UNSAFE
 
-    #generate ssh key pair
-    ret = domain_common.ssh_keygen(logger)
-    if ret:
-        logger.error("failed to generate RSA key")
-        return 1
-    #setup ssh tunnel with target machine
-    ret = domain_common.ssh_tunnel(target_machine, username, password, logger)
-    if ret:
-        logger.error(
-            "faild to setup ssh tunnel with target machine %s" %
-            target_machine)
-        return 1
-
-    #process.run("ssh-add", shell=True, ignore_status=True)
+    domain_common.config_ssh(target_machine, username, password, logger)
     check_virtlogd(target_machine, username, password, logger)
 
     dsturi = "qemu+%s://%s/system" % (transport, target_machine)
@@ -223,7 +198,7 @@ def migrate(params):
     # Connect to local hypervisor connection URI
     srcconn = sharedmod.libvirtobj['conn']
 
-    time.sleep(5)
+    time.sleep(10)
     if auth_tcp == '':
         dstconn = libvirt.open(dsturi)
     elif auth_tcp == 'sasl':

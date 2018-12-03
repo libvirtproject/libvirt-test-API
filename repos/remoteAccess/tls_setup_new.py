@@ -8,7 +8,7 @@ import libvirt
 from libvirt import libvirtError
 
 from utils import utils, process
-from repos.domain.domain_common import ssh_keygen, ssh_tunnel, request_credentials
+from repos.domain import domain_common
 
 required_params = ('listen_tls',
                    'auth_tls',
@@ -344,7 +344,7 @@ def hypervisor_connecting_test(uri, auth_tls, username,
             conn = libvirt.open(uri)
         elif auth_tls == 'sasl':
             user_data = [username, password]
-            auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_PASSPHRASE], request_credentials, user_data]
+            auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_PASSPHRASE], domain_common.request_credentials, user_data]
             logger.debug("call libvirt.openAuth()")
             conn = libvirt.openAuth(uri, auth, 0)
     except libvirtError as e:
@@ -398,17 +398,7 @@ def tls_setup_new(params):
 
     os.mkdir(TEMP_TLS_FOLDER)
 
-    ret = ssh_keygen(logger)
-    if ret:
-        logger.error("failed to generate RSA key")
-        return 1
-    ret = ssh_tunnel(target_machine, username, password, logger)
-    if ret:
-        logger.error("failed to setup ssh tunnel with target machine %s" % target_machine)
-        return 1
-
-    process.run("ssh-add", shell=True, ignore_status=True)
-
+    domain_common.config_ssh(target_machine, username, password, logger)
     if iptables_stop(target_machine, username, password, logger):
         return 1
 

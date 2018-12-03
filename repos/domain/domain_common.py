@@ -3,11 +3,26 @@
 import libvirt
 import pexpect
 import time
+import os
 
 from utils import utils
 
 SSH_KEYGEN = "ssh-keygen -t rsa"
 SSH_COPY_ID = "ssh-copy-id"
+
+
+def config_ssh(target_machine, username, password, logger):
+    if not os.path.exists("/root/.ssh/id_rsa"):
+        ssh_keygen(logger)
+    cmd = "ls /root/.ssh/authorized_keys"
+    ret, output = utils.remote_exec_pexpect(target_machine, username, password, cmd)
+    if ret:
+        logger.debug("/root/.ssh/authorized_keys already exist.")
+        cmd = "cat /root/.ssh/authorized_keys | grep %s" % target_machine
+        ret, output = utils.remote_exec_pexpect(target_machine, username, password, cmd)
+        if ret:
+            logger.debug("setup ssh tunnel on target machine")
+            ssh_tunnel(target_machine, username, password, logger)
 
 
 def ssh_keygen(logger):
