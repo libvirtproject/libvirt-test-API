@@ -16,13 +16,15 @@ def config_ssh(target_machine, username, password, logger):
         ssh_keygen(logger)
     cmd = "ls /root/.ssh/authorized_keys"
     ret, output = utils.remote_exec_pexpect(target_machine, username, password, cmd)
-    if ret:
+    if not ret:
         logger.debug("/root/.ssh/authorized_keys already exist.")
         cmd = "cat /root/.ssh/authorized_keys | grep %s" % target_machine
         ret, output = utils.remote_exec_pexpect(target_machine, username, password, cmd)
         if ret:
             logger.debug("setup ssh tunnel on target machine")
             ssh_tunnel(target_machine, username, password, logger)
+    else:
+        ssh_tunnel(target_machine, username, password, logger)
 
 
 def ssh_keygen(logger):
