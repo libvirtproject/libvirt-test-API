@@ -14,17 +14,18 @@ SSH_COPY_ID = "ssh-copy-id"
 def config_ssh(target_machine, username, password, logger):
     if not os.path.exists("/root/.ssh/id_rsa"):
         ssh_keygen(logger)
-    cmd = "ls /root/.ssh/authorized_keys"
-    ret, output = utils.remote_exec_pexpect(target_machine, username, password, cmd)
-    if not ret:
-        logger.debug("/root/.ssh/authorized_keys already exist.")
-        cmd = "cat /root/.ssh/authorized_keys | grep %s" % target_machine
-        ret, output = utils.remote_exec_pexpect(target_machine, username, password, cmd)
+    target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
+    count = 10
+    while count:
+        cmd = "cat /root/.ssh/authorized_keys | grep %s" % target_hostname
+        ret, output = utils.remote_exec_pexpect(target_hostname, username, password, cmd)
+        logger.debug("output: %s" % output)
         if ret:
-            logger.debug("setup ssh tunnel on target machine")
-            ssh_tunnel(target_machine, username, password, logger)
-    else:
-        ssh_tunnel(target_machine, username, password, logger)
+            ssh_tunnel(target_hostname, username, password, logger)
+            time.sleep(5)
+            count -= 1
+        else:
+            return 0
 
 
 def ssh_keygen(logger):
