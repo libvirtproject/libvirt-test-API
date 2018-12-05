@@ -14,18 +14,19 @@ SSH_COPY_ID = "ssh-copy-id"
 def config_ssh(target_machine, username, password, logger):
     if not os.path.exists("/root/.ssh/id_rsa"):
         ssh_keygen(logger)
-    target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
-    count = 10
+    local_hostname = utils.get_local_hostname()
+    count = 3
     while count:
-        cmd = "cat /root/.ssh/authorized_keys | grep %s" % target_hostname
-        ret, output = utils.remote_exec_pexpect(target_hostname, username, password, cmd)
+        cmd = "cat /root/.ssh/authorized_keys | grep '%s'" % local_hostname
+        ret, output = utils.remote_exec_pexpect(target_machine, username, password, cmd)
         logger.debug("output: %s" % output)
         if ret:
-            ssh_tunnel(target_hostname, username, password, logger)
-            time.sleep(5)
+            set_ssh_pub_key(target_machine, username, password, logger)
+            time.sleep(3)
             count -= 1
         else:
-            return 0
+            break
+    return 0
 
 
 def ssh_keygen(logger):
@@ -81,6 +82,21 @@ def ssh_tunnel(hostname, username, password, logger):
             child.close()
             return 1
 
+    return 0
+
+
+def set_ssh_pub_key(target_hostname, username, password, logger):
+    rsa_pub_key = "/root/.ssh/id_rsa.pub"
+    key_fd = open(rsa_pub_key, 'r')
+    key_str = key_fd.read()
+
+    cmd = "echo '%s' >> /root/.ssh/authorized_keys" % key_str
+    ret, output = utils.remote_exec_pexpect(target_hostname, username, password, cmd)
+    if ret:
+        logger.error("Write pub key failed: %s" % output)
+        key_fd.close()
+        return 1
+    key_fd.close()
     return 0
 
 
