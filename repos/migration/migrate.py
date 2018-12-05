@@ -82,7 +82,6 @@ def check_virtlogd(target_machine, username, password, logger):
     logger.debug("cmd : %s" % check_cmd)
     ret, out = utils.remote_exec_pexpect(target_machine, username,
                                          password, check_cmd)
-    logger.debug("ret = %s, out = %s" % (ret, out))
     if "inactive (dead)" in out:
         logger.info("start remote virtlogd.socket")
         start_cmd = "systemctl start virtlogd.socket"
@@ -94,7 +93,6 @@ def check_virtlogd(target_machine, username, password, logger):
             return 1
 
     ret, out = utils.exec_cmd(check_cmd, shell=True)
-    logger.debug("ret = %s, out = %s" % (ret, out))
     if ret == 3:
         logger.info("start local virtlogd.socket")
         start_cmd = "systemctl start virtlogd.socket"
@@ -104,7 +102,13 @@ def check_virtlogd(target_machine, username, password, logger):
             logger.error("output: %s" % output)
             return 1
 
-    logger.info("done the virtlogd.socket service start job")
+    cmd = "systemctl restart libvirtd"
+    logger.info("restart remote libvirtd service.")
+    ret, output = utils.remote_exec_pexpect(target_machine, username,
+                                            password, cmd)
+    if ret:
+        logger.error("libvirtd restart fail: %s" % output)
+        return 1
     return 0
 
 
