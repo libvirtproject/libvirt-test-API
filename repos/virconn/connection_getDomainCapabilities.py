@@ -409,9 +409,13 @@ def check_hostdev(logger):
             value = item.getElementsByTagName("value")
             for temp in value:
                 backend_api.append(str(temp.childNodes[0].data))
-    # WIP, we need more codes to check vfio
-    if not (drive & device & scsi_generic):
-        allsubsys.remove("scsi")
+    #WIP, we need more codes to check vfio
+    if utils.version_compare('libvirt', 4, 10, 0, logger):
+        if not (drive & device):
+            allsubsys.remove("scsi")
+    else:
+        if not (drive & device & scsi_generic):
+            allsubsys.remove("scsi")
     if not (supportsPassthroughKVM(logger) & device):
         allbackend.remove("default")
         allbackend.remove("kvm")
