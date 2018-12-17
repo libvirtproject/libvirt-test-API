@@ -50,7 +50,10 @@ def block_copy(params):
 
     try:
         logger.info("start block copy:")
-        domobj.blockCopy(path[0], destxml, None, flags)
+        if utils.isRelease('8', logger):
+            domobj.blockCopy(path[0], destxml, {}, flags)
+        else:
+            domobj.blockCopy(path[0], destxml, None, flags)
         while(1):
             new_info = domobj.blockJobInfo(path[0], 0)
             if len(new_info) == 0:

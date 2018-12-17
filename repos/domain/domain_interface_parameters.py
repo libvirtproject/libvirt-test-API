@@ -82,15 +82,14 @@ def domain_interface_parameters(params):
 
     conn = sharedmod.libvirtobj['conn']
 
-    cmd = "virsh domiflist %s" % guestname
+    cmd = "virsh domiflist %s | grep %s" % (guestname, mac)
     ret = process.run(cmd, shell=True, ignore_status=True)
-    dev_name = re.findall(r'\n([a-zA-Z0-9]+)\s.*%s' % mac, ret.stdout)
-    if not dev_name or len(dev_name) != 1:
+    dev_name = ret.stdout.split()[0]
+    if not dev_name or len(dev_name) == 0:
         logger.error("Failed to find interface with mac address: %s "
                      "maybe the guest is not started" % mac)
         return 1
 
-    dev_name = dev_name[0]
     logger.info("Interface %s is connected to virtual net %s" % (mac, dev_name))
 
     cmd = "tc class show dev %s" % dev_name

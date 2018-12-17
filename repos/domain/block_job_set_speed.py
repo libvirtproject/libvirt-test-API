@@ -29,7 +29,10 @@ def block_job_set_speed(params):
     logger.info("blockcopy xml: %s" % blockcopy_xml)
 
     try:
-        domobj.blockCopy(path[0], blockcopy_xml, None, 0)
+        if utils.isRelease('8', logger):
+            domobj.blockCopy(path[0], blockcopy_xml, {}, 0)
+        else:
+            domobj.blockCopy(path[0], blockcopy_xml, None, 0)
         domobj.blockJobSetSpeed(path[0], int(bandwidth), flags)
         new_info = domobj.blockJobInfo(path[0], 1)
         logger.info("blockJobInfo: %s." % new_info)
