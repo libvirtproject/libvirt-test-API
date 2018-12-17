@@ -8,6 +8,7 @@ optional_params = {'target_machine': None,
                    'username': 'root',
                    'password': 'redhat'}
 
+
 def nfs_env(params):
     """ migrate a guest back and forth between two machines"""
     logger = params['logger']

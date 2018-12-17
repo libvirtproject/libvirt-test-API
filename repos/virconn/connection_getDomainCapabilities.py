@@ -73,13 +73,13 @@ def validate_caps_from_hv(emulatorbin, logger):
     """
     Validate the relative caps between libvirt and qemu-kvm
     """
-    F1 = "%s -h| grep \"\-drive\""
+    F1 = r"%s -h| grep \"\-drive\""
     F2 = "%s -h| grep \"format=\""
     F3 = "%s -h| grep \"readonly=\""
     F4 = "%s -h| grep \"^\\-device\""
-    l = [F1, F2, F3, F4]
+    param_list = [F1, F2, F3, F4]
     flags = []
-    for item in l:
+    for item in param_list:
         status, temp = utils.exec_cmd(item % emulatorbin, shell=True)
         if not status:
             flags.append(True)

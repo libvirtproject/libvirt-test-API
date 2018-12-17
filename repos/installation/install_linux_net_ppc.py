@@ -129,7 +129,7 @@ def install_linux_net_ppc(params):
     installtype = params.get('type', 'define')
 
     logger.info("guestname: %s" % guestname)
-    params_info = "%s, %s, "  % (guestos, guestarch)
+    params_info = "%s, %s, " % (guestos, guestarch)
     params_info += "%s(network), %s(disk), " % (nicdriver, hddriver)
     params_info += "%s, %s, " % (imageformat, graphic)
     params_info += "%s, %s(storage)" % (video, storage)

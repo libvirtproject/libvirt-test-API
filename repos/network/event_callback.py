@@ -52,6 +52,7 @@ def net_destroy(conn, net_name, xmlstr):
     netobj = conn.networkLookupByName(net_name)
     netobj.destroy()
 
+
 event_func_map = {"define": net_define,
                   "undefine": net_undefine,
                   "start": net_start,

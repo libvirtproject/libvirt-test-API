@@ -555,9 +555,12 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
         child = pexpect.spawn("/usr/bin/ssh", [user_hostname, '-q', cmd],
                               timeout=60, maxread=2000, logfile=None)
         while True:
-            index = child.expect(['(yes\/no)', 'password:', pexpect.EOF,
-                                  'ssh: connect to host .+ Connection refused',
-                                  pexpect.TIMEOUT])
+            ssh_str = [r'(yes\/no)',
+                       'password:',
+                       pexpect.EOF,
+                       'ssh: connect to host .+ Connection refused',
+                       pexpect.TIMEOUT]
+            index = child.expect(ssh_str)
             if index == 0:
                 child.sendline("yes")
             elif index == 1:
@@ -592,9 +595,8 @@ def scp_file(hostname, username, password, target_path, filename):
     user_hostname = "%s@%s:%s" % (username, hostname, target_path)
     child = pexpect.spawn("/usr/bin/scp", [filename, user_hostname])
     while True:
-        index = child.expect(['yes\/no', 'password: ',
-                              pexpect.EOF,
-                              pexpect.TIMEOUT])
+        ssh_str = [r'yes\/no', 'password: ', pexpect.EOF, pexpect.TIMEOUT]
+        index = child.expect(ssh_str)
         if index == 0:
             child.sendline("yes")
         elif index == 1:
@@ -813,8 +815,8 @@ def format_parammap(paramlist, map_test, length):
     parammap = ()
 
     try:
-        if re.match('\^', paramlist):
-            unuse = int(re.split('\^', paramlist)[1])
+        if re.match(r'\^', paramlist):
+            unuse = int(re.split(r'\^', paramlist)[1])
             for i in range(length):
                 if i == unuse:
                     parammap += (False,)

@@ -75,6 +75,7 @@ def delete_rbd_volume(params):
 
     return 0
 
+
 def delete_rbd_volume_clean(params):
     global logger
 

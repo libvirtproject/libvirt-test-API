@@ -47,6 +47,7 @@ def domain_rename(params):
 
     return 0
 
+
 def domain_rename_clean(params):
     logger = params['logger']
     ret_flag = params.get('ret_flag')

@@ -7,7 +7,7 @@ import time
 import libvirt
 from libvirt import libvirtError
 
-from utils import utils, process
+from utils import utils
 from repos.domain import domain_common
 
 required_params = ('listen_tls',

@@ -63,7 +63,7 @@ def result_log(mod_case_func, case_params, ret, case_start_time, case_end_time):
             line = '\n' + line
             fp.writelines(line)
             fp.close()
-        except:
+        except OSError as err:
             print("ERROR: error writing to file '" + logfile + "'!")
             return False
     else:
@@ -76,7 +76,7 @@ def result_log(mod_case_func, case_params, ret, case_start_time, case_end_time):
             line = '\n' + line
             fp.writelines(line)
             fp.close()
-        except:
+        except OSError as err:
             print("ERROR: error writing to file '" + logfile + "'!")
             return False
     return True

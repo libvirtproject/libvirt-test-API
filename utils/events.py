@@ -7,6 +7,7 @@ import libvirt
 
 from .utils import version_compare
 
+
 class eventListenerThread(threading.Thread):
     def __init__(self, event_source, event_id, event_type, event_detail, logger, rand=None):
         """

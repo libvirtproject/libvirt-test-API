@@ -17,8 +17,8 @@ try:
 except ImportError:
     import _thread as thread
 
-required_params = ('guestname', 'flags',)
-optional_params = {'dxml': 'alter',}
+required_params = ('guestname', 'flags')
+optional_params = {'dxml': 'alter'}
 
 SAVE_PATH = "/tmp/%s.save"
 

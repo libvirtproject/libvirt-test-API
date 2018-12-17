@@ -35,26 +35,26 @@ from src.casecfgcheck import CaseCfgCheck
 
 def usage():
     print("Usage: libvirt-test-api <OPTIONS> <ARGUMENTS>")
-    print("\noptions: -h, --help : Display usage information \
-           \n         -c, --casefile: Specify configuration file \
-           \n         -t, --template: Print testcase config file template \
-           \n         -f, --logxml: Specify log file with type xml,\
-           \n                       defaults to log.xml in current directory \
-           \n         -l, --log-level: 0 or 1 currently \
-           \n         -d, --delete-log: Delete log items \
-           \n         -m, --merge: Merge two log xmlfiles \
-           \n         -r, --rerun: Rerun one or more test")
+    print("\noptions: -h, --help : Display usage information"
+          "\n         -c, --casefile: Specify configuration file"
+          "\n         -t, --template: Print testcase config file template"
+          "\n         -f, --logxml: Specify log file with type xml,"
+          "\n                       defaults to log.xml in current directory"
+          "\n         -l, --log-level: 0 or 1 currently"
+          "\n         -d, --delete-log: Delete log items"
+          "\n         -m, --merge: Merge two log xmlfiles"
+          "\n         -r, --rerun: Rerun one or more test")
 
-    print("example: \
-           \n         libvirt-test-api -l 0|1 -c TEST.CONF    \
-           \n         libvirt-test-api -c TEST.CONF -f TEST.XML \
-           \n         libvirt-test-api -t repos/domain/start.py ... \
-           \n         libvirt-test-api -m TESTONE.XML TESTTWO.XML \
-           \n         libvirt-test-api -d TEST.XML TESTRUNID TESTID \
-           \n         libvirt-test-api -d TEST.XML TESTRUNID \
-           \n         libvirt-test-api -d TEST.XML all \
-           \n         libvirt-test-api -f TEST.XML \
--r TESTRUNID TESTID ...")
+    print("example:"
+          "\n         libvirt-test-api -l 0|1 -c TEST.CONF"
+          "\n         libvirt-test-api -c TEST.CONF -f TEST.XML"
+          "\n         libvirt-test-api -t repos/domain/start.py ..."
+          "\n         libvirt-test-api -m TESTONE.XML TESTTWO.XML"
+          "\n         libvirt-test-api -d TEST.XML TESTRUNID TESTID"
+          "\n         libvirt-test-api -d TEST.XML TESTRUNID"
+          "\n         libvirt-test-api -d TEST.XML all"
+          "\n         libvirt-test-api -f TEST.XML"
+          "-r TESTRUNID TESTID ...")
 
 
 def append_path():
@@ -273,7 +273,7 @@ class Main(object):
             print("testid is %s" % testid)
             log_xml_parser.remove_test_xml(testrunid, testid)
             os.remove("log/%s/libvirt_test%s" % (testrunid, testid))
-            print("Item testid %s in testrunid %s deleted successfully" % \
+            print("Item testid %s in testrunid %s deleted successfully" %
                   (testid, testrunid))
 
         # delete all of records in a log xmlfile
@@ -313,6 +313,7 @@ class Main(object):
             activities_list.append(activities)
 
         self.run(activities_list)
+
 
 if __name__ == "__main__":
 

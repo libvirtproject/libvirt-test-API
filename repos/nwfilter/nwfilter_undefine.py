@@ -26,7 +26,7 @@ def nwfilter_undefine(params):
 
         # Check if the nwfilter lookup by name/uuid/uuidstr is the same one
         if (operator.eq(nwfilter.name(), nwfilter_uuidstr.name()) and
-            operator.eq(nwfilter_uuidstr.name(), nwfilter_uuid.name())):
+                operator.eq(nwfilter_uuidstr.name(), nwfilter_uuid.name())):
             # Undefine the nwfilter
             nwfilter.undefine()
             # Check if the nwfiler list includes the undefined nwfilter

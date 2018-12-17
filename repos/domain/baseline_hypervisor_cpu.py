@@ -20,7 +20,7 @@ def get_host_cpu(conn):
 
 
 def get_cpu_feature_set(cpu_xml):
-    curret_set = re.findall('\s*<feature.*? name=["\'](\S+?)["\']', cpu_xml)
+    curret_set = re.findall(r'\s*<feature.*? name=["\'](\S+?)["\']', cpu_xml)
     return set(curret_set)
 
 

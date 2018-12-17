@@ -10,11 +10,9 @@
 
 import os
 import sys
-import getopt
 import re
 import shutil
 import subprocess
-import commands
 
 
 def append_path(path):
@@ -23,6 +21,7 @@ def append_path(path):
         pass
     else:
         sys.path.append(path)
+
 
 pwd = os.getcwd()
 result = re.search('(.*)libvirt-test-API', pwd)

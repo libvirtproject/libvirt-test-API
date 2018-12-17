@@ -129,8 +129,8 @@ def check_block_data(blockdev, blkdata, logger):
                 default which is the same value for allocation and physical.
                 """
                 logger.info("The allocation and physical values are different.")
-                logger.info("Expect a number near %d, got: %d"
-                             % (alloc_size, blkdata[1]))
+                logger.info("Expect a number near %d, got: %d" %
+                            (alloc_size, blkdata[1]))
         elif block_size_b == blkdata[1] and int(block_size_b) == blkdata[2]:
             logger.info("Allocation and Physical value's checking succeeded")
         else:

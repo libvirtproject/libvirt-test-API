@@ -10,7 +10,7 @@ from src import sharedmod
 from utils import utils
 
 required_params = ()
-optional_params = {'guestname': '',}
+optional_params = {'guestname': ''}
 
 VIRSH_LIST = "virsh list --all"
 RESTART_CMD = "service libvirtd restart"

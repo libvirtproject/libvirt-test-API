@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import time
 import functools
 
 from libvirt import libvirtError

@@ -38,7 +38,7 @@ def nfs_setup(root_squash, logger):
         logger.error("wrong root_squash value")
         return 1
 
-    cmd = "echo /tmp *\(rw,%s\) >> /etc/exports" % option
+    cmd = "echo '/tmp *(rw,%s)' >> /etc/exports" % option
     ret, out = utils.exec_cmd(cmd, shell=True)
     if ret:
         logger.error("failed to config nfs export")

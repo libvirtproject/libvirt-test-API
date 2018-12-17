@@ -20,9 +20,7 @@ def gen_hostcpu_online_map():
     online = output.split('\n')
 
     online_num = len(online)
-    online_map = list(map(lambda cpu_num:
-                      True if str(cpu_num) in online else False,
-                      range(total)))
+    online_map = list(map(lambda cpu_num: True if str(cpu_num) in online else False, range(total)))
     return (total, online_map, online_num)
 
 

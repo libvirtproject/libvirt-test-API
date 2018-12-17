@@ -40,7 +40,7 @@ def nfs_setup(logger):
     """setup nfs on localhost
     """
     logger.info("set nfs service")
-    cmd = "echo /tmp *\(rw,root_squash\) >> /etc/exports"
+    cmd = "echo '/tmp *(rw,root_squash)' >> /etc/exports"
     ret, out = utils.exec_cmd(cmd, shell=True)
     if ret:
         logger.error("failed to config nfs export")

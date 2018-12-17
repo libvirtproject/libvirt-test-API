@@ -65,9 +65,8 @@ def ssh_tunnel(hostname, username, password, logger):
     user_host = "%s@%s" % (username, hostname)
     child = pexpect.spawn(SSH_COPY_ID, [user_host])
     while True:
-        index = child.expect(['yes\/no', 'password: ',
-                             pexpect.EOF,
-                             pexpect.TIMEOUT])
+        ssh_str = [r'yes\/no', 'password: ', pexpect.EOF, pexpect.TIMEOUT]
+        index = child.expect(ssh_str)
         if index == 0:
             child.sendline("yes")
         elif index == 1:

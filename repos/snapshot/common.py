@@ -13,7 +13,7 @@ def check_domain_image(domobj, guestname, format_required, logger):
         qemu_img_format = "qemu-img info %s |grep format |awk -F': ' '{print $2}'"
 
     (status, output) = exec_cmd(qemu_img_format % disk_path,
-                                      shell=True)
+                                shell=True)
     if status:
         logger.error('Executing "' + qemu_img_format % guestname + '" failed"')
         logger.error(output)

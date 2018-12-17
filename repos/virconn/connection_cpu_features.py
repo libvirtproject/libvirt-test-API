@@ -38,7 +38,7 @@ def get_host_cpu(conn):
 
 
 def get_cpu_feature_set(cpu_xml):
-    curret_set = re.findall('\s*<feature.*? name=["\'](\S+?)["\']', cpu_xml)
+    curret_set = re.findall(r'\s*<feature.*? name=["\'](\S+?)["\']', cpu_xml)
     return set(curret_set)
 
 
@@ -95,7 +95,7 @@ def baseline_test(conn, host_cpu, logger):
     expand_baseline_features = get_cpu_feature_set(expand_baseline)
 
     if (expand_baseline_features > set(ALL_FEATURES) or
-        expand_baseline_features < get_cpu_feature_set(host_cpu)):
+            expand_baseline_features < get_cpu_feature_set(host_cpu)):
         logger.error("Generate expand cpu failed")
         logger.error("Got: " + str(expand_baseline_features))
         logger.error("Host cpu: " + str(get_cpu_feature_set(host_cpu)))

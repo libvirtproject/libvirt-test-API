@@ -113,7 +113,7 @@ def pin_iothread(params):
 
         if utils.isPower():
             # retrieve cpu total amount
-            cmd = "lscpu | grep ^CPU\(s\) | awk '{print $2}'"
+            cmd = r"lscpu | grep ^CPU\(s\) | awk '{print $2}'"
             (status, output) = utils.exec_cmd(cmd, shell=True)
             if status != 0:
                 logger.info("Exec_cmd failed: %s" % cmd)

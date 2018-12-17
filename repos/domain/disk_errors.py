@@ -9,7 +9,7 @@ from src import sharedmod
 from repos.domain import domain_common
 
 required_params = ('guestname', 'xml')
-optional_params = {'diskpath': '/var/lib/libvirt/images/libvirt-test-api',}
+optional_params = {'diskpath': '/var/lib/libvirt/images/libvirt-test-api'}
 
 
 def disk_errors(params):

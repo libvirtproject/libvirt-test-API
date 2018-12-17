@@ -11,7 +11,7 @@ from utils.utils import version_compare
 from utils import utils
 
 required_params = ('guestname', 'alias_type', 'user_alias')
-optional_params = {'xml': 'xmls/detach_device_alias.xml',}
+optional_params = {'xml': 'xmls/detach_device_alias.xml'}
 
 
 def check_result(dom, alias_type, user_alias_str, logger):

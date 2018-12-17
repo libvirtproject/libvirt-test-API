@@ -101,4 +101,3 @@ def get_vf_driver(vf_addr, logger):
         logger.error("cmd result: %s" % ret.stdout)
         return 1
     return os.path.basename(ret.stdout)
-

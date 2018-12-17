@@ -17,8 +17,8 @@ try:
 except ImportError:
     import _thread as thread
 
-required_params = ('guestname', 'flags',)
-optional_params = {'dxml': 'alter',}
+required_params = ('guestname', 'flags')
+optional_params = {'dxml': 'alter'}
 
 SAVE_PATH = "/tmp/%s.save"
 
@@ -63,7 +63,7 @@ def save_flags(params):
 
     save_path = SAVE_PATH % guestname
     if os.path.exists(save_path):
-       os.remove(save_path)
+        os.remove(save_path)
 
     #If given flags include bypass-cache,check if bypass file system cache
     if flags % 2 == 1:

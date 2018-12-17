@@ -6,7 +6,6 @@ import time
 import libvirt
 from libvirt import libvirtError
 from repos.domain import domain_common
-from utils import process
 
 required_params = ('target_machine',
                    'username',

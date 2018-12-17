@@ -167,7 +167,7 @@ def prepare_win_unattended(guestname, guestos, guestarch, envparser, hddriver, l
         else:
             drivernet = "A:\\"
             if guestos == "win8u1":
-                driverpath = "A:\\" + win_arch + "\Win8.1"
+                driverpath = "A:\\" + win_arch + r"\Win8.1"
             else:
                 driverpath = "A:\\" + win_arch + "\\" + guestos[0].upper() + guestos[1:]
 

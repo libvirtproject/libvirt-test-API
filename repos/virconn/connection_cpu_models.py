@@ -13,6 +13,7 @@ optional_params = {}
 CPU_MAP_FILE = "/usr/share/libvirt/cpu_map.xml"
 CPU_MAP_DIR = "/usr/share/libvirt/cpu_map"
 
+
 def get_cpu_archs_list(filename, logger):
     """
        return supported cpu archs

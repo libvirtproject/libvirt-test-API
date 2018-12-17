@@ -43,8 +43,10 @@ def check_file(domobj, logger, username, password, ip):
         return 1
     return 0
 
+
 # For test
 import aexpect
+
 
 def login_guest(guestname, username, password, logger):
     cmd = "virsh console %s --force" % guestname
@@ -75,7 +77,7 @@ def login_guest(guestname, username, password, logger):
                          % detail)
         log = session.get_output()
         logger.error("failed login guest: %s" % log)
-        session.close()  
+        session.close()
 # end test
 
 

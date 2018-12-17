@@ -1,7 +1,6 @@
 """
 NFS server set up and mount.
 """
-import re
 import os
 import shutil
 
@@ -9,7 +8,7 @@ from utils import process
 from . import utils
 
 
-def local_nfs_exported(nfs_path):
+def local_nfs_exported(nfs_path, logger):
     cmd = "exportfs -o rw,no_root_squash *:%s" % nfs_path
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
@@ -17,7 +16,8 @@ def local_nfs_exported(nfs_path):
         return False
     return True
 
-def local_nfs_exported_clean(nfs_path):
+
+def local_nfs_exported_clean(nfs_path, logger):
     cmd = "exportfs -u *:%s" % nfs_path
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
@@ -87,7 +87,7 @@ def local_nfs_setup(nfs_path, mount_path, logger):
     if os.path.exists(mount_path) and not os.path.isdir(mount_path):
         logger.error("%s is not a directory." % mount_path)
         return False
-    local_nfs_exported(nfs_path)
+    local_nfs_exported(nfs_path, logger)
     local_mount("127.0.0.1:" + nfs_path, mount_path, logger)
     return True
 
@@ -95,7 +95,7 @@ def local_nfs_setup(nfs_path, mount_path, logger):
 def local_nfs_clean(nfs_path, mount_path, logger):
     local_umount(mount_path, logger)
     if os.path.exists(nfs_path):
-        local_nfs_exported_clean(nfs_path)
+        local_nfs_exported_clean(nfs_path, logger)
         shutil.rmtree(nfs_path)
     local_restart_service(logger)
     return True

@@ -52,7 +52,7 @@ def create(params):
         logger.error("interface %s is running" % ifacename)
         logger.debug("interface %s ip address: %s" % (ifacename, hostip))
         return 1
-    except:
+    except Exception as err:
         logger.info("interface %s is deactive" % ifacename)
 
     conn = sharedmod.libvirtobj['conn']

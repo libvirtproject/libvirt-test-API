@@ -34,7 +34,7 @@ def check_pool_create_OS(poolobj, logger):
     src_path = out["source"]["device"]["attr"]["path"]
     dest_path = out["target"]["path"]
     logger.info("src path: %s tgt path: %s" % (src_path, dest_path))
-    pat = src_path + "\s+" + dest_path
+    pat = src_path + r"\s+" + dest_path
     found = 0
     fd = open("/proc/mounts", "r")
     for line in fd:

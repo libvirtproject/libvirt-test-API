@@ -6,7 +6,7 @@ from libvirt import libvirtError
 from src import sharedmod
 
 required_params = ('guestname', )
-optional_params = {'page_offset':''}
+optional_params = {'page_offset': ''}
 
 
 def memory_peek(params):

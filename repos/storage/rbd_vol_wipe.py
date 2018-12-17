@@ -5,8 +5,8 @@ from src import sharedmod
 from libvirt import libvirtError
 from utils import utils, process
 
-required_params = ('guestname', 'cephserver', 'cephpool', 'poolname', 'volname', 'alg',)
-optional_params = {'xml': 'xmls/rbd_disk.xml',}
+required_params = ('guestname', 'cephserver', 'cephpool', 'poolname', 'volname', 'alg')
+optional_params = {'xml': 'xmls/rbd_disk.xml'}
 
 
 def write_img(ip, logger):

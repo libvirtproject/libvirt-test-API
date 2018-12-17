@@ -22,7 +22,7 @@ optional_params = {}
 
 
 def get_blkio_path(guestname, logger):
-    logger.info("Check " + BLKIO_PATH1 %  guestname)
+    logger.info("Check " + BLKIO_PATH1 % guestname)
     if os.path.exists(BLKIO_PATH1 % guestname):
         return BLKIO_PATH1 % guestname
     elif os.path.exists(BLKIO_PATH2 % guestname):

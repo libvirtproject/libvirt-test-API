@@ -37,14 +37,14 @@ def parse_page_list(pagesize):
     if pagesize is None:
         return None
 
-    l = list()
+    page_list = list()
     for ps in pagesize.split(','):
         ps = ps.strip().upper()
         val = parse_unit(ps)
         if val is None:
             return None
-        l.append(val)
-    return l
+        page_list.append(val)
+    return page_list
 
 
 def check_free_pages(page_list, cell_id, free_page, logger):

@@ -31,7 +31,7 @@ def pool_event_any(params):
 
     tmp_event_type = params['event_type']
     if (tmp_event_type == "VIR_STORAGE_POOL_EVENT_CREATED" or
-        tmp_event_type == "VIR_STORAGE_POOL_EVENT_DELETED"):
+            tmp_event_type == "VIR_STORAGE_POOL_EVENT_DELETED"):
         logger.info("tmp_event_type: %s" % tmp_event_type)
         if not version_compare("libvirt-python", 3, 8, 0, logger):
             logger.info("Current libvirt-python don't support %s" % tmp_event_type)

@@ -46,9 +46,7 @@ def snapshot_child(params):
 
     conn = sharedmod.libvirtobj['conn']
 
-
     (flaglist, flagn) = convert_flags(flags, FLAGDICT, logger)
-
     logger.info("Flag list %s " % flaglist)
     logger.info("bitwise OR value of flags is %s" % flagn)
 

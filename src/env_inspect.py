@@ -123,7 +123,7 @@ class EnvInspect(object):
             try:
                 conn.close()
                 conn = None
-            except:
+            except Exception as err:
                 pass
 
         sharedmod.libvirtobj.clear()

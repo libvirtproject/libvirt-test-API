@@ -157,7 +157,7 @@ class CaseFileParser(object):
                     self.missing_variables.append(varname)
                 except exception.SectionDoesNotExist as e:
                     self.missing_variables.append(varname)
-                except:
+                except Exception as e:
                     self.missing_variables.append(varname)
             else:
                 res.append(val)
@@ -465,6 +465,7 @@ class CaseFileParser(object):
                 else:
                     raise exception.CaseConfigfileError("option indentation error!")
         return list
+
 
 if __name__ == "__main__":
 

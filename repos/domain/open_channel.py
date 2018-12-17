@@ -30,16 +30,16 @@ def open_channel(params):
             logger.info("Channel is readable")
             try:
                 received_data = stream.recv(1024)
-            except:
-                logger.error("Error reading from stream!")
+            except libvirtError as e:
+                logger.error("Stream recv error: %s" % str(e))
                 return
             counter['read'] = counter['read'] + 1
         elif events == libvirt.VIR_EVENT_HANDLE_WRITABLE:
             logger.info("Channel is writable")
             try:
                 stream.send("\r")
-            except:
-                logger.error("Error reading from stream!")
+            except libvirtError as e:
+                logger.error("Stream send error: %s" % str(e))
                 return
             counter['write'] = counter['write'] + 1
 

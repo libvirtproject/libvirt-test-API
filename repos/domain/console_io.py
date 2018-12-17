@@ -122,7 +122,7 @@ def console_io(params):
         logger.info("Closing hypervisor connection")
         try:
             stream.abort()
-        except:
+        except libvirtError as e:
             pass
 
         logger.info("Done")

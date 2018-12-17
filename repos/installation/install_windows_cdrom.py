@@ -219,7 +219,7 @@ def install_windows_cdrom(params):
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
 
-    if guestos == "win10": 
+    if guestos == "win10":
         xmlstr = params.get('xml', 'xmls/kvm_win10_guest_install_cdrom.xml')
     else:
         xmlstr = params.get('xml')

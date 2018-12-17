@@ -49,7 +49,7 @@ def destroy(params):
         hostip = utils.get_ip_address(ifacename)
         logger.info("interface %s is active" % ifacename)
         logger.debug("interface %s ip address: %s" % (ifacename, hostip))
-    except:
+    except Exception as err:
         logger.error("interface %s is deactive" % ifacename)
         return 1
 

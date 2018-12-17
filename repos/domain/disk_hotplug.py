@@ -272,6 +272,7 @@ def disk_hotplug(params):
     else:
         return 0
 
+
 def disk_hotplug_clean(params):
     """
     Cleanup the test environment.
@@ -288,4 +289,3 @@ def disk_hotplug_clean(params):
         start(params)
 
     return 0
-

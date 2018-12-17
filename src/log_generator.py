@@ -279,7 +279,7 @@ class LogGenerator(object):
     def merge_xmlfiles(self, logxml_two):
         """ merge two xmlfiles into one """
         xmldoc_one = self.get_xmldoc()
-        file=codecs.open(logxml_two, "r", "unicode-escape")
+        file = codecs.open(logxml_two, "r", "unicode-escape")
         xmldoc_two = minidom.parse(file)
         file.close()
         testrunlist_two = xmldoc_two.getElementsByTagName('testrun')
@@ -295,4 +295,3 @@ class LogGenerator(object):
         """ save changes into log xml file """
         with codecs.open(logxml, "w", "unicode-escape") as file:
             xmldoc.writexml(file)
-

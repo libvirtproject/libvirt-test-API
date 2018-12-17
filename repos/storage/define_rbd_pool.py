@@ -6,7 +6,7 @@ from src import sharedmod
 from repos.storage import storage_common
 
 required_params = ('poolname', 'cephserver', 'cephpool')
-optional_params = {'xml': 'xmls/rbd_pool.xml',}
+optional_params = {'xml': 'xmls/rbd_pool.xml'}
 
 
 def define_rbd_pool(params):

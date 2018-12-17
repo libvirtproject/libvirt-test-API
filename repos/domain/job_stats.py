@@ -9,7 +9,7 @@ import functools
 from libvirt import libvirtError
 from src import sharedmod
 from utils.utils import parse_flags, version_compare
-from utils import utils, process
+from utils import utils
 from repos.domain import domain_common
 
 required_params = ('guestname',)
@@ -22,6 +22,7 @@ optional_params = {'vm_state': None,
 
 DUMP_PATH = "/tmp/test-api-job-stats.dump"
 SAVE_PATH = "/tmp/test-api-job-stats.save"
+
 
 def domain_dump(dom, logger):
     if os.path.exists(DUMP_PATH):
@@ -80,7 +81,7 @@ def domain_migrate(dom, target, username, passwd, logger):
     logger.info("start to migrate.")
     try:
         dstconn = libvirt.open(dsturi)
-        dom.migrate(dstconn, libvirt.VIR_MIGRATE_LIVE|libvirt.VIR_MIGRATE_UNSAFE, None, None, 0)
+        dom.migrate(dstconn, libvirt.VIR_MIGRATE_LIVE | libvirt.VIR_MIGRATE_UNSAFE, None, None, 0)
     except libvirtError as e:
         logger.error("info: %s, code: %s" % (e.get_error_message(), e.get_error_code()))
         return 1

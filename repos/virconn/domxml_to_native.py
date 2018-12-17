@@ -43,7 +43,7 @@ def check_domxml_to_native(nativeconfig, guestname):
     temp = nativeconLog[:]
     skipped_item = ['netdev', 'object', 'chardev']
     for item in temp:
-        if any([ i for i in skipped_item if i in item ]):
+        if any([i for i in skipped_item if i in item]):
             nativeconLog.remove(item)
 
         if "vnc" in item:
@@ -58,7 +58,7 @@ def check_domxml_to_native(nativeconfig, guestname):
     #convert native config from API
     temp = nativeconfig[:]
     for item in temp:
-        if any([ i for i in skipped_item if i in item ]):
+        if any([i for i in skipped_item if i in item]):
             nativeconfig.remove(item)
 
         if "vnc" in item:

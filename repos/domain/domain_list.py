@@ -15,6 +15,7 @@ AUTOSTART_DIR = '/etc/libvirt/qemu/autostart'
 RUNNING_DIR = '/var/run/libvirt/qemu'
 SAVE_DIR = '/var/lib/libvirt/qemu/save'
 SNAPSHOT_DIR = '/var/lib/libvirt/qemu/snapshot/'
+
 flag_list = {"default": 0,
              "active": libvirt.VIR_CONNECT_LIST_DOMAINS_ACTIVE,
              "persistent": libvirt.VIR_CONNECT_LIST_DOMAINS_PERSISTENT,
@@ -33,7 +34,7 @@ def get_dir_entires(domain_dir, end_string):
     end_length = len(end_string)
     try:
         dir_entries = os.listdir(domain_dir)
-    except:
+    except OSError as err:
         dir_entries = []
 
     if dir_entries == []:

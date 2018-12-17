@@ -81,7 +81,7 @@ def block_peek_clean(params):
     logger = params['logger']
     guestname = params['guestname']
     conn = libvirt.open()
-    cmd = "ps aux | awk '/\/usr\/libexec\/qemu-kvm -name guest=%s/{print $2}'" % guestname
+    cmd = "cat /var/run/libvirt/qemu/%s.pid" % guestname
     ret, out = utils.exec_cmd(cmd, shell=True)
     if ret:
         logger.error("cmd failed: %s" % cmd)
@@ -96,4 +96,3 @@ def block_peek_clean(params):
             break
     logger.info("Kill guest successful.")
     domain_common.guest_clean(conn, guestname, logger)
-

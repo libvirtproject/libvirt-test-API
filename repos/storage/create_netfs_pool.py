@@ -42,7 +42,7 @@ def check_pool_create_OS(conn, poolname, logger):
                 (src_host, src_path, dest_path))
     fd = open("/proc/mounts", "r")
     mount = src_host + ":" + src_path
-    pat = mount + "/*\s+" + dest_path
+    pat = mount + r"/*\s+" + dest_path
     found = 0
     for line in fd:
         if re.match(pat, line):

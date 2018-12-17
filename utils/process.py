@@ -16,18 +16,13 @@
 Functions dedicated to find and run external commands.
 """
 
-import errno
-import fnmatch
 import logging
 import os
-import re
 import select
 import shlex
-import shutil
 import signal
-import stat
-import threading
 import time
+import threading
 
 try:
     import subprocess32 as subprocess
@@ -574,8 +569,8 @@ def run(cmd, timeout=None, verbose=True, ignore_status=False,
     """
     #klass = get_sub_process_klass(cmd)
     sp = SubProcess(cmd=cmd, verbose=verbose,
-               allow_output_check=allow_output_check, shell=shell, env=env,
-               sudo=sudo, ignore_bg_processes=ignore_bg_processes)
+                    allow_output_check=allow_output_check, shell=shell,
+                    env=env, sudo=sudo, ignore_bg_processes=ignore_bg_processes)
     cmd_result = sp.run(timeout=timeout)
     fail_condition = cmd_result.exit_status != 0 or cmd_result.interrupted
     if fail_condition and not ignore_status:

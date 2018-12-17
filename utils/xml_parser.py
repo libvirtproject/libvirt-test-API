@@ -93,7 +93,7 @@ class xml_parser(object):
                     value = thenode.childNodes[0].data
                     if value.strip() == '':
                         value = None
-                except:
+                except Exception as err:
                     value = None
                 newdict = {key: value}
                 attrdic = None
@@ -150,7 +150,7 @@ class xml_parser(object):
             value = thenode.childNodes[0].data
             if value.strip() == '':
                 value = None
-        except:
+        except Exception as err:
             value = None
         newval = {newvalkey: value}
         attrdic = None

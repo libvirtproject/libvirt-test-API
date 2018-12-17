@@ -2,9 +2,9 @@
 # To test blockJobSetSpeed()
 
 import libvirt
-from libvirt import libvirtError
 
-from utils.utils import parse_flags, del_file, get_xml_value
+from libvirt import libvirtError
+from utils import utils
 
 IMG = '/var/lib/libvirt/images/test-api-blockjobsetspeed'
 
@@ -18,12 +18,12 @@ def block_job_set_speed(params):
     logger = params['logger']
     guestname = params['guestname']
     bandwidth = params['bandwidth']
-    flags = parse_flags(params, param_name='flags')
+    flags = utils.parse_flags(params, param_name='flags')
     logger.info("blockJobSetSpeed flags : %s" % flags)
 
     conn = libvirt.open()
     domobj = conn.lookupByName(guestname)
-    path = get_xml_value(domobj, "/domain/devices/disk/target/@dev")
+    path = utils.get_xml_value(domobj, "/domain/devices/disk/target/@dev")
 
     blockcopy_xml = "<disk><source file='%s'/></disk>" % IMG
     logger.info("blockcopy xml: %s" % blockcopy_xml)
@@ -35,7 +35,7 @@ def block_job_set_speed(params):
         logger.info("blockJobInfo: %s." % new_info)
         domobj.blockJobAbort(path[0])
 
-        if not del_file(IMG, logger):
+        if not utils.del_file(IMG, logger):
             return 1
 
         if flags == libvirt.VIR_DOMAIN_BLOCK_JOB_SPEED_BANDWIDTH_BYTES:

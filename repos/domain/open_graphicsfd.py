@@ -41,7 +41,7 @@ def check_graphicsfd(fd):
     try:
         f = os.fdopen(fd)
         f.close()
-    except:
+    except OSError as err:
         return False
     return True
 

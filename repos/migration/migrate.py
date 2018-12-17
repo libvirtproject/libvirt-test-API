@@ -224,9 +224,9 @@ def migrate(params):
             return 1
 
     try:
-        ## Add for test
+        # Add for test
         logger.info("xml for migration: %s\n\n" % srcdom.XMLDesc(libvirt.VIR_DOMAIN_XML_MIGRATABLE))
-        ## End for test
+        # End for test
         if(migflags & libvirt.VIR_MIGRATE_PEER2PEER):
             if domxml is None:
                 logger.info("use migrateToURI() to migrate")

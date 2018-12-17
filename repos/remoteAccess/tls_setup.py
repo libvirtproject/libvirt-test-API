@@ -77,7 +77,7 @@ def CA_setting_up(target_hostname, logger):
     return 0
 
 
-def tls_server_cert(target_machine, target_hostname,logger):
+def tls_server_cert(target_machine, target_hostname, logger):
     """ generating server certificates """
     # Create tls server key
     logger.info("generate server certificates")

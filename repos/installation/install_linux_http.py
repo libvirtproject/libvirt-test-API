@@ -45,7 +45,7 @@ def install_linux_http(params):
     rhelnewest = params.get('rhelnewest')
 
     options = [guestname, guestos, guestarch, nicdriver, hddriver,
-              imageformat, graphic, video, diskpath, seeksize, "local"]
+               imageformat, graphic, video, diskpath, seeksize, "local"]
     install_common.prepare_env(options, logger)
 
     logger.info("rhelnewest: %s" % rhelnewest)

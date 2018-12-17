@@ -15,7 +15,7 @@ def shutdown_request(params):
     flags = params['flags']
 
     if "host" in flags:
-        cmd = "ps aux | awk '/\/usr\/libexec\/qemu-kvm -name guest=%s/{print $2}'" % guestname
+        cmd = "cat /var/run/libvirt/qemu/%s.pid" % guestname
         ret, out = utils.exec_cmd(cmd, shell=True)
         if ret:
             logger.error("cmd failed: %s" % cmd)
