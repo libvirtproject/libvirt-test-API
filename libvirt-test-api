@@ -54,7 +54,7 @@ def usage():
           "\n         libvirt-test-api -d TEST.XML TESTRUNID"
           "\n         libvirt-test-api -d TEST.XML all"
           "\n         libvirt-test-api -f TEST.XML"
-          "-r TESTRUNID TESTID ...")
+          "\n         libvirt-test-api -r TESTRUNID TESTID ...")
 
 
 def append_path():
@@ -83,8 +83,7 @@ class Main(object):
         # if it's a new test, parsing the case configuration file to generate
         # a list of activities and options for the test instance.
         if activities_options_list is None:
-            activities_options_list = \
-                parser.CaseFileParser(self.casefile).get_list()
+            activities_options_list = parser.CaseFileParser(self.casefile).get_list()
 
         if "options" in activities_options_list[-1][0]:
             activities_list = activities_options_list[:-1]
@@ -96,7 +95,7 @@ class Main(object):
         # generate testrunid from time point runing a testrun
         testrunid = time.strftime("%Y%m%d%H%M%S")
         while os.path.exists('log/%s' % testrunid):
-                testrunid = str(int(testrunid) + 1)
+            testrunid = str(int(testrunid) + 1)
         os.makedirs('log/%s' % testrunid)
 
         log_xml_parser = LogGenerator(self.logxml)
@@ -242,9 +241,9 @@ class Main(object):
         proxy_obj = proxy.Proxy(modcasename)
         case_params = proxy_obj.get_params_variables()
 
-        string = "# the file is generated automatically, please\n" \
-                 "# make some modifications before the use of it\n" \
-                 "# params in [] are optional to its testcase\n"
+        string = ("# the file is generated automatically, please\n"
+                  "# make some modifications before the use of it\n"
+                  "# params in [] are optional to its testcase\n")
         for key in modcasename:
             string += "%s\n" % key
             required_params, optional_params = case_params[key]
