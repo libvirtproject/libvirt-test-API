@@ -13,7 +13,7 @@ from six.moves import urllib
 
 required_params = ('guestname', 'guestos', 'guestarch')
 optional_params = {
-                   'memory': 2097152,
+                   'memory': 4194304,
                    'vcpu': 2,
                    'disksize': 14,
                    'imageformat': 'qcow2',

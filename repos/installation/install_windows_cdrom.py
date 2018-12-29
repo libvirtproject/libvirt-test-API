@@ -23,7 +23,7 @@ FLOOPY_IMG = "/tmp/floppy.img"
 HOME_PATH = os.getcwd()
 
 required_params = ('guestname', 'guestos', 'guestarch',)
-optional_params = {'memory': 2097152,
+optional_params = {'memory': 4194304,
                    'vcpu': 2,
                    'disksize': 14,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
