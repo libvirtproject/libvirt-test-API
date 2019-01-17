@@ -9,7 +9,10 @@ from . import utils
 
 
 def local_nfs_exported(nfs_path, logger):
-    cmd = "exportfs -o rw,fsid=0,no_root_squash *:%s" % nfs_path
+    if utils.isRelease('7', logger):
+        cmd = "exportfs -o rw,no_root_squash *:%s" % nfs_path
+    else:
+        cmd = "exportfs -o rw,fsid=0,no_root_squash *:%s" % nfs_path
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
         logger.error("%s failed: %s." % (cmd, ret.stdout))
