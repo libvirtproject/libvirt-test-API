@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import operator
+import re
 
 from libvirt import libvirtError
 from src import sharedmod
@@ -20,17 +21,28 @@ def check_domxml_to_native(nativeconfig, guestname):
        /var/log/libvirt/qemu/$vm.log, and remove vnc
        port and netdev part before compare.
     """
-    (status, output) = utils.exec_cmd(GET_NATIVE_CONFIG %
-                                      (GREP_STR, guestname), shell=True)
-    if status:
-        logger.error("Fail to get native config of domain %s" % guestname)
-        return 1
-    nativeconLog = output[0]
+    if utils.isRelease('7', logger):
+        (status, output) = utils.exec_cmd(GET_NATIVE_CONFIG %
+                                          (GREP_STR, guestname), shell=True)
+        if status:
+            logger.error("Fail to get native config of domain %s" % guestname)
+            return 1
+        nativeconLog = output[0]
+    else:
+        cmd = "cat /var/run/libvirt/qemu/%s.pid" % guestname
+        ret, guest_pid = utils.exec_cmd(cmd, shell=True)
+        cmd = "cat -v /proc/%s/cmdline" % guest_pid[0]
+        ret, guest_cmdline = utils.exec_cmd(cmd, shell=True)
+        nativeconLog = re.sub(r'\^@', ' ', guest_cmdline[0]).strip(' ')
+        tmp = (re.search(r'LC_ALL.[^\s]\s', nativeconfig).group(0) +
+               re.search(r'PATH.[^\s]+\s', nativeconfig).group(0) +
+               re.search(r'QEMU_AUDIO_DRV.[^\s]+\s', nativeconfig).group(0))
+        nativeconLog = tmp + nativeconLog
 
     nativeconLog = nativeconLog.split(SPLIT_STR)
     nativeconfig = nativeconfig.split(SPLIT_STR)
 
-    # Revmoe the netdev part because mac is always be zero,
+    # Remove the netdev part because mac is always be zero,
     #
     # Remove vnc port because the port will change if there are
     # other vnc guests on the host, and this is not a problem for
