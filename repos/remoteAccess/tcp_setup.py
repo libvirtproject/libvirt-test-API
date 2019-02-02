@@ -156,7 +156,8 @@ def tcp_setup(params):
     listen_tcp = params['listen_tcp']
     auth_tcp = params['auth_tcp']
 
-    uri = "qemu+tcp://%s/system" % target_machine
+    target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
+    uri = "qemu+tcp://%s/system" % target_hostname
 
     logger.info("the hostname of server is %s" % target_machine)
     logger.info("the value of listen_tcp is %s" % listen_tcp)

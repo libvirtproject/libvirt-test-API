@@ -426,12 +426,11 @@ def tls_setup(params):
 
         os.mkdir(pkipath)
 
-    uri = "qemu://%s/system" % target_machine
-    if pkipath:
-        uri += "?pkipath=%s" % pkipath
-
     local_machine = utils.get_local_hostname()
     target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
+    uri = "qemu://%s/system" % target_hostname
+    if pkipath:
+        uri += "?pkipath=%s" % pkipath
 
     logger.info("server's ip: %s" % target_machine)
     logger.info("server's hostname: %s" % target_hostname)

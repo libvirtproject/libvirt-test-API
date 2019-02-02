@@ -197,7 +197,8 @@ def migrate(params):
     domain_common.config_ssh(target_machine, username, password, logger)
     check_virtlogd(target_machine, username, password, logger)
 
-    dsturi = "qemu+%s://%s/system" % (transport, target_machine)
+    target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
+    dsturi = "qemu+%s://%s/system" % (transport, target_hostname)
 
     # Connect to local hypervisor connection URI
     srcconn = sharedmod.libvirtobj['conn']
