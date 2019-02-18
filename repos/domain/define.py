@@ -113,12 +113,13 @@ def define(params):
         uri = conn.getURI()
     else:
         domain_common.config_ssh(target_machine, username, password, logger)
+        target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
         if transport == 'ssh':
-            uri = 'qemu+ssh://root@%s/system' % target_machine
+            uri = 'qemu+ssh://root@%s/system' % target_hostname
         elif transport == 'tls':
-            uri = 'qemu://%s/system' % target_machine
+            uri = 'qemu://%s/system' % target_hostname
         elif transport == 'tcp':
-            uri = 'qemu+tcp://%s/system' % target_machine
+            uri = 'qemu+tcp://%s/system' % target_hostname
         else:
             uri = 'qemu:///system'
 
