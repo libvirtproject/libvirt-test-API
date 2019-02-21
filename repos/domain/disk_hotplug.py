@@ -77,6 +77,7 @@ def detach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
         else:
             try:
                 domobj.detachDeviceFlags(xmlstr, int(flags))
+                time.sleep(3)
                 config_check = check_persistent(guestname, target)
                 if not config_check:
                     logger.info("detach disk from guest succeed")
@@ -91,6 +92,7 @@ def detach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
     elif state == libvirt.VIR_DOMAIN_RUNNING:
         try:
             domobj.detachDeviceFlags(xmlstr, int(flags))
+            time.sleep(3)
         except libvirtError as e:
             logger.error("libvirt call failed: " + str(e))
             return 1
@@ -153,6 +155,7 @@ def attach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
         else:
             try:
                 domobj.attachDeviceFlags(xmlstr, int(flags))
+                time.sleep(3)
                 disk_num2 = utils.dev_num(guestname, "disk")
                 ret = check_disk(disk_num1, disk_num2)
 
@@ -169,6 +172,7 @@ def attach_disk(domobj, guestname, state, xmlstr, flags, target, disk_num1,
     elif state == libvirt.VIR_DOMAIN_RUNNING:
         try:
             domobj.attachDeviceFlags(xmlstr, int(flags))
+            time.sleep(3)
         except libvirtError as e:
             logger.error("libvirt call failed: " + str(e))
             return 1
