@@ -9,14 +9,16 @@ from src import sharedmod
 from utils import utils
 
 required_params = ()
-optional_params = {'stats': '', 'flags': '', 'doms': ''}
+optional_params = {'stats': '', 'flags': '', 'doms': '', 'iothread_id': ''}
 
 ds = {"state": libvirt.VIR_DOMAIN_STATS_STATE,
       "cpu": libvirt.VIR_DOMAIN_STATS_CPU_TOTAL,
       "balloon": libvirt.VIR_DOMAIN_STATS_BALLOON,
       "vcpu": libvirt.VIR_DOMAIN_STATS_VCPU,
       "interface": libvirt.VIR_DOMAIN_STATS_INTERFACE,
-      "block": libvirt.VIR_DOMAIN_STATS_BLOCK}
+      "block": libvirt.VIR_DOMAIN_STATS_BLOCK,
+      "perf": libvirt.VIR_DOMAIN_STATS_PERF,
+      "iothread": libvirt.VIR_DOMAIN_STATS_IOTHREAD}
 
 fg = {"active": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_ACTIVE,
       "inactive": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_INACTIVE,
@@ -384,6 +386,32 @@ def check_each_block(logger, dom_name, dom_eles, backing_f):
     return True
 
 
+def check_perf(logger, dom_name, dom_active, dom_eles):
+    # TODO: add check for perf
+    logger.info("check perf")
+    return True
+
+
+def check_iothread(logger, dom_name, dom_active, dom_eles, iothread_id):
+    # check for iothread values
+    # default values:
+    #   poll-max-ns: 32768
+    #   poll-grow: 0
+    #   poll-shrink: 0
+    logger.info("check iothread values")
+    if dom_eles['iothread.%s.poll-max-ns' % iothread_id] != 32768:
+        logger.error("check iothread.%s.poll-max-ns failed." % iothread_id)
+        return False
+    if dom_eles['iothread.%s.poll-grow' % iothread_id] != 0:
+        logger.error("check iothread.%s.poll-grow failed." % iothread_id)
+        return False
+    if dom_eles['iothread.%s.poll-shrink' % iothread_id] != 0:
+        logger.error("check iothread.%s.poll-shrink failed." % iothread_id)
+        return False
+
+    return True
+
+
 def connection_getAllDomainStats(params):
     """
        test API for getAllDomainStats in class virConnect, the script need
@@ -410,6 +438,8 @@ def connection_getAllDomainStats(params):
     block_f = False
     backing_f = False
     filter_f = True
+    perf_f = False
+    iothread_f = False
 
     logger = params['logger']
     domstats = params.get('stats', "all")
@@ -433,6 +463,17 @@ def connection_getAllDomainStats(params):
         elif domstat == 'block':
             domstats |= ds.get('block')
             block_f = True
+        elif domstat == 'perf':
+            domstats |= ds.get('perf')
+            perf_f = True
+        elif domstat == 'iothread':
+            if not utils.version_compare('libvirt-python', 5, 0, 0, logger):
+                logger.info("Current libvirt-python don't support VIR_DOMAIN_STATS_IOTHREAD.")
+                return 0
+            else:
+                domstats |= ds.get('iothread')
+                iothread_f = True
+                iothread_id = params.get("iothread_id")
         elif domstat == "all":
             domstats = 0
             balloon_f = True
@@ -559,6 +600,17 @@ def connection_getAllDomainStats(params):
                     return 1
                 else:
                     logger.info("Success to check block state")
+            if perf_f:
+                if not check_perf(logger, dom_name, dom_active, dom_eles):
+                    logger.info("Failed to check perf state")
+                    return 1
+                else:
+                    logger.info("Success to check perf state")
+            if iothread_f:
+                if not check_iothread(logger, dom_name, dom_active, dom_eles, iothread_id):
+                    logger.info("Failed to check iothread state")
+                else:
+                    logger.info("Success to check iothread state")
 
     except libvirtError as e:
         logger.error("API error message: %s" % e.get_error_message())
