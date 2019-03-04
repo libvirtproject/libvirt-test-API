@@ -17,8 +17,7 @@ ds = {"state": libvirt.VIR_DOMAIN_STATS_STATE,
       "vcpu": libvirt.VIR_DOMAIN_STATS_VCPU,
       "interface": libvirt.VIR_DOMAIN_STATS_INTERFACE,
       "block": libvirt.VIR_DOMAIN_STATS_BLOCK,
-      "perf": libvirt.VIR_DOMAIN_STATS_PERF,
-      "iothread": libvirt.VIR_DOMAIN_STATS_IOTHREAD}
+      "perf": libvirt.VIR_DOMAIN_STATS_PERF}
 
 fg = {"active": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_ACTIVE,
       "inactive": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_INACTIVE,
@@ -471,6 +470,7 @@ def connection_getAllDomainStats(params):
                 logger.info("Current libvirt-python don't support VIR_DOMAIN_STATS_IOTHREAD.")
                 return 0
             else:
+                ds['iothread'] = libvirt.VIR_DOMAIN_STATS_IOTHREAD
                 domstats |= ds.get('iothread')
                 iothread_f = True
                 iothread_id = params.get("iothread_id")

@@ -3,6 +3,7 @@
 import libvirt
 
 from libvirt import libvirtError
+from utils import utils
 
 required_params = ('guestname', 'iothread_id')
 optional_params = {'max_ns': None,
