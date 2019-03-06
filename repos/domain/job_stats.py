@@ -78,10 +78,11 @@ def domain_migrate(dom, target, username, passwd, logger):
     domain_common.config_ssh(target, username, passwd, logger)
     dsturi = "qemu+ssh://%s/system" % target
 
-    logger.info("start to migrate.")
     try:
+        flags = libvirt.VIR_MIGRATE_LIVE | libvirt.VIR_MIGRATE_UNSAFE
+        logger.info("start to migrate.")
         dstconn = libvirt.open(dsturi)
-        dom.migrate(dstconn, libvirt.VIR_MIGRATE_LIVE | libvirt.VIR_MIGRATE_UNSAFE, None, None, 0)
+        dom.migrate(dstconn, flags, None, None, 0)
     except libvirtError as e:
         logger.error("info: %s, code: %s" % (e.get_error_message(), e.get_error_code()))
         return 1
@@ -89,6 +90,54 @@ def domain_migrate(dom, target, username, passwd, logger):
     ret = utils.wait_for(functools.partial(check_dom_state, dom, 5), 100)
     if ret:
         logger.info("The domain state is not as expected")
+        return 1
+
+    return 0
+
+
+def domain_migrate_post_copy(dom, guestname, target, username, passwd, logger):
+    domain_common.config_ssh(target, username, passwd, logger)
+    dsturi = "qemu+ssh://%s/system" % target
+
+    def migrate(srcd, dstc, guestname, target, logger):
+        try:
+            flags = libvirt.VIR_MIGRATE_LIVE | libvirt.VIR_MIGRATE_POSTCOPY | libvirt.VIR_MIGRATE_UNSAFE
+            logger.info("use migrate() to migrate")
+            srcd.migrate(dstc, flags, None, None, 0)
+        except libvirtError as e:
+            logger.error("API error message: %s, error code is %s"
+                         % (e.get_error_message(), e.get_error_code()))
+            clean_src_env(guestname, logger)
+            clean_dst_env(guestname, target, logger)
+            return 1
+        return 0
+
+    def postcopy(srcd, guestname, target, logger):
+        try:
+            logger.info("start postcopy migration.")
+            srcd.migrateStartPostCopy(0)
+        except libvirtError as e:
+            logger.error("API error message: %s, error code is %s"
+                         % (e.get_error_message(), e.get_error_code()))
+            clean_src_env(guestname, logger)
+            clean_dst_env(guestname, target, logger)
+            return 1
+        return 0
+
+    try:
+        dstconn = libvirt.open(dsturi)
+        dom.migrateSetMaxSpeed(10, 0)
+        m = threading.Thread(target=migrate, args=(dom, dstconn, guestname, target, logger))
+        p = threading.Thread(target=postcopy, args=(dom, guestname, target, logger))
+
+        m.start()
+        time.sleep(1)
+        p.start()
+
+        m.join()
+        p.join()
+    except libvirtError as e:
+        logger.error("info: %s, code: %s" % (e.get_error_message(), e.get_error_code()))
         return 1
 
     return 0
@@ -128,6 +177,10 @@ def job_stats(params):
     logger.info("flags: %s" % flags)
     logger.info("vm_state: %s" % vm_state)
 
+    if not version_compare("libvirt-python", 5, 0, 0, logger):
+        if vm_state == "migrate-post-copy":
+            logger.info("Current version don't support VIR_DOMAIN_JOB_MEMORY_POSTCOPY_REQS.")
+            return 0
     try:
         conn = sharedmod.libvirtobj['conn']
         domobj = conn.lookupByName(guestname)
@@ -138,6 +191,8 @@ def job_stats(params):
                 domain_dump(domobj, logger)
             elif vm_state == "migrate":
                 domain_migrate(domobj, target, username, passwd, logger)
+            elif vm_state == "migrate-post-copy":
+                domain_migrate_post_copy(domobj, guestname, target, username, passwd, logger)
             info = domobj.jobStats(flags)
         else:
             if vm_state == "save":
@@ -206,6 +261,12 @@ def job_stats(params):
                 else:
                     logger.error("FAIL: check migrate operation failed.")
                     return 1
+        if vm_state == "migrate-post-copy":
+            if info['memory_postcopy_requests'] != 0:
+                logger.info("PASS: check memory_postcopy_requests ok: %s." % info['memory_postcopy_requests'])
+            else:
+                logger.error("FAIL: check memory_postcopy_requests failed.")
+                return 1
 
         if info['type'] == 3:
             logger.info("PASS: check type ok.")
@@ -242,6 +303,6 @@ def job_stats_clean(params):
     elif vm_state == "dump":
         if os.path.exists(DUMP_PATH):
             os.remove(DUMP_PATH)
-    elif vm_state == "migrate" and flags == libvirt.VIR_DOMAIN_JOB_STATS_COMPLETED:
+    elif "migrate" in vm_state and flags == libvirt.VIR_DOMAIN_JOB_STATS_COMPLETED:
         clean_dst_env(guestname, target, logger)
     clean_src_env(guestname, logger)
