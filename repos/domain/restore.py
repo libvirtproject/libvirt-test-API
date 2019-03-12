@@ -2,6 +2,8 @@
 # Restore domain from a saved statefile
 
 import libvirt
+import time
+
 from libvirt import libvirtError
 
 from src import sharedmod
@@ -73,6 +75,7 @@ def restore(params):
 
     try:
         conn.restore(filepath)
+        time.sleep(10)
         if check_guest_restore(guestname, domobj, logger):
             logger.info("restore %s domain successful" % guestname)
         else:
