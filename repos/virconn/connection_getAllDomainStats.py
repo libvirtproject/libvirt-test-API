@@ -2,6 +2,9 @@
 # test getAllDomainStats() API for libvirt
 
 import libvirt
+import os
+import stat
+import time
 
 from xml.dom import minidom
 from libvirt import libvirtError
@@ -30,6 +33,16 @@ fg = {"active": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_ACTIVE,
       "backing": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_BACKING,
       "enforce": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_ENFORCE_STATS,
       "nowait": libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_NOWAIT}
+
+hooks_str = ("#! /usr/bin/python3\n"
+             "import sys\n"
+             "if sys.argv[2] == 'reconnect':\n"
+             "    exit(1)\n"
+             "else:\n"
+             "    exit(0)\n")
+
+hooks_dir = "/etc/libvirt/hooks"
+hooks_file = "/etc/libvirt/hooks/qemu"
 
 
 def filer_domains(logger, flags):
@@ -411,6 +424,25 @@ def check_iothread(logger, dom_name, dom_active, dom_eles, iothread_id):
     return True
 
 
+def prepare_shutoff_daemon(logger):
+    if not os.path.exists(hooks_dir):
+        os.makedirs(hooks_dir)
+    if os.path.exists(hooks_file):
+        os.remove(hooks_file)
+    with open(hooks_file, 'w') as f:
+        f.write(hooks_str)
+    if not os.access(hooks_file, os.X_OK):
+        st = os.stat(hooks_file)
+        os.chmod(hooks_file, st.st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+
+    cmd = "service libvirtd restart"
+    ret, out = utils.exec_cmd(cmd, shell=True)
+    if ret:
+        logger.error("Restart libvirtd failed: %s" % out)
+        return 1
+    return 0
+
+
 def connection_getAllDomainStats(params):
     """
        test API for getAllDomainStats in class virConnect, the script need
@@ -535,20 +567,31 @@ def connection_getAllDomainStats(params):
         for name in doms_string:
             doms_list.append(name)
         doms = doms_list
-        flags &= 0xfc0000000
-        filter_f = True
-        logger.info("The revision flags is %d" % flags)
+        if (domstats != libvirt.VIR_DOMAIN_STATS_STATE and
+                flags != libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_SHUTOFF):
+            flags &= 0xfc0000000
+            filter_f = True
+            logger.info("The revision flags is %d" % flags)
     else:
         doms = []
 
     try:
-        conn = sharedmod.libvirtobj['conn']
+        if (domstats == libvirt.VIR_DOMAIN_STATS_STATE and
+                flags == libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_SHUTOFF):
+            if not utils.version_compare('libvirt-python', 5, 0, 0, logger):
+                logger.info("Current libvirt-python don't support VIR_DOMAIN_SHUTOFF_DAEMON.")
+                return 0
+            else:
+                prepare_shutoff_daemon(logger)
+
+        conn = libvirt.open()
         if len(doms) == 0:
             domstats_from_api = conn.getAllDomainStats(domstats, flags)
             logger.info("Got the number of domain from API: %s"
                         % len(domstats_from_api))
         else:
             logger.info("The given domains: %s" % doms)
+            time.sleep(3)
             domstats_from_api = conn.domainListGetStats(
                 [conn.lookupByName(name) for name in doms], domstats, flags)
         #filter expected domains
@@ -609,11 +652,29 @@ def connection_getAllDomainStats(params):
             if iothread_f:
                 if not check_iothread(logger, dom_name, dom_active, dom_eles, iothread_id):
                     logger.info("Failed to check iothread state")
+                    return 1
                 else:
                     logger.info("Success to check iothread state")
-
+            if (domstats == libvirt.VIR_DOMAIN_STATS_STATE and
+                    flags == libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_SHUTOFF):
+                if dom_eles['state.state'] == 5 and dom_eles['state.reason'] == 8:
+                    logger.info("Success to check state reason.")
+                else:
+                    logger.info("Failed to check state reason.")
+                    return 1
     except libvirtError as e:
         logger.error("API error message: %s" % e.get_error_message())
         return 1
-
+    finally:
+        if (domstats == libvirt.VIR_DOMAIN_STATS_STATE and
+                flags == libvirt.VIR_CONNECT_GET_ALL_DOMAINS_STATS_SHUTOFF):
+            if os.path.exists(hooks_file):
+                os.remove(hooks_file)
+            if os.path.exists(hooks_dir):
+                os.rmdir(hooks_dir)
+            cmd = "service libvirtd restart"
+            ret, out = utils.exec_cmd(cmd, shell=True)
+            if ret:
+                logger.error("Restart libvirtd failed: %s" % out)
+            time.sleep(3)
     return 0
