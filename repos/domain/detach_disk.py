@@ -61,6 +61,8 @@ def detach_disk(params):
 
     try:
         domobj.detachDevice(xmlstr)
+        # Add sleep to wait detach disk finish
+        time.sleep(15)
         disk_num2 = utils.dev_num(guestname, "disk")
         logger.debug("update disk number to %s" % disk_num2)
         if check_detach_disk(disk_num1, disk_num2):
