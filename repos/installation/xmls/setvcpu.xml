@@ -10,7 +10,7 @@
     <vcpu id='3' enabled='yes' hotpluggable='yes' order='4'/>
   </vcpus>
   <os>
-    <type machine="GUESTMACHINE">hvm</type>
+    <type arch='GUESTARCH' machine="GUESTMACHINE">hvm</type>
     <boot dev="hd"/>
   </os>
   <features>

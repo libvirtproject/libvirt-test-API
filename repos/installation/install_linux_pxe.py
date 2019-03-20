@@ -102,6 +102,7 @@ def install_linux_pxe(params):
     video = params.get('video', 'qxl')
     installtype = params.get('type', 'define')
     rhelnewest = params.get('rhelnewest')
+    guestmachine = params.get('guestmachine', 'pc')
 
     options = [guestname, guestos, guestarch, nicdriver, hddriver, imageformat, graphic, video, diskpath, seeksize, "local"]
     logger.info("rhelnewest: %s" % rhelnewest)
@@ -111,6 +112,7 @@ def install_linux_pxe(params):
     install_common.create_image(diskpath, seeksize, imageformat, logger)
 
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
+    xmlstr = xmlstr.replace('GUESTMACHINE', guestmachine)
     xmlstr = install_common.set_disk_xml(hddriver, xmlstr, diskpath, logger)
     xmlstr = install_common.set_video_xml(video, xmlstr)
 

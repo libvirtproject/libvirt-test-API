@@ -75,13 +75,16 @@ def define(params):
     """Define a domain from xml"""
     logger = params['logger']
     guestname = params['guestname']
-
     xmlstr = params['xml']
-    if utils.isPower():
-        guestarch = "ppc64le"
-        guestmachine = "persies"
-        xmlstr = xmlstr.replace('GUESTARCH', guestarch)
-        xmlstr = xmlstr.replace('GUESTMACHINE', guestmachine)
+    guestarch = params.get('guestarch', 'x86_64')
+    guestmachine = params.get('guestmachine', 'pc')
+    video = params.get('video', 'qxl')
+    graphic = params.get('graphic', 'spice')
+
+    xmlstr = xmlstr.replace('GUESTARCH', guestarch)
+    xmlstr = xmlstr.replace('GUESTMACHINE', guestmachine)
+    xmlstr = xmlstr.replace('VIDEO', video)
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
 
     logger.debug("domain xml:\n%s" % xmlstr)
 

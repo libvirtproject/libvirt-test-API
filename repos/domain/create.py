@@ -51,11 +51,15 @@ def create(params):
     uuid = params.get('uuid', '05867c1a-afeb-300e-e55e-2673391ae080')
     xmlstr = xmlstr.replace('UUID', uuid)
 
-    if utils.isPower():
-        guestarch = "ppc64le"
-        guestmachine = "persies"
-        xmlstr = xmlstr.replace('GUESTARCH', guestarch)
-        xmlstr = xmlstr.replace('GUESTMACHINE', guestmachine)
+    guestarch = params.get('guestarch', 'x86_64')
+    guestmachine = params.get('guestmachine', 'pc')
+    video = params.get('video', 'qxl')
+    graphic = params.get('graphic', 'spice')
+
+    xmlstr = xmlstr.replace('GUESTARCH', guestarch)
+    xmlstr = xmlstr.replace('GUESTMACHINE', guestmachine)
+    xmlstr = xmlstr.replace('VIDEO', video)
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
 
     imagepath = params.get('imagepath', '/var/lib/libvirt/images/libvirt-ci.qcow2')
     logger.info("using image %s" % imagepath)

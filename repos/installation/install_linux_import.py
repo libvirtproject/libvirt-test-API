@@ -121,18 +121,16 @@ def install_linux_import(params):
 
     logger.info("the name of guest is %s" % guestname)
 
-    if utils.isPower():
-        guestmachine = "persies"
-        xmlstr = xmlstr.replace('GUESTMACHINE', guestmachine)
-        video = params.get('video', 'vga')
-        xmlstr = xmlstr.replace('VIDEO', video)
-        graphic = params.get('graphic', 'vnc')
-        xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    else:
-        video = params.get('video', 'qxl')
-        xmlstr = xmlstr.replace('VIDEO', video)
-        graphic = params.get('graphic', 'spice')
-        xmlstr = xmlstr.replace('GRAPHIC', graphic)
+    guestarch = params.get('guestarch', 'x86_64')
+    guestmachine = params.get('guestmachine', 'pc')
+    video = params.get('video', 'qxl')
+    graphic = params.get('graphic', 'spice')
+
+    xmlstr = xmlstr.replace('GUESTARCH', guestarch)
+    xmlstr = xmlstr.replace('GUESTMACHINE', guestmachine)
+    xmlstr = xmlstr.replace('VIDEO', video)
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
+
 
     conn = libvirt.open()
     check_domain_state(conn, guestname, logger)
