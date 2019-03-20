@@ -42,7 +42,7 @@ def destroy(params):
     if "lxc" in virt_type:
         conn = libvirt.open("lxc:///")
     else:
-        conn = sharedmod.libvirtobj['conn']
+        conn = libvirt.open()
 
     # Get running domain by name
     guest_names = []

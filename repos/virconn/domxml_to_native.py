@@ -2,6 +2,7 @@
 
 import operator
 import re
+import libvirt
 
 from libvirt import libvirtError
 from src import sharedmod
@@ -104,7 +105,7 @@ def domxml_to_native(params):
     """
     global logger
     logger = params['logger']
-    conn = sharedmod.libvirtobj['conn']
+    conn = libvirt.open()
     nativeformat = params['nativeformat']
     guestname = params['guestname']
     guest = conn.lookupByName(guestname)

@@ -676,5 +676,5 @@ def connection_getAllDomainStats(params):
             ret, out = utils.exec_cmd(cmd, shell=True)
             if ret:
                 logger.error("Restart libvirtd failed: %s" % out)
-            time.sleep(3)
+            time.sleep(5)
     return 0

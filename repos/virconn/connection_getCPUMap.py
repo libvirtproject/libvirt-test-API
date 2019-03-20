@@ -35,7 +35,7 @@ def connection_getCPUMap(params):
         if 'conn' in params:
             conn = libvirt.open(params['conn'])
         else:
-            conn = sharedmod.libvirtobj['conn']
+            conn = libvirt.open()
 
         result = conn.getCPUMap()
         expect = gen_hostcpu_online_map()

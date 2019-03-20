@@ -98,7 +98,7 @@ def undefine(params):
     if "lxc" in virt_type:
         conn = libvirt.open("lxc:///")
     else:
-        conn = sharedmod.libvirtobj['conn']
+        conn = libvirt.open()
     flags = params.get('flags', 'none')
     libvirt_flags = parse_flags(logger, flags)
 

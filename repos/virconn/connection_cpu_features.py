@@ -148,7 +148,7 @@ def connection_cpu_features(params):
         if 'conn' in params:
             conn = libvirt.open(params['conn'])
         else:
-            conn = sharedmod.libvirtobj['conn']
+            conn = libvirt.open()
         host_cpu = get_host_cpu(conn)
         logger.debug("Host cpu xml: " + str(host_cpu))
         logger.info("Host cpu features: " + str(get_cpu_feature_set(host_cpu)))

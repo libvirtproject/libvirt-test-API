@@ -112,7 +112,7 @@ def start(params):
         conn = libvirt.open("lxc:///")
         noping = True
     else:
-        conn = sharedmod.libvirtobj['conn']
+        conn = libvirt.open()
     domobj = conn.lookupByName(domname)
 
     timeout = 600
