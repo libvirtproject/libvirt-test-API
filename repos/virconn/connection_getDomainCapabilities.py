@@ -337,6 +337,9 @@ def check_disk(given_list, logger):
     bus_api = []
     xml = minidom.parse(API_FILE)
     dom = xml.getElementsByTagName('domainCapabilities')[0]
+    guestmachine = dom.getElementsByTagName('machine')[0]
+    if 'q35' in guestmachine.childNodes[0].nodeValue:
+        allbus.remove("ide")
     devices = dom.getElementsByTagName('devices')[0]
     disk = devices.getElementsByTagName('disk')[0]
     enum = disk.getElementsByTagName('enum')
