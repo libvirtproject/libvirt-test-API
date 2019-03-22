@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # To test vHBA destroying.
 
-import commands
+import time
+
 from libvirt import libvirtError
 from src import sharedmod
+from utils import process
 
 required_params = ('wwpn',)
 optional_params = {}
@@ -17,8 +19,9 @@ def destroy_virtual_hba(params):
 
     conn = sharedmod.libvirtobj['conn']
     dev_name = ''
-    pname_list = commands.getoutput("ls -1 -d /sys/class/*_host/host*/*"
-                                    "| grep port_name")
+    cmd = "ls -1 -d /sys/class/*_host/host*/* | grep port_name"
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    pname_list = ret.stdout
     for pname in pname_list.split("\n"):
         portid = open(pname).read()[2:].strip('\n')
         if wwpn_node == portid:
@@ -30,7 +33,7 @@ def destroy_virtual_hba(params):
     try:
         nodedev_obj = conn.nodeDeviceLookupByName(dev_name)
         nodedev_obj.destroy()
-
+        time.sleep(3)
         scsi_list = conn.listDevices('scsi_host', 0)
         for fc_name in scsi_list:
             if fc_name == dev_name:

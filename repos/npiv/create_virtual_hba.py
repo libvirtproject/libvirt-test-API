@@ -2,10 +2,11 @@
 # To test vHBA creating with npiv.
 
 import re
-import commands
+import time
 
 from libvirt import libvirtError
 from utils import utils
+from utils import process
 from src import sharedmod
 
 required_params = ('wwpn', 'wwnn',)
@@ -17,9 +18,9 @@ def check_nodedev_create(wwpn, device_name):
     """Check if the node device vHBA was created. Can search created
        vport name in all FC list, to see if it exists.
     """
-
-    pname_list = commands.getoutput("ls -1 -d /sys/class/*_host/host*/*"
-                                    " | grep port_name")
+    cmd = "ls -1 -d /sys/class/*_host/host*/* | grep port_name"
+    ret = process.run(cmd, shell=True, ignore_status=True)
+    pname_list = ret.stdout
     for pname in pname_list.split("\n"):
         portid = open(pname).read()[2:].strip('\n')
         if wwpn == portid:
@@ -92,8 +93,8 @@ def create_virtual_hba(params):
     try:
         logger.info("creating a virtual HBA ...")
         nodedev_obj = conn.nodeDeviceCreateXML(xmlstr, 0)
+        time.sleep(3)
         dev_name = nodedev_obj.name()
-
         if check_nodedev_create(wwpn_node, dev_name) and \
                 check_nodedev_parent(nodedev_obj, device_parent, dev_name):
             logger.info("the virtual HBA '%s' was created successfully"
