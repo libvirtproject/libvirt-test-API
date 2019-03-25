@@ -451,6 +451,10 @@ def connection_getDomainCapabilities(params):
     machine = params['machine']
     virttype = params['virttype']
 
+    if not utils.version_compare('qemu-kvm', 3, 1, 0, logger):
+        logger.info("Low version qemu-kvm don't support q35 machine type.")
+        machine = "pc-i440fx-rhel7.0.0"
+
     try:
         logger.info("The specified emulatorbin is %s" % emulatorbin)
         logger.info("The specified architecture is %s" % arch)
