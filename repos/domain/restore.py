@@ -74,8 +74,9 @@ def restore(params):
         return 1
 
     try:
-        conn.restore(filepath)
         time.sleep(10)
+        conn.restore(filepath)
+        time.sleep(20)
         if check_guest_restore(guestname, domobj, logger):
             logger.info("restore %s domain successful" % guestname)
         else:
