@@ -31,6 +31,7 @@ optional_params = {
                    'storage': 'local',
                    'sourcehost': '',
                    'sourcepath': '',
+                   'gluster_server_ip': None
 }
 
 

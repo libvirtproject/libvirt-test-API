@@ -37,11 +37,10 @@ def setup_storage(params, mountpath, logger):
             if not os.path.isdir(brickpath):
                 os.mkdir(brickpath, 0o755)
             if utils.isRelease("8", logger):
-                gluster_server = "download.libvirt.redhat.com"
-                utils.set_fusefs(logger)
+                gluster_server = params.get("gluster_server_ip")
             else:
                 gluster_server = utils.get_local_hostname()
-                utils.setup_gluster("test-api-gluster", gluster_server, brickpath, logger)
+            utils.setup_gluster("test-api-gluster", gluster_server, brickpath, logger)
             utils.mount_gluster("test-api-gluster", gluster_server, mountpath, logger)
             diskpath = mountpath + "/" + imagename
             remove_all(diskpath, logger)
@@ -63,10 +62,9 @@ def cleanup_storage(params, mountpath, logger):
     sourcepath = params.get('sourcepath')
     if storage == "gluster":
         utils.umount_gluster(mountpath, logger)
-        if not utils.isRelease("8", logger):
-            utils.cleanup_gluster("test-api-gluster", logger)
-            if os.path.isdir(brickpath):
-                shutil.rmtree(brickpath)
+        utils.cleanup_gluster("test-api-gluster", logger)
+        if os.path.isdir(brickpath):
+            shutil.rmtree(brickpath)
     elif storage == "nfs":
         utils.cleanup_nfs(mountpath, logger)
     elif storage == "iscsi":

@@ -43,6 +43,7 @@ optional_params = {'memory': 4194304,
                    'storage': 'local',
                    'sourcehost': '',
                    'sourcepath': '',
+                   'gluster_server_ip': None
                    }
 
 
