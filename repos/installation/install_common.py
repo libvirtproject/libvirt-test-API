@@ -12,7 +12,7 @@ from utils import utils
 from libvirt import libvirtError
 from six.moves import urllib
 
-brickpath = "/tmp/test-api-brick"
+brickpath = "/test-api-brick"
 imagename = "libvirt-test-api"
 
 BOOT_DIR = "/var/lib/libvirt/boot"
@@ -61,8 +61,12 @@ def cleanup_storage(params, mountpath, logger):
     storage = params.get('storage', 'local')
     sourcepath = params.get('sourcepath')
     if storage == "gluster":
+        if utils.isRelease("8", logger):
+            gluster_server = params.get("gluster_server_ip")
+        else:
+            gluster_server = utils.get_local_hostname()
         utils.umount_gluster(mountpath, logger)
-        utils.cleanup_gluster("test-api-gluster", logger)
+        utils.cleanup_gluster("test-api-gluster", gluster_server, logger)
         if os.path.isdir(brickpath):
             shutil.rmtree(brickpath)
     elif storage == "nfs":

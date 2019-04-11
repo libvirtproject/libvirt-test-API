@@ -1283,87 +1283,87 @@ def version_compare(package_name, major, minor, update, logger):
     return False
 
 
-def gluster_status(logger):
+def gluster_status(ip, logger):
     cmd = "service glusterd status"
-    result = process.run(cmd, shell=True, ignore_status=True)
-    if not result.exit_status:
-        if "active" not in result.stdout or "running" not in result.stdout:
+    ret, output = remote_exec_pexpect(ip, "root", "redhat", cmd)
+    if not ret:
+        if "active" not in output or "running" not in output:
             cmd = "service glusterd start"
             logger.info("Starting glusterd ...")
-            result = process.run(cmd, shell=True, ignore_status=True)
-            if result.exit_status:
+            ret, output = remote_exec_pexpect(ip, "root", "redhat", cmd)
+            if ret:
                 logger.error("cmd failed: %s" % cmd)
-                logger.error("out: %s" % result.stdout)
+                logger.error("out: %s" % output)
                 return False
 
     else:
         logger.error("cmd failed: %s." % cmd)
-        logger.error("out: %s." % result.stdout)
+        logger.error("out: %s." % output)
         return False
     return True
 
 
-def is_gluster_vol_started(vol_name, logger):
+def is_gluster_vol_started(vol_name, ip, logger):
     cmd = "gluster volume info %s" % vol_name
-    result = process.run(cmd, shell=True, ignore_status=True)
-    vol_status = re.findall(r'Status: (\S+)', result.stdout)
+    ret, output = remote_exec_pexpect(ip, "root", "redhat", cmd)
+    vol_status = re.findall(r'Status: (\S+)', output)
     if 'Started' in vol_status:
         return True
     else:
         return False
 
 
-def gluster_vol_start(vol_name, logger):
-    if not is_gluster_vol_started(vol_name, logger):
+def gluster_vol_start(vol_name, ip, logger):
+    if not is_gluster_vol_started(vol_name, ip, logger):
         cmd = "gluster volume start %s" % vol_name
-        result = process.run(cmd, shell=True, ignore_status=True)
-        if result.exit_status:
+        ret, output = remote_exec_pexpect(ip, "root", "redhat", cmd)
+        if ret:
             logger.error("cmd failed: %s" % cmd)
-            logger.error("out: %s" % result.stdout)
+            logger.error("out: %s" % output)
             return False
 
     return True
 
 
-def gluster_vol_stop(vol_name, logger, force=False):
-    if is_gluster_vol_started(vol_name, logger):
+def gluster_vol_stop(vol_name, ip, logger, force=False):
+    if is_gluster_vol_started(vol_name, ip, logger):
         if force:
             cmd = "echo 'y' | gluster volume stop %s force" % vol_name
         else:
             cmd = "echo 'y' | gluster volume stop %s" % vol_name
-        result = process.run(cmd, shell=True, ignore_status=True)
-        if result.exit_status:
+        ret, output = remote_exec_pexpect(ip, "root", "redhat", cmd)
+        if ret:
             logger.error("cmd failed: %s" % cmd)
-            logger.error("out: %s" % result.stdout)
+            logger.error("out: %s" % output)
             return False
     return True
 
 
-def gluster_vol_delete(vol_name, logger):
-    if not is_gluster_vol_started(vol_name, logger):
+def gluster_vol_delete(vol_name, ip, logger):
+    if not is_gluster_vol_started(vol_name, ip, logger):
         cmd = "echo 'y' | gluster volume delete %s" % vol_name
-        result = process.run(cmd, shell=True, ignore_status=True)
-        if result.exit_status:
+        ret, output = remote_exec_pexpect(ip, "root", "redhat", cmd)
+        if ret:
             logger.error("cmd failed: %s" % cmd)
-            logger.error("out: %s" % result.stdout)
+            logger.error("out: %s" % output)
             return False
         return True
     else:
         return False
 
 
-def is_gluster_vol_avail(vol_name, logger):
+def is_gluster_vol_avail(vol_name, ip, logger):
     cmd = "gluster volume info"
-    result = process.run(cmd, shell=True, ignore_status=True)
-    volume_name = re.findall(r'Volume Name: (%s)\n' % vol_name, result.stdout)
+    ret, output = remote_exec_pexpect(ip, "root", "redhat", cmd)
+    volume_name = re.findall(r'Volume Name: (%s)' % vol_name, output)
     if volume_name:
-        return gluster_vol_start(vol_name, logger)
+        return gluster_vol_start(vol_name, ip, logger)
 
 
 def gluster_vol_create(vol_name, ip, brick_path, logger, force=False):
-    if is_gluster_vol_avail(vol_name, logger):
-        gluster_vol_stop(vol_name, logger, True)
-        gluster_vol_delete(vol_name, logger)
+    if is_gluster_vol_avail(vol_name, ip, logger):
+        gluster_vol_stop(vol_name, ip, logger, True)
+        gluster_vol_delete(vol_name, ip, logger)
 
     if force:
         force_opt = "force"
@@ -1372,30 +1372,30 @@ def gluster_vol_create(vol_name, ip, brick_path, logger, force=False):
 
     cmd = "gluster volume create %s %s:/%s %s" % (vol_name, ip,
                                                   brick_path, force_opt)
-    result = process.run(cmd, shell=True, ignore_status=True)
-    if result.exit_status:
+    ret, output = remote_exec_pexpect(ip, "root", "redhat", cmd)
+    if ret:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("out: %s" % result.stdout)
+        logger.error("out: %s" % output)
         return False
 
-    return is_gluster_vol_avail(vol_name, logger)
+    return is_gluster_vol_avail(vol_name, ip, logger)
 
 
-def gluster_allow_insecure(vol_name, logger):
+def gluster_allow_insecure(vol_name, ip, logger):
     cmd = "gluster volume set %s server.allow-insecure on" % vol_name
-    result = process.run(cmd, shell=True, ignore_status=True)
-    if result.exit_status:
+    ret, output = remote_exec_pexpect(ip, "root", "redhat", cmd)
+    if ret:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("out: %s" % result.stdout)
+        logger.error("out: %s" % output)
         return 1
 
     cmd = "gluster volume info"
-    result = process.run(cmd, shell=True, ignore_status=True)
-    if result.exit_status:
+    ret, output = remote_exec_pexpect(ip, "root", "redhat", cmd)
+    if ret:
         logger.error("cmd failed: %s" % cmd)
-        logger.error("out: %s" % result.stdout)
+        logger.error("out: %s" % output)
         return 1
-    match = re.findall(r'server.allow-inscure: on', result.stdout)
+    match = re.findall(r'server.allow-inscure: on', output)
     if not match:
         return 1
     else:
@@ -1416,19 +1416,19 @@ def setup_gluster(vol_name, ip, brick_path, logger):
     """
     Set up glusterfs environment on localhost
     """
-    gluster_status(logger)
+    gluster_status(ip, logger)
     gluster_vol_create(vol_name, ip, brick_path, logger, force=True)
-    gluster_allow_insecure(vol_name, logger)
+    gluster_allow_insecure(vol_name, ip, logger)
     set_fusefs(logger)
     return 0
 
 
-def cleanup_gluster(vol_name, logger):
+def cleanup_gluster(vol_name, ip, logger):
     """
     Clean up glusterfs enviroment on localhost
     """
-    gluster_vol_stop(vol_name, logger, True)
-    gluster_vol_delete(vol_name, logger)
+    gluster_vol_stop(vol_name, ip, logger, True)
+    gluster_vol_delete(vol_name, ip, logger)
     return 0
 
 
