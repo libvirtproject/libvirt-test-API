@@ -24,7 +24,7 @@ def setup_storage(params, mountpath, logger):
     storage = params.get('storage', 'local')
     sourcehost = params.get('sourcehost')
     sourcepath = params.get('sourcepath')
-    seeksize = params.get('disksize', 14)
+    seeksize = params.get('disksize', 20)
     imageformat = params.get('imageformat', 'qcow2')
     diskpath = ""
 

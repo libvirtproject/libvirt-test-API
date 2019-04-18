@@ -28,7 +28,7 @@ HOME_PATH = os.getcwd()
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {'memory': 4194304,
                    'vcpu': 2,
-                   'disksize': 14,
+                   'disksize': 20,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'imageformat': 'qcow2',
                    'hddriver': 'virtio',
@@ -245,7 +245,7 @@ def install_windows_iso(params):
     guestname = params.get('guestname')
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
-    seeksize = params.get('disksize', 14)
+    seeksize = params.get('disksize', 20)
     imageformat = params.get('imageformat', 'qcow2')
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     nicdriver = params.get('nicdriver', 'virtio')
