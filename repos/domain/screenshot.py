@@ -32,7 +32,7 @@ def screenshot(params):
 
     ext = mimetypes.guess_extension(mime) or '.ppm'
     last_filename = params['filename'] + ext
-    f = file(last_filename, 'w')
+    f = open(last_filename, 'wb')
 
     logger.debug('Saving screenshot into %s' % last_filename)
     st.recvAll(saver, f)
