@@ -5,14 +5,14 @@ import os
 import re
 import time
 import tempfile
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
 from src import env_parser
 from utils import utils, process
 from six.moves import urllib
+from repos.installation import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {'memory': 4194304,
@@ -27,8 +27,8 @@ optional_params = {'memory': 4194304,
                    'netmethod': 'http',
                    'type': 'define',
                    'xml': 'xmls/kvm_linux_guest_install_net.xml',
-                   'graphic': "spice",
-                   'video': 'qxl',
+                   'graphic': "vnc",
+                   'video': 'vga',
                    'guestmachine': 'pseries',
                    'rhelnewest': '',
                    'rhelalt': '',
@@ -124,8 +124,8 @@ def install_linux_net_ppc(params):
     storage = params.get('storage', 'local')
     seeksize = params.get('disksize', 14)
     imageformat = params.get('imageformat', 'qcow2 -o compat=1.1')
-    graphic = params.get('graphic', 'spice')
-    video = params.get('video', 'qxl')
+    graphic = params.get('graphic', 'vnc')
+    video = params.get('video', 'vga')
     installtype = params.get('type', 'define')
 
     logger.info("guestname: %s" % guestname)
@@ -201,34 +201,8 @@ def install_linux_net_ppc(params):
     rhelnewest = params.get('rhelnewest')
     rhelalt = params.get('rhelalt')
     os_arch = guestos + "_" + guestarch
-
-    if installmethod == 'http':
-        release_ver_flag = 0
-        if rhelnewest is not None:
-            version = re.search(r'RHEL.*?/', rhelnewest).group()[:-1]
-            num = version.split("-")[1].split('.')[0]
-            release_ver_list = envparser.get_value("other", "release_ver").split()
-            for release_ver in release_ver_list:
-                if version.split("-")[1] == release_ver:
-                    release_ver_flag = 1
-            if release_ver_flag:
-                ks = envparser.get_value("guest", os_arch + "_http_ks")
-                ostree = envparser.get_value("guest", os_arch)
-            else:
-                ks = envparser.get_value("guest", "rhel" + num + "_newest_" + guestarch + "_http_ks")
-                ostree = rhelnewest + "%s/os" % guestarch
-        elif rhelalt is not None:
-            version = re.search(r'RHEL-ALT.*?/', rhelalt).group()[:-1]
-            num = version.split("-")[2].split('.')[0]
-            ks = envparser.get_value("guest", "rhel_alt" + num + "_newest_" + guestarch + "_http_ks")
-            ostree = rhelalt + "%s/os" % guestarch
-        else:
-            ks = envparser.get_value("guest", os_arch + "_http_ks")
-            ostree = envparser.get_value("guest", os_arch)
-    elif installmethod == 'ftp':
-        ks = envparser.get_value("guest", os_arch + "_ftp_ks")
-    elif installmethod == "nfs":
-        ks = envparser.get_value("guest", os_arch + "_nfs_ks")
+    ostree = install_common.get_ostree(rhelnewest, guestos, guestarch, logger)
+    ks = install_common.get_kscfg(rhelnewest, guestos, guestarch, installmethod, logger)
 
     xmlstr = xmlstr.replace('KS', ks)
 

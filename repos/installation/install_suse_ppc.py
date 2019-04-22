@@ -5,11 +5,10 @@ import os
 import re
 import time
 import shutil
-import urllib
-
 import libvirt
-from libvirt import libvirtError
 
+from six.moves import urllib
+from libvirt import libvirtError
 from src import sharedmod
 from src import env_parser
 from utils import utils, process
@@ -31,7 +30,7 @@ optional_params = {
                    'guestmachine': 'pseries',
                    'networksource': 'default',
                    'bridgename': 'virbr0',
-                   'graphic': "spice",
+                   'graphic': "vnc",
                    'disksymbol': 'sdb'
 }
 
@@ -60,7 +59,7 @@ def prepare_ks(ks, guestos, hddriver, ks_path, logger):
     """Prepare the ks file for suse installation
        virtio bus use the vda instead of sda in ide or scsi bus
     """
-    urllib.urlretrieve(ks, ks_path)
+    urllib.request.urlretrieve(ks, ks_path)
     logger.info("the url of kickstart is %s" % ks)
     if (hddriver == "virtio" or hddriver == "lun") and "suse" in guestos:
         with open(ks_path, "r+") as f:
@@ -298,7 +297,7 @@ def install_suse_ppc(params):
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     seeksize = params.get('disksize', 20)
     imageformat = params.get('imageformat', 'qcow2')
-    graphic = params.get('graphic', 'spice')
+    graphic = params.get('graphic', 'vnc')
     video = params.get('video', 'qxl')
     installtype = params.get('type', 'define')
 
@@ -365,10 +364,6 @@ def install_suse_ppc(params):
         xmlstr = xmlstr.replace('SDX', disksymbol)
         xmlstr = xmlstr.replace("<disk type='block' device='cdrom'>",
                                 "<disk type='file' device='cdrom'>")
-
-    # prepare the graphic
-    if graphic == 'spice':
-        xmlstr = xmlstr.replace('vnc', 'spice')
 
     # prepare the custom iso
     logger.info("get system environment information")

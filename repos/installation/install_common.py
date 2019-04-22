@@ -122,9 +122,15 @@ def get_iso_link(rhelnewest, guestos, guestarch, logger):
     else:
         os_arch = guestos + "_" + guestarch
         if "pek2" in location or "nay" in location:
-            isolink = local_url + get_value_from_global("guest", os_arch + "_iso")
+            if "ppc" in guestarch:
+                isolink = get_value_from_global("guest", os_arch + "_iso")
+            else:
+                isolink = local_url + get_value_from_global("guest", os_arch + "_iso")
         else:
-            isolink = remote_url + get_value_from_global("guest", os_arch + "_iso")
+            if "ppc" in guestarch:
+                isolink = get_value_from_global("guest", os_arch + "_iso")
+            else:
+                isolink = remote_url + get_value_from_global("guest", os_arch + "_iso")
     logger.info("ISO link: %s" % isolink)
     return isolink
 

@@ -5,12 +5,11 @@ import os
 import re
 import time
 import shutil
-import urllib
-
 import libvirt
+
 from libvirt import libvirtError
 from src.exception import TestError
-
+from six.moves import urllib
 from src import sharedmod
 from src import env_parser
 from utils import utils, process
@@ -242,10 +241,10 @@ def prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger):
     boot_path = os.path.join(ostree, 'images/boot.iso')
     logger.info("the url of downloading boot.iso file is %s" % boot_path)
 
-    urllib.urlretrieve(boot_path, '%s/boot.iso' % new_dir)
+    urllib.request.urlretrieve(boot_path, '%s/boot.iso' % new_dir)
     time.sleep(10)
 
-    urllib.urlretrieve(kscfg, '%s/%s' % (new_dir, ks_name))
+    urllib.request.urlretrieve(kscfg, '%s/%s' % (new_dir, ks_name))
     logger.info("the url of kickstart is %s" % kscfg)
 
     src_path = os.getcwd()

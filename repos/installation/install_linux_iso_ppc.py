@@ -4,17 +4,15 @@
 import os
 import re
 import time
-import urllib
 import tempfile
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
 from src import env_parser
 from utils import utils, process
 from repos.domain import domain_common
-
+from six.moves import urllib
 
 required_params = ('guestname', 'guestos', 'guestarch')
 optional_params = {
@@ -28,8 +26,8 @@ optional_params = {
                    'type': 'define',
                    'xml': 'xmls/kvm_linux_guest_install_iso_ppc.xml',
                    'guestmachine': 'pseries',
-                   'graphic': 'spice',
-                   'video': 'qxl',
+                   'graphic': 'vnc',
+                   'video': 'vga',
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'disksymbol': 'sdb',
                    'rhelalt': '',
@@ -128,8 +126,8 @@ def install_linux_iso_ppc(params):
     storage = params.get('storage', 'local')
     seeksize = params.get('disksize', 14)
     imageformat = params.get('imageformat', 'qcow2')
-    graphic = params.get('graphic', 'spice')
-    video = params.get('video', 'qxl')
+    graphic = params.get('graphic', 'vnc')
+    video = params.get('video', 'vga')
     installtype = params.get('type', 'define')
 
     logger.info("guestname: %s" % guestname)
@@ -241,23 +239,9 @@ def install_linux_iso_ppc(params):
     os_arch = guestos + "_" + guestarch
 
     envparser = env_parser.Envparser(envfile)
-
-    if rhelnewest is not None:
-        version = re.search(r'RHEL.*?/', rhelnewest).group()[:-1]
-        num = version.split("-")[1].split('.')[0]
-        ostree = rhelnewest + "%s/os" % guestarch
-        ks = envparser.get_value("guest", "rhel" + num + "_newest_" + guestarch + "_iso_ks")
-        isolink = rhelnewest + guestarch + '/iso/' + version + '-Server-' + guestarch + '-dvd1.iso'
-    elif rhelalt is not None:
-        version = re.search(r'RHEL-ALT.*?/', rhelalt).group()[:-1]
-        num = version.split("-")[2].split('.')[0]
-        ostree = rhelalt + "%s/os" % guestarch
-        ks = envparser.get_value("guest", "rhel_alt" + num + "_newest_" + guestarch + "_iso_ks")
-        isolink = rhelalt + guestarch + '/iso/' + version + '-Server-' + guestarch + '-dvd1.iso'
-    else:
-        ostree = envparser.get_value("guest", os_arch)
-        ks = envparser.get_value("guest", os_arch + "_iso_ks")
-        isolink = envparser.get_value("guest", os_arch + "_iso")
+    ostree = install_common.get_ostree(rhelnewest, guestos, guestarch, logger)
+    ks = install_common.get_kscfg(rhelnewest, guestos, guestarch, "iso", logger)
+    isolink = install_common.get_iso_link(rhelnewest, guestos, guestarch, logger)
 
     logger.debug('install source:\n    %s' % ostree)
     logger.debug('kisckstart file:\n    %s' % ks)
@@ -289,8 +273,8 @@ def install_linux_iso_ppc(params):
     logger.debug("the url of vmlinuz file is %s" % vmlinuzpath)
     logger.debug("the url of initrd file is %s" % initrdpath)
 
-    urllib.urlretrieve(vmlinuzpath, VMLINUZ)
-    urllib.urlretrieve(initrdpath, INITRD)
+    urllib.request.urlretrieve(vmlinuzpath, VMLINUZ)
+    urllib.request.urlretrieve(initrdpath, INITRD)
     logger.debug("vmlinuz and initrd.img are located in %s" % BOOT_DIR)
 
     xmlstr = xmlstr.replace(params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api'),

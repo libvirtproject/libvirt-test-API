@@ -4,7 +4,6 @@
 import os
 import re
 import time
-import urllib
 import libvirt
 
 from libvirt import libvirtError
@@ -13,6 +12,8 @@ from src import sharedmod
 from src import env_parser
 from utils import utils, process
 from repos.domain import domain_common
+from repos.installation import install_common
+from six.moves import urllib
 
 required_params = ('guestname', 'guestos', 'guestarch', 'netmethod')
 optional_params = {'memory': 2097152,
@@ -26,8 +27,8 @@ optional_params = {'memory': 2097152,
                    'type': 'define',
                    'xml': 'xmls/kvm_linux_guest_install_net.xml',
                    'guestmachine': 'pseries',
-                   'graphic': 'spice',
-                   'video': 'qxl',
+                   'graphic': 'vnc',
+                   'video': 'vga',
                    'hostip': '127.0.0.1',
                    'user': 'root',
                    'password': 'redhat',
@@ -151,8 +152,8 @@ def install_linux_net_remote_ppc(params):
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     seeksize = params.get('disksize', 14)
     imageformat = params.get('imageformat', 'qcow2')
-    graphic = params.get('graphic', 'spice')
-    video = params.get('video', 'qxl')
+    graphic = params.get('graphic', 'vnc')
+    video = params.get('video', 'vga')
     installtype = params.get('type', 'define')
 
     logger.info("guestname: %s" % guestname)
@@ -250,8 +251,6 @@ def install_linux_net_remote_ppc(params):
     # Setting grahoic work
     if graphic == "vnc":
         xmlstr = xmlstr.replace('spice', 'vnc')
-    elif graphic == "spice":
-        xmlstr = xmlstr.replace('spice', 'spice')
     else:
         logger.info("graphic type unsupported")
         return 1
@@ -264,20 +263,8 @@ def install_linux_net_remote_ppc(params):
     os_arch = guestos + "_" + guestarch
     rhelnewest = params.get('rhelnewest')
     rhelalt = params.get('rhelalt')
-
-    if rhelnewest is not None:
-        version = re.search(r'RHEL.*?/', rhelnewest).group()[:-1]
-        num = version.split("-")[1].split('.')[0]
-        ks = envparser.get_value("guest", "rhel" + num + "_newest_" + guestarch + "_" + installmethod + "_ks")
-        ostree = rhelnewest + "%s/os" % guestarch
-    elif rhelalt is not None:
-        version = re.search(r'RHEL-ALT.*?/', rhelalt).group()[:-1]
-        num = version.split("-")[2].split('.')[0]
-        ks = envparser.get_value("guest", "rhel_alt" + num + "_newest_" + guestarch + "_" + installmethod + "_ks")
-        ostree = rhelalt + "%s/os" % guestarch
-    else:
-        ks = envparser.get_value("guest", os_arch + "_" + installmethod + "_ks")
-        ostree = envparser.get_value("guest", os_arch)
+    ostree = install_common.get_ostree(rhelnewest, guestos, guestarch, logger)
+    ks = install_common.get_kscfg(rhelnewest, guestos, guestarch, installmethod, logger)
 
     if ostree == 'http://':
         logger.error("no os tree defined in %s for %s" % (envfile, os_arch))
@@ -309,11 +296,12 @@ def install_linux_net_remote_ppc(params):
     logger.debug("the url of initrd file is %s" % initrdpath)
 
     if hostip == "127.0.0.1":
-        urllib.urlretrieve(vmlinuzpath, VMLINUZ)
-        urllib.urlretrieve(initrdpath, INITRD)
+        urllib.request.urlretrieve(vmlinuzpath, VMLINUZ)
+        urllib.request.urlretrieve(initrdpath, INITRD)
     else:
-        urlcommand = """echo "import urllib;urllib.urlretrieve('%s','%s');\
-                     urllib.urlretrieve('%s','%s')">/var/lib/libvirt/temp.py """ \
+        urlcommand = """echo "from six.moves import urllib;
+                              urllib.request.urlretrieve('%s','%s');
+                              urllib.request.urlretrieve('%s','%s')">/var/lib/libvirt/temp.py """ \
                      % (vmlinuzpath, VMLINUZ, initrdpath, INITRD)
         utils.remote_exec_pexpect(hostip, user, password, urlcommand +
                                   ";python /var/lib/libvirt/temp.py;\

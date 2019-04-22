@@ -4,12 +4,11 @@
 import os
 import re
 import time
-import urllib
 import shutil
-
 import libvirt
-from libvirt import libvirtError
 
+from six.moves import urllib
+from libvirt import libvirtError
 from src import sharedmod
 from src import env_parser
 from utils import utils, process
@@ -27,8 +26,8 @@ optional_params = {
                    'macaddr': '52:54:00:97:e4:28',
                    'type': 'define',
                    'xml': 'xmls/install_pxe_ppc.xml',
-                   'graphic': "spice",
-                   'video': 'qxl',
+                   'graphic': "vnc",
+                   'video': 'vga',
                    'guestmachine': 'pseries',
                    'rhelnewest': '',
                    'rhelalt': '',
@@ -137,9 +136,9 @@ def prepare_network_ppc(ostree, logger):
 
 def prepare_kernel_ppc(ostree, logger):
     if 'RHEL-6' in ostree:
-        conf_path = urllib.urlopen(ostree + '/etc/').geturl()
+        conf_path = urllib.request.urlopen(ostree + '/etc/').geturl()
     else:
-        conf_path = urllib.urlopen(ostree + '/boot/').geturl()
+        conf_path = urllib.request.urlopen(ostree + '/boot/').geturl()
     wget_paramter = "-m -np -nH --cut-dirs=6 -R 'index.html*' -P "
     wget_command = 'wget ' + wget_paramter + TFTPPATH + ' ' + conf_path
     logger.debug('%s' % (wget_command))
@@ -147,7 +146,7 @@ def prepare_kernel_ppc(ostree, logger):
     if ret.exit_status != 0:
         logger.error(ret.stdout)
 
-    ppc_path = urllib.urlopen(ostree + '/ppc/').geturl()
+    ppc_path = urllib.request.urlopen(ostree + '/ppc/').geturl()
     if 'RHEL-6' in ostree:
         wget_paramter = "-m -np -nH --cut-dirs=6 -R 'index.html*' -A initrd.img,vmlinuz,yaboot -P "
     else:
@@ -258,8 +257,8 @@ def install_linux_pxe_ppc(params):
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     seeksize = params.get('disksize', 14)
     imageformat = params.get('imageformat', 'qcow2')
-    graphic = params.get('graphic', 'spice')
-    video = params.get('video', 'qxl')
+    graphic = params.get('graphic', 'vnc')
+    video = params.get('video', 'vga')
     installtype = params.get('type', 'define')
 
     logger.info("guestname: %s" % guestname)
