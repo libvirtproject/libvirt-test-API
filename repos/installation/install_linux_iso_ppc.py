@@ -13,6 +13,7 @@ from src import env_parser
 from utils import utils, process
 from repos.domain import domain_common
 from six.moves import urllib
+from repos.installation import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch')
 optional_params = {
