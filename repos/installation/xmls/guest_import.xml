@@ -28,7 +28,7 @@
       <model type='NICDRIVER'/>
     </interface>
     <console/>
-    <input bus="ps2" type="mouse"/>
+    <input bus="usb" type="mouse"/>
     <graphics keymap="en-us" port="-1" autoport="yes" type="GRAPHIC"/>
     <channel type='unix'>
       <source mode='bind' path='/var/lib/libvirt/qemu/channel/target/GUESTNAME.agent'/>

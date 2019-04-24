@@ -492,8 +492,8 @@ def mac_to_ips(mac, timeout, bridge='virbr0'):
         if len(ipaddr) > 0:
             break
 
-        time.sleep(10)
-        timeout -= 10
+        time.sleep(3)
+        timeout -= 3
 
     return timeout and ipaddr or None
 
@@ -511,13 +511,14 @@ def do_ping(ip, timeout):
         timeout = 10
 
     cmd = "ping -c 3 " + str(ip)
+    ping_msg = "icmp_seq=1 Destination Host Unreachable"
     while timeout > 0:
         result = process.run(cmd, shell=True, ignore_status=True)
-        if result.exit_status == 0:
+        if ping_msg in result.stdout:
             break
-        timeout -= 10
+        timeout -= 3
 
-    return (timeout and 1) or 0
+    return (timeout and True) or False
 
 
 def exec_cmd(command, sudo=False, cwd=None, infile=None, outfile=None,
