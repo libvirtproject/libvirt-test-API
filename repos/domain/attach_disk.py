@@ -129,7 +129,7 @@ def attach_disk(params):
     try:
         #Attach disk to domain
         domobj.attachDevice(xmlstr)
-        time.sleep(150)
+        time.sleep(90)
         disk_num2 = utils.dev_num(guestname, "disk")
         logger.debug("update disk number to %s" % disk_num2)
 

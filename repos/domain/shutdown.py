@@ -95,7 +95,7 @@ def shutdown(params):
         return 1
 
     logger.info('ping guest')
-    if utils.do_ping(ip, 300):
+    if utils.do_ping(ip, 150, start_status=False):
         logger.error('The guest is still active, IP: ' + str(ip))
         return 1
     else:
