@@ -84,7 +84,7 @@ def destroy(params):
     # Check domain status by ping ip
     if not flags:
         logger.info('ping guest')
-        if not utils.do_ping(ip, 60):
+        if utils.do_ping(ip, 30):
             logger.error('The guest is still active, IP: ' + str(ip))
             return 1
     logger.info("domain %s was destroyed successfully" % guestname)

@@ -477,8 +477,8 @@ def mac_to_ips(mac, timeout, bridge='virbr0'):
     if not bridge_ip:
         return None
 
-    if timeout < 10:
-        timeout = 10
+    if timeout < 9:
+        timeout = 9
 
     cmd = "nmap -sP -n %s" % bridge_ip
     while timeout > 0:
@@ -501,24 +501,22 @@ def mac_to_ips(mac, timeout, bridge='virbr0'):
 def do_ping(ip, timeout):
     """Ping some host
 
-       return True on success or False on Failure
-       timeout should be greater or equal to 10
+       return True on success or False on failure
+       timeout should be greater or equal to 9
     """
     if not ip:
         return False
 
-    if timeout < 10:
-        timeout = 10
+    if timeout < 9:
+        timeout = 9
 
     cmd = "ping -c 3 " + str(ip)
-    ping_msg = "icmp_seq=1 Destination Host Unreachable"
     while timeout > 0:
         result = process.run(cmd, shell=True, ignore_status=True)
-        if ping_msg in result.stdout:
+        if result.exit_status == 0:
             break
         timeout -= 3
-
-    return (timeout and True) or False
+    return (timeout and 1) or 0
 
 
 def exec_cmd(command, sudo=False, cwd=None, infile=None, outfile=None,
