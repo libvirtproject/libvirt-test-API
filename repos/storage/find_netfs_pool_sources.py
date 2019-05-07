@@ -39,7 +39,7 @@ def check_pool_sources(host, xmlstr):
 
     nfs_path_list = []
     gluster_path_list = []
-    for key,value in source_val.items():
+    for key, value in source_val.items():
         if key == "nfs":
             cmd = "showmount --no-headers -e %s | awk -F' ' '{print $1}'" % host
             ret, nfs_path_list = utils.exec_cmd(cmd, shell=True)

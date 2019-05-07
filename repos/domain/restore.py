@@ -60,12 +60,12 @@ def check_guest_restore(*args):
 
 
 def restore(params):
-    """Save domain to a disk file"""
+    """ retore a domain """
     logger = params['logger']
     guestname = params['guestname']
     filepath = params['filepath']
-    conn = sharedmod.libvirtobj['conn']
 
+    conn = libvirt.open()
     domobj = conn.lookupByName(guestname)
 
     if check_guest_status(domobj, logger):
@@ -74,7 +74,7 @@ def restore(params):
         return 1
 
     try:
-        time.sleep(10)
+        time.sleep(20)
         conn.restore(filepath)
         time.sleep(20)
         if check_guest_restore(guestname, domobj, logger):

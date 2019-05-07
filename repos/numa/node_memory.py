@@ -58,7 +58,7 @@ def node_memory(params):
             ret, output = utils.exec_cmd(cmd, shell=True)
             for i in range(node_num):
                 node_list.append(output[i].split()[1].strip('node'))
-            ret =conn.getCellsFreeMemory(0, (int(node_list[-1]) + 1))
+            ret = conn.getCellsFreeMemory(0, (int(node_list[-1]) + 1))
             for i in range(node_num):
                 mem_list.append(int(ret[int(node_list[i])] / 1024))
         else:
