@@ -29,7 +29,7 @@ def shutdown_request(params):
         ip = utils.mac_to_ip(mac, 120)
         logger.info("Guest ip is %s" % ip)
 
-        cmd = "poweroff"
+        cmd = "shutdown now"
         err_str = "Connection to %s closed by remote host" % ip
         ret, out = utils.remote_exec_pexpect(ip, "root", "redhat", cmd)
         if ret and err_str not in out:

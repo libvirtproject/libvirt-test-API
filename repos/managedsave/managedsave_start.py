@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
 import time
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 
@@ -49,6 +48,11 @@ def managedsave_start(params):
     logger = params['logger']
     flags = params.get('flags', '')
     # Get given flags of managedsave
+
+    if utils.check_qemu_package("qemu-kvm"):
+        logger.info("Current qemu-kvm don't support this API.")
+        return 0
+
     if "flagsave" in sharedmod.data:
         flagsave = sharedmod.data.get('flagsave')
     else:

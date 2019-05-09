@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import libvirt
-from libvirt import libvirtError
 import lxml
 import lxml.etree
+
+from libvirt import libvirtError
+from utils import utils
 
 required_params = ('guestname', 'id',)
 optional_params = {'conn': 'qemu:///system'}
@@ -31,6 +33,10 @@ def add_iothread(params):
 
     logger = params['logger']
     id = int(params['id'])
+
+    if utils.check_qemu_package("qemu-kvm"):
+        logger.info("Current qemu-kvm don't support this API.")
+        return 0
 
     try:
         conn = libvirt.open(params['conn'])

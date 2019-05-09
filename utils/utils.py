@@ -569,9 +569,9 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
             elif index == 2:
                 child.close()
                 # Add for test
-                if child.exitstatus == 255:
-                    time.sleep(200)
-                    (child.exitstatus, child.before) = remote_exec_pexpect(hostname, username, password, cmd, 30)
+                #if child.exitstatus == 255:
+                #    time.sleep(200)
+                #    (child.exitstatus, child.before) = remote_exec_pexpect(hostname, username, password, cmd, 30)
                 # End for test
                 if isinstance(child.before, str):
                     return child.exitstatus, child.before.strip()
@@ -1724,3 +1724,12 @@ def isPower():
         return True
     else:
         return False
+
+
+def check_qemu_package(package):
+    cmd = "rpm -q %s" % package
+    ret, out = exec_cmd(cmd, shell=True)
+    if ret:
+        return False
+    else:
+        return True

@@ -1,7 +1,9 @@
 import importlib
 import libvirt
+
 from utils.events import eventListenerThreadThreshold, eventLoopPure
 from utils.utils import parse_flags, get_rand_str, version_compare
+from utils import utils
 
 required_params = ('event_runner', )
 optional_params = {
@@ -23,6 +25,10 @@ def threshold_event_any(params):
     event_domain = params.get('event_domain', None)
     event_runner_params = params.get('event_runner_params', {})
     event_timeout = int(params.get('event_timeout', 5))
+
+    if utils.check_qemu_package("qemu-kvm"):
+        logger.info("Current qemu-kvm don't support this API.")
+        return 0
 
     if not version_compare("libvirt-python", 3, 8, 0, logger):
         eventLoopPure(logger)
