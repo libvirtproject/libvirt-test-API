@@ -85,6 +85,9 @@ def migrate3(params):
     test_result = False
 
     tmp_list = params.get('params_list', None)
+    if not utils.version_compare('libvirt-python', 5, 0, 0, logger) and 'bandwidth.postcopy' in tmp_list:
+        logger.info("Current libvirt-python don't support VIR_MIGRATE_PARAM_BANDWIDTH_POSTCOPY.")
+        return 0
     params_list = None
     if tmp_list:
         params_list = json.loads(tmp_list)
