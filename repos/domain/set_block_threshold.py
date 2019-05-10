@@ -25,7 +25,7 @@ def set_block_threshold(params):
     if not utils.version_compare("libvirt-python", 3, 2, 0, logger):
         logger.info("Current libvirt-python don't support this API.")
         return 0
-    if utils.check_qemu_package("qemu-kvm"):
+    if utils.check_qemu_package("qemu-kvm") and not utils.version_compare("qemu-kvm", 2, 12, 0, logger):
         logger.info("Current qemu-kvm don't support this API.")
         return 0
 

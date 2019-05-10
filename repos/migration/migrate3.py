@@ -3,10 +3,11 @@
 import threading
 import time
 import json
-
 import libvirt
+
 from libvirt import libvirtError
 from repos.domain import domain_common
+from utils import utils
 
 required_params = ('target_machine',
                    'username',

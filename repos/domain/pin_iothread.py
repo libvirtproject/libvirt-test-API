@@ -105,7 +105,7 @@ def pin_iothread(params):
     logger = params['logger']
     fail = 0
 
-    if utils.check_qemu_package("qemu-kvm"):
+    if utils.check_qemu_package("qemu-kvm") and not utils.version_compare("qemu-kvm", 2, 12, 0, logger):
         logger.info("Current qemu-kvm don't support this API.")
         return 0
 

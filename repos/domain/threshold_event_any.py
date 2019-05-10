@@ -26,7 +26,7 @@ def threshold_event_any(params):
     event_runner_params = params.get('event_runner_params', {})
     event_timeout = int(params.get('event_timeout', 5))
 
-    if utils.check_qemu_package("qemu-kvm"):
+    if utils.check_qemu_package("qemu-kvm") and not utils.version_compare("qemu-kvm", 2, 12, 0, logger):
         logger.info("Current qemu-kvm don't support this API.")
         return 0
 

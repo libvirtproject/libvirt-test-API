@@ -101,6 +101,10 @@ def set_vcpus_flags(params):
     vcpu = int(params['vcpu'])
     flags = params['flags']
 
+    if utils.check_qemu_package("qemu-kvm") and not utils.version_compare("qemu-kvm", 2, 12, 0, logger):
+        logger.info("Current qemu-kvm don't support this API.")
+        return 0
+
     logger.info("guestname: %s" % guestname)
     logger.info("vcpu number: %s" % vcpu)
     logger.info("flags: %s" % flags)
