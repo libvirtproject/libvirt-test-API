@@ -6,6 +6,7 @@
 
 import time
 import math
+import functools
 
 import libvirt
 from libvirt import libvirtError
@@ -55,6 +56,15 @@ def get_current_memory(guestname, username, password):
     return current
 
 
+def check_dom_current_mem(domobj, memory, logger):
+    dominfo = domobj.info()
+    logger.debug("domain info: %s" % dominfo)
+    if dominfo[2] >= memory and dominfo[2] <= 2516582:
+        return True
+    else:
+        return False
+
+
 def set_memory_live(params):
     """set domain memory with live flag and check
     """
@@ -88,11 +98,9 @@ def set_memory_live(params):
                     (memory, libvirt.VIR_DOMAIN_AFFECT_LIVE))
         domobj.setMemoryFlags(memory, libvirt.VIR_DOMAIN_AFFECT_LIVE)
         logger.info("get domain current memory")
-        time.sleep(10)
-        dominfo = domobj.info()
-        logger.debug("domain info list is: %s" % dominfo)
-        logger.info("domain current memory value is: %s KiB" % dominfo[2])
-        if memory == dominfo[2]:
+
+        ret = utils.wait_for(functools.partial(check_dom_current_mem, domobj, memory, logger), 60, step=5)
+        if ret:
             logger.info("set memory match with domain info")
         else:
             logger.error("set memory not match with domain info")
