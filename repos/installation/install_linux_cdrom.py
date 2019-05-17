@@ -465,7 +465,7 @@ def install_linux_cdrom(params):
             cmd = ('wget -N %s -P %s' % (bootaddr, bootcd))
             custom_iso = bootaddr.split('/')[-1]
             ret = process.run(cmd, shell=True, ignore_status=True)
-    except TestError, err:
+    except TestError as err:
         logger.error("Failed to prepare boot cdrom!")
         return 1
 
