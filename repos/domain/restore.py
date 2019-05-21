@@ -3,9 +3,9 @@
 
 import libvirt
 import time
+import functools
 
 from libvirt import libvirtError
-
 from src import sharedmod
 from utils import utils
 
@@ -59,6 +59,16 @@ def check_guest_restore(*args):
         return False
 
 
+def restore_guest(conn, filepath, logger):
+    try:
+        conn.restore(filepath)
+    except libvirtError as e:
+        logger.error("API error message: %s, error code is %s"
+                     % (e.get_error_message(), e.get_error_code()))
+        return False
+    return True
+
+
 def restore(params):
     """ retore a domain """
     logger = params['logger']
@@ -73,19 +83,14 @@ def restore(params):
                       can not do restore operation")
         return 1
 
-    try:
-        time.sleep(20)
-        conn.restore(filepath)
-        time.sleep(20)
-        if check_guest_restore(guestname, domobj, logger):
-            logger.info("restore %s domain successful" % guestname)
-        else:
-            logger.error("Error: fail to check restore domain")
-            return 1
-    except libvirtError as e:
-        logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
+    ret = utils.wait_for(functools.partial(restore_guest, conn, filepath, logger), 60, step=5)
+    if not ret:
         logger.error("Error: fail to restore %s domain" % guestname)
+        return 1
+    if check_guest_restore(guestname, domobj, logger):
+        logger.info("restore %s domain successful" % guestname)
+    else:
+        logger.error("Error: fail to check restore domain")
         return 1
 
     return 0
