@@ -2,8 +2,9 @@
 # get guest vcpus
 
 import time
-from libvirt import libvirtError
+import functools
 
+from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 from repos.installation import install_common
@@ -59,23 +60,23 @@ def check_guest_vcpus(ip, info, logger):
     if ret:
         logger.error("Get guest online cpu list failed.")
         logger.error("ret: %s, out: %s" % (ret, out))
-        return 1
+        return False
 
     if info['online'] != out:
-        return 1
+        return False
 
     cmd = "lscpu | grep '^CPU(s)' | awk '{print $2}'"
     ret, out = utils.remote_exec_pexpect(ip, username, passwd, cmd)
     if ret:
         logger.error("Get guest cpu failed.")
         logger.error("ret: %s, out: %s" % (ret, out))
-        return 1
+        return False
 
     vcpu = "0-" + str(int(out) - 1)
     if info['vcpus'] != vcpu and info['offlinable'] != vcpu:
-        return 1
+        return False
 
-    return 0
+    return True
 
 
 def get_guest_vcpus(params):
@@ -96,13 +97,12 @@ def get_guest_vcpus(params):
         ip = get_guest_ip(guestname, logger)
         info = domobj.guestVcpus()
         logger.info("Guest vcpus: %s" % info)
-        if check_guest_vcpus(ip, info, logger):
+        ret = utils.wait_for(functools.partial(check_guest_vcpus, ip, info, logger), 90, step=5)
+        if ret:
+            logger.info("PASS: get guest vcpus successful.")
+        else:
             logger.error("FAIL: get guest vcpus failed.")
             return 1
-        else:
-            logger.info("PASS: get guest vcpus successful.")
-            return 0
-
     except libvirtError as e:
         logger.error("libvirt call failed: " + str(e))
         return 1
