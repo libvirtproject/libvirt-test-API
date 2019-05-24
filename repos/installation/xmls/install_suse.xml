@@ -3,7 +3,7 @@
   <memory>MEMORY</memory>
   <vcpu>VCPU</vcpu>
   <os>
-    <type arch='GUESTARCH' machine="GUESTMACHINE">hvm</type>
+    <type machine="GUESTMACHINE">hvm</type>
     <boot dev='cdrom'/>
   </os>
   <features>
