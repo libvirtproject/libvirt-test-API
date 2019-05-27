@@ -13,6 +13,7 @@ from src import sharedmod
 from src import env_parser
 from utils import utils, process
 from repos.domain import domain_common
+from repos.installation import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
@@ -65,7 +66,7 @@ def clean_env(diskpath, logger):
 def prepare_conf_ppc(ostree, kscfg, newest, envparser):
     os.system("restorecon -Rv %s >> /dev/null 2>&1" % TFTPPATH)
 
-    if len(newest) == 0:
+    if newest is None:
         new_boot_cfg_filename = TFTPPATH + '/tmp.conf'
         new_boot_cfg = open(new_boot_cfg_filename, 'w')
         if 'RHEL-6' in ostree:
@@ -89,20 +90,21 @@ def prepare_conf_ppc(ostree, kscfg, newest, envparser):
         new_boot_cfg.close()
         old_boot_cfg.close()
         shutil.move(new_boot_cfg_filename, old_boot_cfg_filename)
-    elif 'RHEL-ALT' in newest:
-        arch = re.search(r'ppc.*?/', ostree).group()[:-1]
-        bootaddr = envparser.get_value('guest', 'rhel_alt7_' + arch + '_boot')
-        cmd = 'wget -N ' + bootaddr + ' -P ' + TFTPPATH + '/boot/grub/'
-        ret = process.run(cmd, shell=True, ignore_status=True)
-    elif 'RHEL' in newest:
-        if 'RHEL-6' in ostree:
-            bootaddr = envparser.get_value('guest', 'rhel6_ppc64_boot')
-            cmd = 'wget -N ' + bootaddr + ' -P ' + TFTPPATH + '/etc/'
-        else:
+    else:
+        if 'RHEL-ALT' in newest:
             arch = re.search(r'ppc.*?/', ostree).group()[:-1]
-            bootaddr = envparser.get_value('guest', 'rhel7_' + arch + '_boot')
+            bootaddr = envparser.get_value('guest', 'rhel_alt7_' + arch + '_boot')
             cmd = 'wget -N ' + bootaddr + ' -P ' + TFTPPATH + '/boot/grub/'
-        ret = process.run(cmd, shell=True, ignore_status=True)
+            ret = process.run(cmd, shell=True, ignore_status=True)
+        elif 'RHEL' in newest:
+            if 'RHEL-6' in ostree:
+                bootaddr = envparser.get_value('guest', 'rhel6_ppc64_boot')
+                cmd = 'wget -N ' + bootaddr + ' -P ' + TFTPPATH + '/etc/'
+            else:
+                arch = re.search(r'ppc.*?/', ostree).group()[:-1]
+                bootaddr = envparser.get_value('guest', 'rhel7_' + arch + '_boot')
+                cmd = 'wget -N ' + bootaddr + ' -P ' + TFTPPATH + '/boot/grub/'
+            ret = process.run(cmd, shell=True, ignore_status=True)
 
 
 def prepare_network_ppc(ostree, logger):
@@ -308,37 +310,17 @@ def install_linux_pxe_ppc(params):
 
     rhelnewest = params.get('rhelnewest')
     rhelalt = params.get('rhelalt')
+    logger.info("rhelnewest: %s" % rhelnewest)
 
     envparser = env_parser.Envparser(envfile)
 
-    if 'ppc' in guestarch:
-        if rhelnewest is not None:
-            version = re.search(r'RHEL.*?/', rhelnewest).group()[:-1]
-            num = version.split("-")[1].split('.')[0]
-            kscfg = envparser.get_value("guest", "rhel" + num + "_newest_" + guestarch + "_pxe_ks")
-            ostree = rhelnewest + "%s/os" % guestarch
-            temp = rhelnewest
-        elif rhelalt is not None:
-            version = re.search(r'RHEL-ALT.*?/', rhelalt).group()[:-1]
-            num = version.split("-")[2].split('.')[0]
-            kscfg = envparser.get_value("guest", "rhel_alt" + num + "_newest_" + guestarch + "_pxe_ks")
-            ostree = rhelalt + "%s/os" % guestarch
-            temp = rhelalt
-        else:
-            kscfg = envparser.get_value("guest", os_arch + "_pxe_ks")
-            ostree = envparser.get_value("guest", os_arch)
-            temp = ''
+    ostree = install_common.get_ostree(rhelnewest, guestos, guestarch, logger)
+    kscfg = install_common.get_kscfg(rhelnewest, guestos, guestarch, "pxe", logger)
+    isolink = install_common.get_iso_link(rhelnewest, guestos, guestarch, logger)
 
-        prepare_kernel_ppc(ostree, logger)
-        prepare_network_ppc(ostree, logger)
-        prepare_conf_ppc(ostree, kscfg, temp, envparser)
-
-    else:
-        default_file = envparser.get_value("guest", os_arch + "_pxe_default")
-        logger.debug('default file:\n    %s' % default_file)
-
-        logger.info("begin to prepare network")
-        prepare_install(default_file, logger)
+    prepare_kernel_ppc(ostree, logger)
+    prepare_network_ppc(ostree, logger)
+    prepare_conf_ppc(ostree, kscfg, rhelnewest, envparser)
 
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
 

@@ -130,6 +130,8 @@ def install_linux_iso_ppc(params):
     graphic = params.get('graphic', 'vnc')
     video = params.get('video', 'vga')
     installtype = params.get('type', 'define')
+    rhelnewest = params.get('rhelnewest')
+    rhelalt = params.get('rhelalt')
 
     logger.info("guestname: %s" % guestname)
     params_info = "%s, %s, " % (guestos, guestarch)
@@ -137,6 +139,7 @@ def install_linux_iso_ppc(params):
     params_info += "%s, %s, " % (imageformat, graphic)
     params_info += "%s, %s(storage)" % (video, storage)
     logger.info("%s" % params_info)
+    logger.info("rhelnewest: %s" % rhelnewest)
 
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
@@ -223,33 +226,14 @@ def install_linux_iso_ppc(params):
     else:
         xmlstr = xmlstr.replace("VIDEO", video)
 
-    # Checking the nicdriver define
-    if nicdriver == 'virtio' or nicdriver == 'e1000' or nicdriver == 'rtl8139' or nicdriver == 'spapr-vlan':
-        logger.info('The kind of nicdriver is %s' % nicdriver)
-    else:
-        logger.error('unsupported nicdirver')
-        return 1
-
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     logger.info("the environment file is %s" % envfile)
-
-    rhelnewest = params.get('rhelnewest')
-    rhelalt = params.get('rhelalt')
-
-    os_arch = guestos + "_" + guestarch
 
     envparser = env_parser.Envparser(envfile)
     ostree = install_common.get_ostree(rhelnewest, guestos, guestarch, logger)
     ks = install_common.get_kscfg(rhelnewest, guestos, guestarch, "iso", logger)
     isolink = install_common.get_iso_link(rhelnewest, guestos, guestarch, logger)
-
-    logger.debug('install source:\n    %s' % ostree)
-    logger.debug('kisckstart file:\n    %s' % ks)
-
-    if (ostree == 'http://'):
-        logger.error("no os tree defined in %s for %s" % (envfile, os_arch))
-        return 1
 
     logger.info('prepare installation...')
     cache_folder = envparser.get_value("variables", "domain_cache_folder")
@@ -296,15 +280,8 @@ def install_linux_iso_ppc(params):
         logger.info('define guest from xml description')
         try:
             domobj = conn.defineXML(xmlstr)
-        except libvirtError as e:
-            logger.error("API error message: %s, error code is %s"
-                         % (e.get_error_message(), e.get_error_code()))
-            logger.error("fail to define domain %s" % guestname)
-            return 1
-
-        logger.info('start installation guest ...')
-
-        try:
+            logger.info('start installation guest ...')
+            time.sleep(3)
             domobj.create()
         except libvirtError as e:
             logger.error("API error message: %s, error code is %s"
@@ -367,23 +344,8 @@ def install_linux_iso_ppc(params):
                 logger.info('%s seconds passed away...' % interval)
 
     if interval == 2400:
-        if 'rhel3u9' in guestname:
-            logger.info(
-                "guest installaton will be destoryed forcelly for rhel3u9 guest")
-            domobj.destroy()
-            logger.info("boot guest vm off harddisk")
-            xmlstr_bak = xmlstr_bak.replace("KERNEL", "")
-            xmlstr_bak = xmlstr_bak.replace("INITRD", "")
-            xmlstr_bak = xmlstr_bak.replace("ks=KS", "")
-            xmlstr_bak = xmlstr_bak.replace("dev=\"cdrom\"", "dev=\"hd\"")
-            xmlstr = xmlstr_bak
-            ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger)
-            if ret:
-                logger.info("booting guest vm off harddisk failed")
-                return 1
-        else:
-            logger.info("guest installation timeout 2400s")
-            return 1
+        logger.info("guest installation timeout 2400s")
+        return 1
     else:
         logger.info("guest is booting up")
 
@@ -447,14 +409,7 @@ def install_linux_iso_ppc_clean(params):
         os.remove(isopath)
 
     diskpath = params.get('diskpath', "/var/lib/libvirt/images/libvirt-test-api")
-    conn = libvirt.open()
-    domain_common.guest_clean(conn, guestname, logger)
 
-    if os.path.exists(diskpath):
-        os.remove(diskpath)
-
-    if os.path.exists(VMLINUZ):
-        os.remove(VMLINUZ)
-
-    if os.path.exists(INITRD):
-        os.remove(INITRD)
+    install_common.clean_guest(guestname, logger)
+    install_common.remove_all(diskpath, logger)
+    install_common.remove_vmlinuz_initrd(logger)

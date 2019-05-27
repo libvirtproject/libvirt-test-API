@@ -418,6 +418,7 @@ def install_linux_cdrom(params):
     os_arch = guestos + "_" + guestarch
     rhelnewest = params.get('rhelnewest')
     rhelalt = params.get('rhelalt')
+    logger.info("rhelnewest: %s" % rhelnewest)
 
     envparser = env_parser.Envparser(envfile)
     if rhelnewest is not None:
