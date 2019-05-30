@@ -4,16 +4,33 @@
 # live flag only work on running domain, so test on shutoff
 # domain will fail.
 
-from xml.dom import minidom
-
 import libvirt
-from libvirt import libvirtError
+import functools
 
+from xml.dom import minidom
+from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 
 required_params = ('guestname', 'vcpu', 'username', 'password', )
 optional_params = {}
+
+
+def get_guest_vcpu(current, ip, username, password, logger):
+    cmd = "cat /proc/cpuinfo | grep processor | wc -l"
+    ret, output = utils.remote_exec_pexpect(ip, username, password, cmd)
+    if not ret:
+        logger.info("cpu number in domain is %s" % output)
+        if int(output) == current:
+            logger.info("cpu in domain is equal to current vcpu value")
+            return True
+        else:
+            logger.error("current vcpu is not equal as check in domain")
+            return False
+    else:
+        logger.error("check in domain fail: ret: %s, out: %s" % (ret, output))
+        return False
+
 
 
 def get_current_vcpu(domobj, username, password):
@@ -40,26 +57,15 @@ def get_current_vcpu(domobj, username, password):
         logger.error("libvirt call failed: " + str(e))
         return False
 
-    logger.debug("get the mac address of vm %s" % guestname)
     mac = utils.get_dom_mac_addr(guestname)
-    logger.debug("the mac address of vm %s is %s" % (guestname, mac))
-
-    logger.info("check cpu number in domain")
+    logger.info("mac address: %s" % mac)
     ip = utils.mac_to_ip(mac, 180)
-
-    cmd = "cat /proc/cpuinfo | grep processor | wc -l"
-    ret, output = utils.remote_exec_pexpect(ip, username, password, cmd)
+    logger.info("guest ip: %s" % ip)
+    logger.info("check cpu number in domain")
+    ret = utils.wait_for(functools.partial(get_guest_vcpu, current, ip, username, password, logger), 60, step=5)
     if not ret:
-        logger.info("cpu number in domain is %s" % output)
-        if int(output) == current:
-            logger.info("cpu in domain is equal to current vcpu value")
-        else:
-            logger.error("current vcpu is not equal as check in domain")
-            return False
-    else:
-        logger.error("check in domain fail")
+        logger.error("get vcpu in guest timeout.")
         return False
-
     return current
 
 
