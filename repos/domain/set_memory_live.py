@@ -99,7 +99,7 @@ def set_memory_live(params):
         domobj.setMemoryFlags(memory, libvirt.VIR_DOMAIN_AFFECT_LIVE)
         logger.info("get domain current memory")
 
-        ret = utils.wait_for(functools.partial(check_dom_current_mem, domobj, memory, logger), 60, step=5)
+        ret = utils.wait_for(functools.partial(check_dom_current_mem, domobj, memory, logger), 180, step=5)
         if ret:
             logger.info("set memory match with domain info")
         else:

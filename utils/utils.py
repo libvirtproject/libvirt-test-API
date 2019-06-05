@@ -684,15 +684,18 @@ def get_remote_memory(hostname, username, password, mem_type="DirectMap"):
     while i < 3:
         i += 1
         ret, out = remote_exec_pexpect(hostname, username, password, cmd)
-        memory = out.split('\r\n')
-        j = 0
-        for j in range(len(memory)):
-            memsize += int(memory[j])
-
-        if memsize == -1:
+        if ret:
+            time.sleep(15)
             continue
         else:
-            break
+            memory = out.split('\r\n')
+            j = 0
+            for j in range(len(memory)):
+                memsize += int(memory[j])
+            if memsize == -1:
+                continue
+            else:
+                break
     return memsize
 
 

@@ -97,7 +97,7 @@ def get_guest_vcpus(params):
         ip = get_guest_ip(guestname, logger)
         info = domobj.guestVcpus()
         logger.info("Guest vcpus: %s" % info)
-        ret = utils.wait_for(functools.partial(check_guest_vcpus, ip, info, logger), 90, step=5)
+        ret = utils.wait_for(functools.partial(check_guest_vcpus, ip, info, logger), 180, step=5)
         if ret:
             logger.info("PASS: get guest vcpus successful.")
         else:

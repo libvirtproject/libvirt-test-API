@@ -62,7 +62,7 @@ def get_current_vcpu(domobj, username, password):
     ip = utils.mac_to_ip(mac, 180)
     logger.info("guest ip: %s" % ip)
     logger.info("check cpu number in domain")
-    ret = utils.wait_for(functools.partial(get_guest_vcpu, current, ip, username, password, logger), 60, step=5)
+    ret = utils.wait_for(functools.partial(get_guest_vcpu, current, ip, username, password, logger), 180, step=5)
     if not ret:
         logger.error("get vcpu in guest timeout.")
         return False
