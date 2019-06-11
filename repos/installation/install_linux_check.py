@@ -101,7 +101,7 @@ def install_linux_check(params):
         vcpunum_expect = int(utils.get_num_vcpus(domain_name))
         logger.info("vcpu number in domain config xml - %s is %s" %
                     (domain_name, vcpunum_expect))
-        vcpunum_actual = int(utils.get_remote_vcpus(ipaddr, "root", "redhat", logger))
+        vcpunum_actual = utils.get_remote_vcpus(ipaddr, "root", "redhat", logger)
         logger.info("The actual vcpu number in guest - %s is %s" %
                     (domain_name, vcpunum_actual))
         if vcpunum_expect == vcpunum_actual:

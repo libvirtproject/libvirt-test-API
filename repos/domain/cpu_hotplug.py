@@ -51,12 +51,10 @@ def redefine_vcpu_number(domobj, guestname, vcpu):
     return doc.toxml()
 
 
-def check_current_vcpu(domobj, username, password):
+def check_current_vcpu(domobj, username, password, ip):
     """dump domain xml description to get current vcpu number
     """
     guestxml = domobj.XMLDesc(1)
-    logger.debug("domain %s xml is :\n%s" % (domobj.name(), guestxml))
-
     xml = minidom.parseString(guestxml)
     vcpu = xml.getElementsByTagName('vcpu')[0]
     if vcpu.hasAttribute('current'):
@@ -67,96 +65,47 @@ def check_current_vcpu(domobj, username, password):
         current_vcpu = int(vcpu.childNodes[0].data)
 
     logger.info("check cpu number in domain")
-    ip = utils.mac_to_ip(mac, 180)
-
-    cmd = "cat /proc/cpuinfo | grep processor | wc -l"
-    ret, output = utils.remote_exec_pexpect(ip, username, password, cmd)
-    if not ret:
-        logger.info("cpu number in domain is %s" % output)
-        if int(output) == current_vcpu:
+    out = utils.get_remote_vcpus(ip, username, password, logger)
+    if out == -1:
+        logger.error("check in domain fail")
+        return False, out
+    else:
+        logger.info("cpu number in domain is %s" % out)
+        if out == current_vcpu:
             logger.info("cpu number in domain is equal to current vcpu value")
-            return current_vcpu
+            return True, current_vcpu
         else:
             logger.error("current vcpu is not equal as check in domain")
-            return False
-    else:
-        logger.error("check in domain fail")
-        return False
+            return False, -1
 
 
 def set_vcpus(domobj, guestname, vcpu, username, password):
     """set the value of virtual machine to vcpu offline , then boot up
        the virtual machine
     """
-    timeout = 60
-    logger.info('destroy domain')
-
     try:
+        logger.info('destroy domain')
         domobj.destroy()
-    except libvirtError as e:
-        logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
-        logger.error("fail to destroy domain")
-        return 1
+        time.sleep(3)
 
-    newguestxml = redefine_vcpu_number(domobj, guestname, vcpu)
-    logger.debug('''new guest %s xml :\n%s''' % (guestname, newguestxml))
-
-    logger.info("undefine the original guest")
-    try:
+        newguestxml = redefine_vcpu_number(domobj, guestname, vcpu)
+        logger.debug('''new guest xml: \n%s''' % newguestxml)
+        logger.info("undefine the original guest")
         domobj.undefine()
-    except libvirtError as e:
-        logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
-        logger.error("fail to undefine guest %s" % guestname)
-        return 1
+        time.sleep(3)
 
-    logger.info("define guest with new xml")
-    try:
+        logger.info("define guest with new xml")
         conn = domobj._conn
         conn.defineXML(newguestxml)
-    except libvirtError as e:
-        logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
-        logger.error("fail to define guest %s" % guestname)
-        return 1
+        time.sleep(3)
 
-    try:
         logger.info('boot guest up ...')
         domobj.create()
-    except libvirtError as e:
-        logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
-        logger.error("fail to start domain %s" % guestname)
-        return 1
-
-    timeout = 600
-
-    while timeout:
         time.sleep(10)
-        timeout -= 10
-
-        logger.debug("get ip by mac address")
-        ip = utils.mac_to_ip(mac, 180)
-        logger.debug("the ip address of vm %s is %s" % (guestname, ip))
-
-        if not ip:
-            logger.info(str(timeout) + "s left")
-        else:
-            logger.info("vm %s power on successfully" % guestname)
-            logger.info("the ip address of vm %s is %s" % (guestname, ip))
-            break
-
-    if timeout <= 0:
-        logger.info("fail to power on vm %s" % guestname)
+    except libvirtError as err:
+        logger.error("API error message: %s, error code: %s"
+                     % (err.get_error_message(), err.get_error_code()))
         return 1
-
-    ret = check_current_vcpu(domobj, username, password)
-    if ret != 'False':
-        return 0
-    else:
-        return 1
-
     return 0
 
 
@@ -178,42 +127,42 @@ def cpu_hotplug(params):
         logger.info("illegal features: " + str(features))
         return 1
 
-    logger.info("features to test %s" % str(features))
-    logger.info("the name of virtual machine is %s" % guestname)
-    logger.info("the vcpu given is %s" % vcpu)
+    logger.info("features: %s" % str(features))
+    logger.info("guestname: %s" % guestname)
+    logger.info("vcpu number: %s" % vcpu)
     if not vcpu > 1:
         logger.error("vcpu number should bigger than 1")
         return 1
 
-    conn = sharedmod.libvirtobj['conn']
-
     try:
+        conn = sharedmod.libvirtobj['conn']
         max_vcpus = int(conn.getMaxVcpus('kvm'))
         logger.debug("hypervisor supported max vcpu is %s" % max_vcpus)
-    except libvirtError as e:
-        logger.error("libvirt call failed: " + str(e))
+    except libvirtError as err:
+        logger.error("libvirt call failed: " + str(err))
         return 1
 
     if vcpu > max_vcpus:
-        logger.error("the given vcpu %s is bigger than hypervisor supported" %
-                     vcpu)
+        logger.error("the given vcpu %s is bigger than hypervisor supported" % vcpu)
         return 1
 
     ret = check_domain_running(conn, guestname)
     if ret:
         return 1
 
-    logger.debug("get the mac address of vm %s" % guestname)
-    global mac
-    mac = utils.get_dom_mac_addr(guestname)
-    logger.debug("the mac address of vm %s is %s" % (guestname, mac))
-
     domobj = conn.lookupByName(guestname)
-
-    logger.info("set domain vcpu to %s and restart with current cpu as 1" %
-                vcpu)
+    logger.info("set domain vcpu to %s and restart with current cpu as 1" % vcpu)
     ret = set_vcpus(domobj, guestname, vcpu, username, password)
-    if ret != 0:
+    if ret:
+        return 1
+    logger.info("get the mac address of vm.")
+    mac = utils.get_dom_mac_addr(guestname)
+    logger.info("mac addr: %s" % mac)
+    logger.info("get ip by mac address")
+    ip = utils.mac_to_ip(mac, 180)
+    logger.info("ip addr: %s" % ip)
+    ret, out = check_current_vcpu(domobj, username, password, ip)
+    if not ret:
         return 1
 
     try:
@@ -236,8 +185,10 @@ def cpu_hotplug(params):
 
             time.sleep(5)
 
-            ret = check_current_vcpu(domobj, username, password)
-            if ret == i:
+            ret, out = check_current_vcpu(domobj, username, password, ip)
+            if not ret:
+                return 1
+            if out == i:
                 logger.info("current vcpu number is %s and equal to set" % ret)
             else:
                 logger.error("set current vcpu failed")
@@ -256,9 +207,10 @@ def cpu_hotplug(params):
                 return 1
 
             time.sleep(5)
-
-            ret = check_current_vcpu(domobj, username, password)
-            if ret == i:
+            ret, out = check_current_vcpu(domobj, username, password, ip)
+            if not ret:
+                return 1
+            if out == i:
                 logger.info("current vcpu number is %s and equal to set" % ret)
             else:
                 logger.error("set current vcpu failed")

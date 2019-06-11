@@ -552,7 +552,9 @@ def exec_cmd(command, sudo=False, cwd=None, infile=None, outfile=None,
 def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
     """ Remote exec function via pexpect """
     user_hostname = "%s@%s" % (username, hostname)
-    while True:
+    count = 0
+    while count < 15:
+        count += 1
         child = pexpect.spawn("/usr/bin/ssh", [user_hostname, '-q', cmd],
                               timeout=60, maxread=2000, logfile=None)
         while True:
@@ -569,9 +571,9 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
             elif index == 2:
                 child.close()
                 # Add for test
-                #if child.exitstatus == 255:
-                #    time.sleep(200)
-                #    (child.exitstatus, child.before) = remote_exec_pexpect(hostname, username, password, cmd, 30)
+                if child.exitstatus == 255:
+                    time.sleep(10)
+                    break
                 # End for test
                 if isinstance(child.before, str):
                     return child.exitstatus, child.before.strip()
@@ -589,6 +591,8 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
                     return 1, "Timeout!!!!"
                 timeout = timeout - 60
                 break
+    if count == 15:
+        return 1, "Timeout!!!"
 
 
 def scp_file(hostname, username, password, target_path, filename):
@@ -671,9 +675,10 @@ def get_remote_vcpus(hostname, username, password, logger):
     cmd = "cat /proc/cpuinfo | grep processor | wc -l"
     (ret, out) = remote_exec_pexpect(hostname, username, password, cmd)
     if ret:
-        logger.info("get remote vcpus failed. out: %s" % out)
+        logger.error("get remote cpu number failed.")
+        logger.error("ret: %s, out: %s" % (ret, out))
         return -1
-    return out
+    return int(out)
 
 
 def get_remote_memory(hostname, username, password, mem_type="DirectMap"):
@@ -706,10 +711,11 @@ def get_remote_kernel(hostname, username, password):
     while i < 3:
         i += 1
         ret, out = remote_exec_pexpect(hostname, username, password, cmd)
-        if out:
-            break
-        else:
+        if ret:
+            time.sleep(15)
             continue
+        else:
+            break
     return out
 
 
