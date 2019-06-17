@@ -138,7 +138,8 @@ def mk_kickstart_iso(kscfg, guestos, logger):
         for line in old_cfg:
             if re.search(r'linux /ppc/ppc64/vmlinuz.*? ro', line):
                 if 'rhel7' in guestos:
-                    line = re.sub('inst.stage2=hd.*?%s' % vlmid.split()[1], '', line)
+                    if "inst.stage2=hd" in line:
+                        line = re.sub('inst.stage2=hd.*?%s' % vlmid.split()[1], '', line)
                     line = line.replace('ro', 'inst.repo=cdrom:sr0 inst.ks=cdrom:sr0:/%s ro' % kscfg)
                 elif 'rhel8' in guestos:
                     line = line.replace('ro', 'inst.repo=cdrom:sr0 inst.ks=cdrom:sr0:/%s ro' % kscfg)
