@@ -28,6 +28,7 @@ def block_rebase(params):
     sourcehost = params.get('sourcehost', None)
     sourcepath = params.get('sourcepath', None)
     flags = parse_flags(params, param_name='flags')
+    disk_path = ""
 
     logger.info("blockRebase flags: %s" % params.get("flags", None))
     logger.info("bandwidth: %s, base: %s" % (bandwidth, base))
@@ -85,7 +86,7 @@ def block_rebase(params):
                 return 1
             else:
                 logger.info("PASS: block rebase success, backing image is not exist.")
-                del_file(get_xml_value(domobj, "/domain/devices/disk/source/@file")[0])
+                disk_path = get_xml_value(domobj, "/domain/devices/disk/source/@file")[0]
 
         elif "VIR_DOMAIN_BLOCK_REBASE_COPY_RAW" in params.get('flags', None):
             domobj.blockRebase(path[0], base, 0, flags)
@@ -95,7 +96,6 @@ def block_rebase(params):
                 job_type = get_xml_value(domobj, "/domain/devices/disk/mirror/@job")
                 format_type = get_xml_value(domobj, "/domain/devices/disk/mirror/format/@type")
                 logger.info("format type: %s" % format_type)
-                del_file(base, logger)
                 domobj.blockJobAbort(path[0])
                 if format_type[0] != "raw":
                     logger.error("check format type failed. type: %s" % format_type)
@@ -119,8 +119,6 @@ def block_rebase(params):
                 new_info = domobj.blockJobInfo(path[0], 0)
                 if len(new_info) == 0:
                     logger.info("block rebase complete.")
-                    utils.cleanup_iscsi(sourcepath, mountpath, logger)
-                    del_file(mountpath, logger)
                     break
 
                 if len(new_info) == 4 and new_info['type'] == 2:
@@ -132,7 +130,8 @@ def block_rebase(params):
                         return 1
                     else:
                         logger.info("check dest file successful.")
-                    utils.cleanup_iscsi(sourcepath, mountpath, logger)
+                        domobj.blockJobAbort(path[0])
+                        break
                 else:
                     logger.error("block rebase info error: %s" % new_info)
                     domobj.blockJobAbort(path[0])
@@ -150,8 +149,6 @@ def block_rebase(params):
             domobj.blockRebase(path[0], base, int(bandwidth), flags)
             new_info = domobj.blockJobInfo(path[0], 1)
             domobj.blockJobAbort(path[0])
-            del_file(base, logger)
-
             if len(new_info) == 4 and new_info['type'] == 2:
                 if new_info['bandwidth'] == int(bandwidth):
                     logger.info("Pass: check bandwidth successful.")
@@ -198,21 +195,16 @@ def block_rebase(params):
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
         return 1
+    finally:
+        if "VIR_DOMAIN_BLOCK_REBASE_RELATIVE" in params.get('flags', None):
+            cmd = "rm -f /var/lib/libvirt/images/libvirt-test-api.*"
+            ret, out = utils.exec_cmd(cmd, shell=True)
+            if ret != 0:
+                logger.error("clean env failed.")
+        elif "VIR_DOMAIN_BLOCK_REBASE_COPY_DEV" in params.get('flags', None):
+            utils.cleanup_iscsi(sourcepath, mountpath, logger)
+            del_file(mountpath, logger)
+        del_file(base, logger)
+        del_file(disk_path, logger)
 
     return 0
-
-
-def block_rebase_clean(params):
-    logger = params['logger']
-    base = params.get('base', "")
-    sourcepath = params.get('sourcepath', None)
-
-    if "VIR_DOMAIN_BLOCK_REBASE_RELATIVE" in params.get('flags', None):
-        cmd = "rm -f /var/lib/libvirt/images/libvirt-test-api.*"
-        ret, out = utils.exec_cmd(cmd, shell=True)
-        if ret != 0:
-            logger.error("clean env failed.")
-    elif "VIR_DOMAIN_BLOCK_REBASE_COPY_DEV" in params.get('flags', None):
-        utils.cleanup_iscsi(sourcepath, base, logger)
-    else:
-        del_file(base, logger)
