@@ -8,8 +8,6 @@ from libvirt import libvirtError
 from src import sharedmod
 from utils import utils
 
-GREP_STR = "LC_ALL=C PATH="
-GET_NATIVE_CONFIG = "grep '%s' /var/log/libvirt/qemu/%s.log | tail -1"
 SPLIT_STR = " -"
 
 required_params = ('nativeformat', 'guestname')
@@ -17,28 +15,17 @@ optional_params = {}
 
 
 def check_domxml_to_native(nativeconfig, guestname):
-    """Check the result form API domainXMLFromNative,
-       compare the result with the native config in
-       /var/log/libvirt/qemu/$vm.log, and remove vnc
-       port and netdev part before compare.
-    """
-    if utils.isRelease('7', logger):
-        (status, output) = utils.exec_cmd(GET_NATIVE_CONFIG %
-                                          (GREP_STR, guestname), shell=True)
-        if status:
-            logger.error("Fail to get native config of domain %s" % guestname)
-            return 1
-        nativeconLog = output[0]
-    else:
-        cmd = "cat /var/run/libvirt/qemu/%s.pid" % guestname
-        ret, guest_pid = utils.exec_cmd(cmd, shell=True)
-        cmd = "cat -v /proc/%s/cmdline" % guest_pid[0]
-        ret, guest_cmdline = utils.exec_cmd(cmd, shell=True)
-        nativeconLog = re.sub(r'\^@', ' ', guest_cmdline[0]).strip(' ')
-        tmp = (re.search(r'LC_ALL.[^\s]\s', nativeconfig).group(0) +
-               re.search(r'PATH.[^\s]+\s', nativeconfig).group(0) +
-               re.search(r'QEMU_AUDIO_DRV.[^\s]+\s', nativeconfig).group(0))
-        nativeconLog = tmp + nativeconLog
+    cmd = "cat /var/run/libvirt/qemu/%s.pid" % guestname
+    ret, guest_pid = utils.exec_cmd(cmd, shell=True)
+    cmd = "cat -v /proc/%s/cmdline" % guest_pid[0]
+    ret, guest_cmdline = utils.exec_cmd(cmd, shell=True)
+    nativeconLog = re.sub(r'\^@', ' ', guest_cmdline[0]).strip(' ')
+    env_params_list = ['LC_ALL', 'PATH', 'XDG_DATA_HOME',
+                       'XDG_CACHE_HOME', 'XDG_CONFIG_HOME',
+                       'QEMU_AUDIO_DRV', 'HOME']
+    for i in env_params_list:
+        if i in nativeconfig:
+            nativeconfig = re.sub(r'%s.[^\s]+\s' % i, '', nativeconfig)
 
     nativeconLog = nativeconLog.split(SPLIT_STR)
     nativeconfig = nativeconfig.split(SPLIT_STR)
