@@ -31,10 +31,10 @@ def domain_event_any(params):
     logger = params['logger']
     event_detail = parse_flags(params, param_name="event_detail")
 
-    if (utils.check_qemu_package('qemu-kvm') and
-            (event_detail == 1 or event_detail == 2)):
-        logger.info("Current libvirt-python don't support event detail %s" % event_detail)
-        return 0
+    if utils.check_qemu_package('qemu-kvm') and utils.isRelease("7", logger):
+        if event_detail == 1 or event_detail == 2:
+            logger.info("Current libvirt-python don't support event detail %s" % event_detail)
+            return 0
 
     if not version_compare("libvirt-python", 3, 8, 0, logger):
         eventLoopPure(logger)
