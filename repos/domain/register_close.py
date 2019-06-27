@@ -13,7 +13,10 @@ callback = False
 
 def connCloseCallback(conn, reason, opaque):
     global callback
-
+    reasonStrings = (
+        "Error", "End-of-file", "Keepalive", "Client",
+        )
+    logger.info("connCloseCallback: %s: %s" % (conn.getURI(), reasonStrings[reason]))
     callback = True
 
 
@@ -30,6 +33,7 @@ def restart_libvirtd(conn, logger):
 
 
 def register_close(params):
+    global logger
     logger = params['logger']
 
     if not version_compare("libvirt-python", 3, 8, 0, logger):
@@ -37,7 +41,7 @@ def register_close(params):
 
     conn = libvirt.openReadOnly("qemu:///system")
     conn.registerCloseCallback(connCloseCallback, None)
-    time.sleep(3)
+    time.sleep(1)
     t = threading.Thread(target=restart_libvirtd, args=(conn, logger))
 
     t.start()
