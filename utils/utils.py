@@ -570,15 +570,19 @@ def remote_exec_pexpect(hostname, username, password, cmd, timeout=30):
                 child.sendline(password)
             elif index == 2:
                 child.close()
-                # Add for test
-                if child.exitstatus == 255:
-                    time.sleep(10)
-                    break
-                # End for test
                 if isinstance(child.before, str):
-                    return child.exitstatus, child.before.strip()
+                    output = child.before.strip()
                 else:
-                    return child.exitstatus, child.before.decode().strip()
+                    output = child.before.decode().strip()
+                # sometimes guest don't start completely which will
+                # lead some command's exit status is 255
+                if child.exitstatus == 255:
+                    # shutdown_request() case will get 255
+                    shutdown_info = "Connection to %s closed by remote host" % hostname
+                    if shutdown_info not in output:
+                        time.sleep(10)
+                        break
+                return child.exitstatus, output
             elif index == 3:
                 if timeout <= 0:
                     return 1, "Refused!!!!"

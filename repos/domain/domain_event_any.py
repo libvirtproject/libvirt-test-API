@@ -1,5 +1,7 @@
 import importlib
 import libvirt
+
+from utils import utils
 from utils.events import eventListenerThread, eventLoopPure
 from utils.utils import parse_flags, get_rand_str, version_compare
 
@@ -29,9 +31,9 @@ def domain_event_any(params):
     logger = params['logger']
     event_detail = parse_flags(params, param_name="event_detail")
 
-    if (not version_compare("libvirt-python", 3, 2, 0, logger) and
+    if (utils.check_qemu_package('qemu-kvm') and
             (event_detail == 1 or event_detail == 2)):
-        logger.info("Current libvirt-python don't support %s" % event_detail)
+        logger.info("Current libvirt-python don't support event detail %s" % event_detail)
         return 0
 
     if not version_compare("libvirt-python", 3, 8, 0, logger):
