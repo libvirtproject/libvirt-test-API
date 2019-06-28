@@ -69,6 +69,8 @@ def guest_import(params):
     logger.info("image path: %s" % imagepath)
     logger.info("disk path: %s" % diskpath)
 
+    if os.path.exists(diskpath):
+        os.remove(diskpath)
     backup_img_format = utils.get_image_format(imagepath, logger)
     if imageformat == "raw" and backup_img_format == "qcow2":
         new_backup_img = imagepath + '.raw'
@@ -127,6 +129,7 @@ def guest_import_clean(params):
     """ clean a guest """
     logger = params['logger']
     guestname = params.get('guestname')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
 
     try:
         conn = libvirt.open()
@@ -134,3 +137,6 @@ def guest_import_clean(params):
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
+
+    if os.path.exists(diskpath):
+        os.remove(diskpath)
