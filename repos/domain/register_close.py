@@ -47,10 +47,15 @@ def register_close(params):
     t.start()
     t.join()
 
-    if callback:
-        logger.info("PASS: registerCloseCallback successful.")
-    else:
-        logger.error("FAIL: registerCloseCallback failed.")
-        return 1
+    count = 0
+    while count < 5:
+        count += 1
+        if callback:
+            logger.info("PASS: registerCloseCallback successful.")
+            break
+        time.sleep(2)
+        if count == 5:
+            logger.error("FAIL: registerCloseCallback failed.")
+            return 1
 
     return 0
