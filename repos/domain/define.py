@@ -3,6 +3,7 @@
 import os
 import shutil
 import libvirt
+import time
 
 from libvirt import libvirtError
 
@@ -38,6 +39,30 @@ optional_params = {'memory': 2097152,
                    'video': 'qxl',
                    'graphic': 'spice'
                    }
+
+
+def check_domain_state(conn, guestname, logger):
+    """ if a guest with the same name exists, remove it """
+    running_guests = []
+    ids = conn.listDomainsID()
+    for id in ids:
+        obj = conn.lookupByID(id)
+        running_guests.append(obj.name())
+
+    if guestname in running_guests:
+        logger.info("A guest with the same name %s is running!" % guestname)
+        logger.info("destroy it...")
+        domobj = conn.lookupByName(guestname)
+        domobj.destroy()
+
+    defined_guests = conn.listDefinedDomains()
+
+    if guestname in defined_guests:
+        logger.info("undefine the guest with the same name %s" % guestname)
+        domobj = conn.lookupByName(guestname)
+        domobj.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_MANAGED_SAVE)
+    time.sleep(3)
+    return 0
 
 
 def check_define_domain(guestname, virt_type, ip, username,
@@ -151,6 +176,7 @@ def define(params):
 
     # Define domain from xml
     try:
+        check_domain_state(conn, guestname, logger)
         conn.defineXML(xmlstr)
         if check_define_domain(guestname, virt_type, target_machine,
                                username, password, logger):

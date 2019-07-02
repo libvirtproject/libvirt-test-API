@@ -45,7 +45,7 @@ def check_domain_state(conn, guestname, logger):
     if guestname in defined_guests:
         logger.info("undefine the guest with the same name %s" % guestname)
         domobj = conn.lookupByName(guestname)
-        domobj.undefine()
+        domobj.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_MANAGED_SAVE)
     time.sleep(3)
     return 0
 
