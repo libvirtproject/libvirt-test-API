@@ -41,27 +41,22 @@ optional_params = {'memory': 2097152,
                    }
 
 
-def check_domain_state(conn, guestname, logger):
+def clean_domain(conn, logger):
     """ if a guest with the same name exists, remove it """
-    running_guests = []
     ids = conn.listDomainsID()
     for id in ids:
         obj = conn.lookupByID(id)
-        running_guests.append(obj.name())
-
-    if guestname in running_guests:
-        logger.info("A guest with the same name %s is running!" % guestname)
-        logger.info("destroy it...")
-        domobj = conn.lookupByName(guestname)
+        domobj = conn.lookupByName(obj.name())
+        logger.info("destroy a running guest: %s" % obj.name())
         domobj.destroy()
+        time.sleep(3)
 
     defined_guests = conn.listDefinedDomains()
-
-    if guestname in defined_guests:
-        logger.info("undefine the guest with the same name %s" % guestname)
+    for guestname in defined_guests:
+        logger.info("undefine guest: %s" % guestname)
         domobj = conn.lookupByName(guestname)
         domobj.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_MANAGED_SAVE)
-    time.sleep(3)
+        time.sleep(3)
     return 0
 
 
@@ -176,7 +171,7 @@ def define(params):
 
     # Define domain from xml
     try:
-        check_domain_state(conn, guestname, logger)
+        clean_domain(conn, logger)
         conn.defineXML(xmlstr)
         if check_define_domain(guestname, virt_type, target_machine,
                                username, password, logger):
