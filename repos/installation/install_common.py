@@ -151,7 +151,11 @@ def get_release_ostree(guestos, guestarch):
 def get_version(rhelnewest):
     tree_list = rhelnewest.split("/")
     if "updates" in rhelnewest:
-        return tree_list[7].split("-")[1]
+        location = utils.get_local_hostname()
+        if "pek2" in location or "nay" in location:
+            return tree_list[8].split("-")[1]
+        else:
+            return tree_list[7].split("-")[1]
     else:
         if "RHEL-8" in tree_list:
             return tree_list[6].split("-")[1]
