@@ -152,7 +152,7 @@ def prepare_kernel_ppc(ostree, logger):
     if '/released/' in ostree:
         wget_paramter = "-m -np -nH --cut-dirs=6 -R 'index.html*' -P "
     else:
-        wget_paramter = "-m -np -nH --cut-dirs=9 -R 'index.html*' -P "
+        wget_paramter = "-m -np -nH --cut-dirs=10 -R 'index.html*' -P "
     wget_command = 'wget ' + wget_paramter + TFTPPATH + ' ' + conf_path
     logger.debug('%s' % (wget_command))
     ret = process.run(wget_command, shell=True, ignore_status=True)
@@ -166,7 +166,7 @@ def prepare_kernel_ppc(ostree, logger):
         else:
             wget_paramter = "-m -np -nH --cut-dirs=6 -R 'index.html*' -A initrd.img,vmlinuz -P "
     else:
-        wget_paramter = "-m -np -nH --cut-dirs=9 -R 'index.html*' -A initrd.img,vmlinuz -P "
+        wget_paramter = "-m -np -nH --cut-dirs=10 -R 'index.html*' -A initrd.img,vmlinuz -P "
     wget_command = 'wget ' + wget_paramter + TFTPPATH + ' ' + ppc_path
     logger.debug('%s' % (wget_command))
     ret = process.run(wget_command, shell=True, ignore_status=True)
