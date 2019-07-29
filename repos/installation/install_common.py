@@ -106,13 +106,10 @@ def get_iso_link(rhelnewest, guestos, guestarch, logger):
     location = utils.get_local_hostname()
     isolink = ""
     if rhelnewest is not None:
-        if local_url in rhelnewest:
-            repo_name = rhelnewest.split('/')[6]
-        elif remote_url in rhelnewest:
-            if "/RHEL-8/" in rhelnewest or "/RHEL-7/" in rhelnewest:
-                repo_name = rhelnewest.split('/')[6]
-            else:
-                repo_name = rhelnewest.split('/')[4]
+        if "/RHEL-8/" in rhelnewest or "/RHEL-7/" in rhelnewest:
+            repo_name = rhelnewest.split('/')[7]
+        else:
+            repo_name = rhelnewest.split('/')[4]
         if "/RHEL-8/" in rhelnewest:
             isolink = ("%s%s/iso/%s-%s-dvd1.iso" %
                        (rhelnewest, guestarch, repo_name, guestarch))
