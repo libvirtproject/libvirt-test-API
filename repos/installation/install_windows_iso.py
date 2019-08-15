@@ -158,7 +158,9 @@ def prepare_win_unattended(guestname, guestos, guestarch, envparser, hddriver, l
                     "win2003": "2k3",
                     "win2012": "2k12",
                     "win2012R2": "2k12R2",
-                    "win2016": "2k16"}
+                    "win2016": "2k16",
+                    "win2019": "2k19"}
+
         if utils.isRelease("8", logger):
             if hddriver == "scsilun" or hddriver == "scsi":
                 driverpath = "E:\\vioscsi\\" + win_list[guestos] + "\\" + win_arch
