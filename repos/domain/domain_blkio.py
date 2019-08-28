@@ -10,6 +10,7 @@ from libvirt import libvirtError
 from src import sharedmod
 from utils import process
 from utils.utils import get_xml_value
+from utils import utils
 
 BLKIO_PATH1 = "/cgroup/blkio/libvirt/qemu/%s"
 BLKIO_PATH2 = "/sys/fs/cgroup/blkio/machine.slice/machine-qemu\\x2d%s.scope"
@@ -80,35 +81,38 @@ def set_device_scheduler(dev, logger):
         logger.error("check scheduler file failed: %s" % ret.stdout)
         return 1
     if "cfq" in ret.stdout:
+        logger.info("set scheduler to cfq.")
         with open(scheduler, 'w') as scheduler_file:
             scheduler_file.write("cfq")
     elif "bfq" in ret.stdout:
+        logger.info("set scheduler to bfq.")
         with open(scheduler, 'w') as scheduler_file:
             scheduler_file.write("bfq")
     else:
         logger.info("Don't support to set scheduler in this kernel version.")
 
 
-def check_blkio_paras(domain_blkio_path, blkio_paras, logger):
+def check_blkio_paras(blkio_path, blkio_paras, logger):
     """check blkio parameters according to cgroup filesystem
     """
-    domain_blkio_path = domain_blkio_path.replace('\\', '\\\\')
+    blkio_path = blkio_path.replace('\\', '\\\\')
     logger.info("checking blkio parameters from cgroup")
     if 'weight' in blkio_paras:
         expected_weight = blkio_paras['weight']
-        status, output = get_output("cat %s/blkio.weight"
-                                    % domain_blkio_path, logger)
+        if utils.isRelease(8, logger):
+            status, output = get_output("cat %s/blkio.bfq.weight" % blkio_path, logger)
+        else:
+            status, output = get_output("cat %s/blkio.weight" % blkio_path, logger)
         if not status:
-            logger.info("%s/blkio.weight is \"%s\""
-                        % (domain_blkio_path, output))
+            logger.info("blkio weight: %s" % output)
         else:
             return 1
 
         if int(output) == expected_weight:
-            logger.info("the weight matches with cgroup blkio.weight")
+            logger.info("the weight matches")
             return 0
         else:
-            logger.error("the weight mismatches with cgroup blkio.weight")
+            logger.error("the weight mismatches")
             return 1
 
     if 'device_weight' in blkio_paras:
@@ -151,57 +155,47 @@ def domain_blkio(params):
     expected_weight = params['weight']
     flag = 0
 
-    conn = sharedmod.libvirtobj['conn']
-
-    domobj = conn.lookupByName(guestname)
-
-    # Check domain block status
-    if check_guest_status(domobj):
-        pass
-    else:
-        domobj.create()
-        time.sleep(90)
-
-    blkio_path = get_blkio_path(guestname, logger)
-
     try:
+        conn = libvirt.open()
+        domobj = conn.lookupByName(guestname)
+
+        # Check domain block status
+        if check_guest_status(domobj):
+            pass
+        else:
+            domobj.create()
+            time.sleep(90)
+
+        device = get_device(domobj, logger)
+        set_device_scheduler(device, logger)
+        logger.info("get weight from blkioParameters().")
         blkio_paras = domobj.blkioParameters(flag)
-
-        logger.info("the blkio weight of %s is: %d"
-                    % (guestname, blkio_paras['weight']))
-
-        status = check_blkio_paras(blkio_path, blkio_paras,
-                                   logger)
+        logger.info("blkio weight: %d" % blkio_paras['weight'])
+        blkio_path = get_blkio_path(guestname, logger)
+        status = check_blkio_paras(blkio_path, blkio_paras, logger)
         if status != 0:
             return 1
 
-        logger.info("start to set param weight to %s" % expected_weight)
+        logger.info("set weight to %s" % expected_weight)
         blkio_paras = {'weight': int(expected_weight)}
         status = domobj.setBlkioParameters(blkio_paras, flag)
         if status != 0:
             return 1
-
-        status = check_blkio_paras(blkio_path, blkio_paras,
-                                   logger)
+        status = check_blkio_paras(blkio_path, blkio_paras, logger)
         if status != 0:
             return 1
 
-        device = get_device(domobj, logger)
-        device_weight = "%s,%s" % (device, expected_weight)
-        logger.info("set scheduler first..")
-        set_device_scheduler(device, logger)
-        logger.info("start to set param device_weight to %s"
-                    % device_weight)
-        blkio_paras = {'device_weight': device_weight}
-        status = domobj.setBlkioParameters(blkio_paras, flag)
-        if status != 0:
-            return 1
-
-        status = check_blkio_paras(blkio_path, blkio_paras,
-                                   logger)
-        if status != 0:
-            return 1
-
+        # Don't support blkio device weight on RHEL 8
+        if not utils.isRelease('8', logger):
+            device_weight = "%s,%s" % (device, expected_weight)
+            logger.info("set device_weight to %s" % device_weight)
+            blkio_paras = {'device_weight': device_weight}
+            status = domobj.setBlkioParameters(blkio_paras, flag)
+            if status != 0:
+                return 1
+            status = check_blkio_paras(blkio_path, blkio_paras, logger)
+            if status != 0:
+                return 1
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
