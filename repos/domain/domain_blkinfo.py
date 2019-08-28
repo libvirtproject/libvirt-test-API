@@ -62,16 +62,18 @@ def check_block_data(blockdev, blkdata, logger):
         qemu_img_format = "qemu-img info -U %s |grep format |awk -F': ' '{print $2}'"
         qemu_img_cluster_size = "qemu-img info -U %s |grep cluster_size |awk -F': ' '{print $2}'"
         qemu_img_check = "qemu-img check -U %s"
-        get_capacity = "qemu-img info -U %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'"
+        get_capacity = "qemu-img info -U %s | grep 'virtual size'"
     else:
         qemu_img_format = "qemu-img info %s |grep format |awk -F': ' '{print $2}'"
         qemu_img_cluster_size = "qemu-img info %s |grep cluster_size |awk -F': ' '{print $2}'"
         qemu_img_check = "qemu-img check %s"
-        get_capacity = "qemu-img info %s | grep 'virtual size' | awk '{print $4}' | sed 's/(//g'"
+        get_capacity = "qemu-img info %s | grep 'virtual size'"
 
     """ check data about capacity,allocation,physical """
-    status, apparent_size = get_output(get_capacity % blockdev, logger)
+    status, capacity_size = get_output(get_capacity % blockdev, logger)
     if not status:
+        capacity_size = re.findall(r'[(](.*?)[)]', capacity_size)
+        apparent_size = capacity_size[0].split()[0]
         if apparent_size == str(blkdata[0]):
             logger.info("the capacity of '%s' is %s, checking succeeded"
                         % (blockdev, apparent_size))
@@ -173,7 +175,7 @@ def domain_blkinfo(params):
         logger.info("Allocation: %d " % block_info[1])
         logger.info("Physical  : %d " % block_info[2])
         # Add to test
-        for count in range(0, 100):
+        for count in range(0, 50):
             logger.info("count: %s" % count)
             if block_info[1] != block_info[2]:
                 time.sleep(3)
