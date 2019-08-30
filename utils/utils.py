@@ -126,8 +126,11 @@ def get_local_ip():
     """ get local ip address """
     cmd = "hostname -i"
     result = process.run(cmd, shell=True, ignore_status=True)
-    ip = result.stdout.split()[0]
-    return ip
+    ips = result.stdout.split()
+    for ip in ips:
+        if "." in ip:
+            return ip
+    return None
 
 
 def get_libvirt_version(ver=''):

@@ -32,7 +32,6 @@ def get_guest_vcpu(current, ip, username, password, logger):
         return False
 
 
-
 def get_current_vcpu(domobj, username, password):
     """dump domain live xml description to get current vcpu number
        and check in domain to confirm
