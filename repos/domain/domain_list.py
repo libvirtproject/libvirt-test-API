@@ -15,6 +15,7 @@ AUTOSTART_DIR = '/etc/libvirt/qemu/autostart'
 RUNNING_DIR = '/var/run/libvirt/qemu'
 SAVE_DIR = '/var/lib/libvirt/qemu/save'
 SNAPSHOT_DIR = '/var/lib/libvirt/qemu/snapshot/'
+CHECKPOINT_DIR = "/var/lib/libvirt/qemu/checkpoint/"
 
 flag_list = {"default": 0,
              "active": libvirt.VIR_CONNECT_LIST_DOMAINS_ACTIVE,
@@ -24,7 +25,9 @@ flag_list = {"default": 0,
              "shutoff": libvirt.VIR_CONNECT_LIST_DOMAINS_SHUTOFF,
              "managedsave": libvirt.VIR_CONNECT_LIST_DOMAINS_MANAGEDSAVE,
              "autostart": libvirt.VIR_CONNECT_LIST_DOMAINS_AUTOSTART,
-             "snapshot": libvirt.VIR_CONNECT_LIST_DOMAINS_HAS_SNAPSHOT}
+             "snapshot": libvirt.VIR_CONNECT_LIST_DOMAINS_HAS_SNAPSHOT,
+             "with_checkpoint": libvirt.VIR_CONNECT_LIST_DOMAINS_HAS_CHECKPOINT,
+             "without_checkpoint": libvirt.VIR_CONNECT_LIST_DOMAINS_NO_CHECKPOINT}
 
 
 def get_dir_entires(domain_dir, end_string):
@@ -44,8 +47,11 @@ def get_dir_entires(domain_dir, end_string):
             if not entry.endswith(end_string):
                 continue
             else:
-                guest = entry[:-end_length]
-                guest_list.append(guest)
+                if end_length == 0:
+                    guest_list.append(entry)
+                else:
+                    guest = entry[:-end_length]
+                    guest_list.append(guest)
 
     return guest_list
 
@@ -57,11 +63,11 @@ def check_domain_list(name_list, flag):
     domains_active = get_dir_entires(RUNNING_DIR, ".xml")
     domains_autostart = get_dir_entires(AUTOSTART_DIR, ".xml")
     domains_save = get_dir_entires(SAVE_DIR, ".save")
+    domains_checkpoint = get_dir_entires(CHECKPOINT_DIR, "")
     domains_inactive = list(set(domains_config) - set(domains_active))
     domain_list = []
 
     all_domains = list(set((domains_config + domains_active)))
-
     if len(domains_active) != conn.numOfDomains():
         logger.error("check the number of active domains failed")
         return 1
@@ -114,6 +120,12 @@ def check_domain_list(name_list, flag):
                 continue
             else:
                 domain_list.append(guest)
+    #Check the domains with checkpoint
+    elif flag_list[flag] == libvirt.VIR_CONNECT_LIST_DOMAINS_HAS_CHECKPOINT:
+        domain_list = domains_checkpoint
+    #Check the domains without checkpoint
+    elif flag_list[flag] == libvirt.VIR_CONNECT_LIST_DOMAINS_NO_CHECKPOINT:
+        domain_list = list(set(all_domains) - set(domains_checkpoint))
 
     logger.info("check the %s domains list is %s" % (flag, domain_list))
     if sorted(domain_list) == sorted(name_list):

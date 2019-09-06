@@ -34,6 +34,12 @@ def parse_flags(logger, flags):
             else:
                 logger.info("Current libvirt-python don't support 'keep_nvram' flag.")
                 return -2
+        elif flag == 'checkpoints_metadata':
+            if utils.version_compare("libvirt-python", 5, 6, 0, logger):
+                ret = ret | libvirt.VIR_DOMAIN_UNDEFINE_CHECKPOINTS_METADATA
+            else:
+                logger.info("Current libvirt-python don't support 'checkpoints-metadata' flag.")
+                return -2
         else:
             logger.error('illegal flags')
             return -1

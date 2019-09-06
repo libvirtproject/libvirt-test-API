@@ -1,0 +1,6 @@
+<domaincheckpoint>
+  <name>CHECKPOINT_NAME</name>
+  <disks>
+    <disk name='vda' checkpoint='bitmap'/>
+  </disks>
+</domaincheckpoint>
