@@ -2,10 +2,11 @@
 # To test "virsh list" command
 
 import os
-
 import libvirt
+
 from libvirt import libvirtError
 from src import sharedmod
+from utils import utils
 
 required_params = ('flags',)
 optional_params = {}
@@ -25,9 +26,7 @@ flag_list = {"default": 0,
              "shutoff": libvirt.VIR_CONNECT_LIST_DOMAINS_SHUTOFF,
              "managedsave": libvirt.VIR_CONNECT_LIST_DOMAINS_MANAGEDSAVE,
              "autostart": libvirt.VIR_CONNECT_LIST_DOMAINS_AUTOSTART,
-             "snapshot": libvirt.VIR_CONNECT_LIST_DOMAINS_HAS_SNAPSHOT,
-             "with_checkpoint": libvirt.VIR_CONNECT_LIST_DOMAINS_HAS_CHECKPOINT,
-             "without_checkpoint": libvirt.VIR_CONNECT_LIST_DOMAINS_NO_CHECKPOINT}
+             "snapshot": libvirt.VIR_CONNECT_LIST_DOMAINS_HAS_SNAPSHOT}
 
 
 def get_dir_entires(domain_dir, end_string):
@@ -140,9 +139,17 @@ def domain_list(params):
     global conn, logger
     conn = sharedmod.libvirtobj['conn']
     logger = params['logger']
+    flag = params['flags']
     name_list = []
 
-    flag = params['flags']
+    if flag == 'with_checkpoint' or flag == 'without_checkpoint':
+        if not utils.version_compare('libvirt-python', 5, 6, 0, logger):
+            logger.info("Current libvirt-python don't support with_checkpoint and without_checkpoint flag.")
+            return 0
+        else:
+            flag_list['with_checkpoint'] = libvirt.VIR_CONNECT_LIST_DOMAINS_HAS_CHECKPOINT
+            flag_list['without_checkpoint'] = libvirt.VIR_CONNECT_LIST_DOMAINS_NO_CHECKPOINT
+
     logger.info("The given flag is %s" % flag)
 
     try:
