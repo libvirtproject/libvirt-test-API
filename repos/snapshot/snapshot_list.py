@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import libvirt
 
 from libvirt import libvirtError
 from src import sharedmod
@@ -6,15 +7,23 @@ from utils import utils
 
 from repos.snapshot.common import convert_flags
 
-required_params = ('guestname', 'flags', )
-optional_params = {}
+required_params = ('guestname', 'flags')
+optional_params = {'snapshotsequence': None}
 
 SNAPSHOT_DIR = "ls /var/lib/libvirt/qemu/snapshot"
 SNAPSHOT_LIST = "virsh snapshot-list %s|sed -n '3,$'p|awk '{print $1}'"
-FLAGDICT = {0: "", 1: " --roots", 2: " --metadata", 4: " --leaves",
-            8: " --no-leaves", 16: " --no-metadata", 32: " --inactive",
-            64: " --active", 128: " --disk-only", 256: " --internal",
-            512: " --external"}
+FLAGDICT = {0: "",
+            1: " --roots",
+            2: " --metadata",
+            4: " --leaves",
+            8: " --no-leaves",
+            16: " --no-metadata",
+            32: " --inactive",
+            64: " --active",
+            128: " --disk-only",
+            256: " --internal",
+            512: " --external",
+            1024: " --topological"}
 
 
 def get_snapshot_list_virsh(*args):
@@ -110,9 +119,15 @@ def snapshot_list(params):
     global logger
     logger = params['logger']
     guestname = params['guestname']
+    flags = params['flags']
+    if flags == '1024':
+        if not utils.version_compare('libvirt-python', 5, 6, 0, logger):
+            logger.info("Current libvirt-python don't support '--topological' flag.")
+            return 0
+
+    snapshotsequence = params.get('snapshotsequence', None)
     conn = sharedmod.libvirtobj['conn']
     domobj = conn.lookupByName(guestname)
-    flags = params['flags']
     (flaglist, flagn) = convert_flags(flags, FLAGDICT, logger)
 
     try:
@@ -141,9 +156,11 @@ def snapshot_list(params):
                         snapshot_namelist_api)
 
             # Get all snapshot name from listAllSnapshots
+            sn_list = []
             snapshot_list = domobj.listAllSnapshots(flagn)
             for snapshot_item in snapshot_list:
                 logger.info("The snapshot's name:" + snapshot_item.getName())
+                sn_list.append(snapshot_item.getName())
                 if not check_get_domain(domobj, snapshot_item, logger):
                     return 1
                 if not check_get_connect(conn, snapshot_item, logger):
@@ -157,13 +174,34 @@ def snapshot_list(params):
                     snapshotnum_filters == \
                     len(snapshot_namelist_api):
                 logger.info("Successfully get snapshot name list")
-                return 0
             else:
                 logger.error("Failed to get snapshot name list through API")
                 return 1
-
-    except libvirtError as e:
-        logger.error("API error message: %s" % e.get_error_message())
+            if flags == '1024':
+                sn_topological = snapshotsequence.split(', ')
+                if sn_list == sn_topological:
+                    logger.info("PASS: Test for topological succeed.")
+                else:
+                    logger.error("FAIL: Test for topological fail.")
+                    return 1
+    except libvirtError as err:
+        logger.error("API error message: %s" % err.get_error_message())
         return 1
 
     return 0
+
+
+def snapshot_list_clean(params):
+    """ Clean snapshots """
+    logger = params['logger']
+    guestname = params['guestname']
+    flags = params['flags']
+    if not utils.version_compare('libvirt-python', 5, 6, 0, logger) and flags != '1024':
+        return 0
+    snapshotsequence = params.get('snapshotsequence', None)
+    conn = libvirt.open()
+    dom = conn.lookupByName(guestname)
+    sn_list = dom.listAllSnapshots()
+    for sn in sn_list:
+        if sn.getName() in snapshotsequence:
+            sn.delete()
