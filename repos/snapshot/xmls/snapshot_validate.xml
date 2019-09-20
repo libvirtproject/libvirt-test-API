@@ -1,0 +1,11 @@
+<domainsnapshot>
+  <name>SNAPSHOTNAME</name>
+  <memory snapshot='MEMORYTYPE' file='SNAPSHOTMEM'/>
+  <disks>
+    <disk name='vda' snapshot='DISKTYPE'>
+      <driver type='qcow2'/>
+      <source file='SNAPSHOTDISK'/>
+      <test/>
+    </disk>
+  </disks>
+</domainsnapshot>

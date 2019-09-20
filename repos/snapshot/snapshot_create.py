@@ -5,6 +5,7 @@ import libvirt
 
 from libvirt import libvirtError
 from src import sharedmod
+from utils import utils
 from repos.snapshot.common import check_domain_image
 from repos.snapshot.common import convert_flags
 
@@ -19,9 +20,17 @@ optional_params = {
                   }
 
 
-FLAGDICT = {0: "no flag", 1: " --redefine", 2: " --current", 4: " --no-metadata",
-            8: " --halt", 16: " --disk-only", 32: " --reuse-external",
-            64: " --quiesce", 128: " --atomic", 256: " --live"}
+FLAGDICT = {0: "no flag",
+            1: " --redefine",
+            2: " --current",
+            4: " --no-metadata",
+            8: " --halt",
+            16: " --disk-only",
+            32: " --reuse-external",
+            64: " --quiesce",
+            128: " --atomic",
+            256: " --live",
+            512: " --validate"}
 
 
 def check_current_snapshot(domobj):
@@ -110,6 +119,12 @@ def snapshot_create(params):
     guestname = params['guestname']
     flags = params['flags']
     xmlstr = params['xml']
+
+    if flags == '512':
+        if not utils.version_compare('libvirt-python', 5, 6, 0, logger):
+            logger.info("Current libvirt-python don't support '--validate' flag.")
+            return 0
+
     conn = sharedmod.libvirtobj['conn']
     domobj = conn.lookupByName(guestname)
     (flaglist, flagn) = convert_flags(flags, FLAGDICT, logger)
@@ -167,8 +182,13 @@ def snapshot_create(params):
             logger.error("Failed to create snapshot")
             return 1
 
-    except libvirtError as e:
-        logger.error("API error message: %s" % e.get_error_message())
-        return 1
+    except libvirtError as err:
+        logger.error("API error message: %s" % err.get_error_message())
+        err_info = "XML document failed to validate against schema"
+        if flags == '512' and err_info in err.get_error_message():
+            logger.info("PASS: test '--validate' flag succeed.")
+            return 0
+        else:
+            return 1
 
     return 0
