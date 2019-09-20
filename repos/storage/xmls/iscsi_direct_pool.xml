@@ -1,0 +1,15 @@
+<pool type='iscsi-direct'>
+  <name>POOLNAME</name>
+  <uuid>2b621385-f734-4b98-8131-0fc17ed29e67</uuid>
+  <capacity unit='bytes'>64424704512</capacity>
+  <allocation unit='bytes'>64424704512</allocation>
+  <available unit='bytes'>0</available>
+  <source>
+    <host name='HOSTIP'/>
+    <device path='SOURCEPATH'/>
+    <initiator>
+      <iqn name='IQNNAME'/>
+    </initiator>
+  </source>
+</pool>
+
