@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-To get the XMLDesc from a saved state file and test if it is matching
+To get the XMLDesc from a snapshot state file and test if it is matching
 with parameter requirement
 """
 import libvirt
@@ -13,6 +13,7 @@ from repos.domain import domain_common
 
 required_params = ('guestname',)
 optional_params = {'flags': 'secure',
+                   'snapshotname': None
                    }
 
 
@@ -52,9 +53,9 @@ def check_definexml(flags, guestxml, new_guestxml, guestname, logger):
     return 1
 
 
-def save_image_get_xml_desc(params):
+def snapshot_get_xml_desc(params):
     """
-    To get the XMLDesc from a saved state file and test if it is matching
+    To get the XMLDesc from a snapshot state file and test if it is matching
     with parameter requirement
     Argument is a dictionary with two keys:
     {'logger': logger, 'guestname': guestname}
@@ -73,22 +74,19 @@ def save_image_get_xml_desc(params):
         if not utils.version_compare('libvirt-python', 5, 6, 0, logger):
             logger.info("Current libvirt-python don't support '--secure-info' flag.")
             return 0
-
     if flags == -1:
         return 1
+    snapshotname = params.get('snapshotname', None)
     conn = sharedmod.libvirtobj['conn']
-    domobj = conn.lookupByName(guestname)
-
-    #shutdown a domain and save it's state
-    #like cmd "virsh save guestname"
-    domobj.save("/tmp/%s.save" % guestname)
+    dom = conn.lookupByName(guestname)
+    sn = dom.snapshotLookupByName(snapshotname)
 
     #get current domain configuration,it is used to compare with a
-    #new configuration from a saved state file
-    guestxml = domobj.XMLDesc(0)
+    #new configuration from a snapshot state file
+    guestxml = dom.XMLDesc(0)
 
     try:
-        new_guestxml = conn.saveImageGetXMLDesc("/tmp/%s.save" % guestname, flags)
+        new_guestxml = sn.getXMLDesc(flags)
         logger.info("Guest xml: %s" % new_guestxml)
     except libvirtError as err:
         logger.info("saveimage get xmldesc failed" + str(err))
@@ -102,9 +100,16 @@ def save_image_get_xml_desc(params):
     return 0
 
 
-def save_image_get_xml_desc_clean(params):
+def snapshot_get_xml_desc_clean(params):
     guestname = params['guestname']
     logger = params['logger']
+    snapshotname = params.get('snapshotname', None)
     conn = libvirt.open()
+    dom = conn.lookupByName(guestname)
+    if snapshotname is not None:
+        sn = dom.snapshotLookupByName(snapshotname, 0)
+        sn.delete(libvirt.VIR_DOMAIN_SNAPSHOT_DELETE_METADATA_ONLY)
+    dom_stats = conn.domainListGetStats([dom], 0)
+    sn_file = dom_stats[0][1]['block.0.path']
+    utils.del_file(sn_file, logger)
     domain_common.guest_clean(conn, guestname, logger)
-    utils.del_file("/tmp/%s.save" % guestname, logger)

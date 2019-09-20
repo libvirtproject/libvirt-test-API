@@ -3,12 +3,13 @@
 To get the XMLDesc from managedsave and test if it is matching
 with parameter requirement
 """
-
-from libvirt import libvirtError
 import libvirt
 import time
+
+from libvirt import libvirtError
 from src import sharedmod
 from lxml import etree as ET
+from utils import utils
 
 required_params = ('guestname',)
 optional_params = {'flags': 'secure',
@@ -81,8 +82,11 @@ def managedsave_get_xml_desc(params):
     """
     guestname = params['guestname']
     logger = params['logger']
-
     flags = parse_flags(logger, params)
+    if flags == 1:
+        if not utils.version_compare('libvirt-python', 5, 6, 0, logger):
+            logger.info("Current libvirt-python don't support '--secure-info' flag.")
+            return 0
     if flags == -1:
         return 1
     conn = sharedmod.libvirtobj['conn']
@@ -101,8 +105,9 @@ def managedsave_get_xml_desc(params):
 
     try:
         new_guestxml = domobj.managedSaveGetXMLDesc(flags)
-    except libvirtError as e:
-        logger.info("Managedsave get xmldesc failed" + str(e))
+        logger.info("Guset xml: %s" % new_guestxml)
+    except libvirtError as err:
+        logger.info("Managedsave get xmldesc failed" + str(err))
         return 1
     ret = check_definexml(flags, guestxml, new_guestxml, guestname, logger)
     if ret:
@@ -116,8 +121,9 @@ def managedsave_get_xml_desc_clean(params):
     guestname = params['guestname']
     logger = params['logger']
     conn = libvirt.open()
-    dom = conn.lookupByName(guestname)
-    state = dom.info()[0]
-    if state == libvirt.VIR_DOMAIN_RUNNING:
-        dom.destroy()
-    dom.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_MANAGED_SAVE)
+    dom_list = conn.listAllDomains()
+    for dom in dom_list:
+        if dom.name() == guestname:
+            if dom.info()[0] == libvirt.VIR_DOMAIN_RUNNING:
+                dom.destroy()
+            dom.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_MANAGED_SAVE)
