@@ -13,10 +13,10 @@ optional_params = {'flags': None}
 def check_dirty_bitmap(cp_name, logger):
     cmd = "virsh qemu-monitor-command test --pretty '{\"execute\": \"query-block\"}'"
     ret, out = utils.exec_cmd(cmd, shell=True)
+    logger.debug("out: %s" % out)
     if ret:
         logger.error("exec cmd: %s failed." % cmd)
         return False
-    logger.debug("out: %s" % out)
     if cp_name in ''.join(out):
         logger.info("%s in dirty bitmap." % cp_name)
         return True
@@ -32,7 +32,7 @@ def checkpoint_delete(params):
     flag = utils.parse_flags(params)
 
     if not utils.version_compare('libvirt-python', 5, 6, 0, logger):
-        logger.info("Current libvirt-python don't support checkpointCreateXML().")
+        logger.info("Current libvirt-python don't support delete().")
         return 0
 
     logger.info("Checkpoint name: %s" % checkpoint_name)
@@ -52,6 +52,7 @@ def checkpoint_delete(params):
         logger.error("API error message: %s" % err.get_error_message())
         return 1
 
+    logger.info("Checkpoint children list: %s" % cp_children_lists)
     if (flag == libvirt.VIR_DOMAIN_CHECKPOINT_DELETE_CHILDREN or
             flag == libvirt.VIR_DOMAIN_CHECKPOINT_DELETE_CHILDREN_ONLY):
         for cp_children in cp_children_lists:
@@ -67,29 +68,8 @@ def checkpoint_delete(params):
             else:
                 logger.info("PASS: check %s dirty bitmap successful." % cp_children)
 
-    checkpoint_xml_path = "/var/lib/libvirt/qemu/checkpoint/%s/%s.xml" % (guestname, checkpoint_name)
-    if flag == libvirt.VIR_DOMAIN_CHECKPOINT_DELETE_CHILDREN_ONLY:
-        if not os.path.exists(checkpoint_xml_path):
-            logger.error("FAIL: check %s xml path failed." % checkpoint_name)
-            return 1
-        else:
-            logger.info("PASS: check %s xml path successful." % checkpoint_name)
-    else:
-        if os.path.exists(checkpoint_xml_path):
-            logger.error("FAIL: check %s xml path failed." % checkpoint_name)
-            return 1
-        else:
-            logger.info("PASS: check %s xml path successful." % checkpoint_name)
-
-    if (flag == libvirt.VIR_DOMAIN_CHECKPOINT_DELETE_METADATA_ONLY or
-            flag == libvirt.VIR_DOMAIN_CHECKPOINT_DELETE_CHILDREN_ONLY):
+    if flag == libvirt.VIR_DOMAIN_CHECKPOINT_DELETE_METADATA_ONLY:
         if not check_dirty_bitmap(checkpoint_name, logger):
-            logger.error("FAIL: check %s dirty bitmap failed." % checkpoint_name)
-            return 1
-        else:
-            logger.info("PASS: check %s dirty bitmap successful." % checkpoint_name)
-    else:
-        if check_dirty_bitmap(checkpoint_name, logger):
             logger.error("FAIL: check %s dirty bitmap failed." % checkpoint_name)
             return 1
         else:
