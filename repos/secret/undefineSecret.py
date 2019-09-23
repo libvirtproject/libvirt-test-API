@@ -1,9 +1,11 @@
 #!/usr/bin/evn python
 
 import os
+
 from libvirt import libvirtError
 from src import sharedmod
 from xml.dom import minidom
+from utils import utils
 
 required_params = ('secretUUID',)
 optional_params = {'usagetype': 'volume'}
@@ -41,6 +43,10 @@ def undefineSecret(params):
     if usagetype == "volume":
         diskpath = minidom.parseString(secretobj.XMLDesc(0)).\
             getElementsByTagName('volume')[0].childNodes[0].data
+    elif usagetype == "vtpm":
+        if not utils.version_compare("libvirt-python", 5, 6, 0, logger):
+            logger.info("Current libvirt-python don't support 'vtpm'.")
+            return 0
     try:
         secretobj.undefine()
         if check_undefineSecret(ephemeral, secretUUID):
@@ -52,9 +58,9 @@ def undefineSecret(params):
             logger.error("fail to check secret undefine")
             return 1
 
-    except libvirtError as e:
+    except libvirtError as err:
         logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
+                     % (err.get_error_message(), err.get_error_code()))
         return 1
 
     return 0

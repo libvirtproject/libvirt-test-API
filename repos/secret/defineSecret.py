@@ -12,6 +12,7 @@ required_params = ('ephemeral', 'private', 'secretUUID', 'usagetype',)
 optional_params = {'xml': 'xmls/secret.xml',
                    'diskpath': '',
                    'tlsname': '',
+                   'vtpmname': ''
                    }
 
 
@@ -45,6 +46,10 @@ def check_defineSecret(secret_params, secretobj):
     elif secret_params['usage_type'] == 'tls':
         if utils.version_compare("libvirt-python", 2, 5, 0, logger):
             secret_xml['tlsname'] = (XMLFile.getElementsByTagName('name')[0]).\
+                childNodes[0].data
+    elif secret_params['usage_type'] == 'vtpm':
+        if utils.version_compare("libvirt-python", 5, 6, 0, logger):
+            secret_xml['vtpmname'] = (XMLFile.getElementsByTagName('name')[0]).\
                 childNodes[0].data
     else:
         logger.error("unexpected secret usage type: %s" % secret_params['usage_type'])
@@ -84,6 +89,12 @@ def defineSecret(params):
         else:
             logger.info("Current libvirt-python don't support 'tls'.")
             return 0
+    elif secret_params['usage_type'] == 'vtpm':
+        if utils.version_compare("libvirt-python", 5, 6, 0, logger):
+            secret_params['vtpmname'] = params['vtpmname']
+        else:
+            logger.info("Current libvirt-python don't support 'vtpm'.")
+            return 0
     else:
         logger.error("unexpected secret usage type: %s" % secret_params['usage_type'])
         return 1
@@ -104,9 +115,9 @@ def defineSecret(params):
             logger.error("fail to check define secret")
             return 1
 
-    except libvirtError as e:
+    except libvirtError as err:
         logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
+                     % (err.get_error_message(), err.get_error_code()))
         return 1
 
     return 0
@@ -122,6 +133,11 @@ def defineSecret_clean(params):
         os.remove(diskpath)
     elif usage_type == 'tls':
         if utils.version_compare("libvirt-python", 2, 5, 0, logger):
+            conn = libvirt.open(None)
+            secretobj = conn.secretLookupByUUIDString(secretUUID)
+            secretobj.undefine()
+    elif usage_type == 'vtpm':
+        if utils.version_compare("libvirt-python", 5, 6, 0, logger):
             conn = libvirt.open(None)
             secretobj = conn.secretLookupByUUIDString(secretUUID)
             secretobj.undefine()
