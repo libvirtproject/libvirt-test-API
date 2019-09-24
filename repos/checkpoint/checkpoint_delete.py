@@ -10,10 +10,10 @@ required_params = {'guestname', 'checkpoint_name'}
 optional_params = {'flags': None}
 
 
-def check_dirty_bitmap(cp_name, logger):
-    cmd = "virsh qemu-monitor-command test --pretty '{\"execute\": \"query-block\"}'"
+def check_dirty_bitmap(guestname, cp_name, logger):
+    cmd = "virsh qemu-monitor-command %s --pretty '{\"execute\": \"query-block\"}'" % guestname
     ret, out = utils.exec_cmd(cmd, shell=True)
-    logger.debug("out: %s" % out)
+    logger.info("out: %s" % out)
     if ret:
         logger.error("exec cmd: %s failed." % cmd)
         return False
@@ -62,14 +62,35 @@ def checkpoint_delete(params):
                 return 1
             else:
                 logger.info("PASS: check checkpoint children %s successful." % cp_children)
-            if check_dirty_bitmap(cp_children, logger):
+            if check_dirty_bitmap(guestname, cp_children, logger):
                 logger.error("FAIL: check %s dirty bitmap failed." % cp_children)
                 return 1
             else:
                 logger.info("PASS: check %s dirty bitmap successful." % cp_children)
 
-    if flag == libvirt.VIR_DOMAIN_CHECKPOINT_DELETE_METADATA_ONLY:
-        if not check_dirty_bitmap(checkpoint_name, logger):
+    checkpoint_xml_path = "/var/lib/libvirt/qemu/checkpoint/%s/%s.xml" % (guestname, checkpoint_name)
+    if flag == libvirt.VIR_DOMAIN_CHECKPOINT_DELETE_CHILDREN_ONLY:
+        if not os.path.exists(checkpoint_xml_path):
+            logger.error("FAIL: check %s xml path failed." % checkpoint_name)
+            return 1
+        else:
+            logger.info("PASS: check %s xml path successful." % checkpoint_name)
+    else:
+        if os.path.exists(checkpoint_xml_path):
+            logger.error("FAIL: check %s xml path failed." % checkpoint_name)
+            return 1
+        else:
+            logger.info("PASS: check %s xml path successful." % checkpoint_name)
+
+    if (flag == libvirt.VIR_DOMAIN_CHECKPOINT_DELETE_METADATA_ONLY or
+            flag == libvirt.VIR_DOMAIN_CHECKPOINT_DELETE_CHILDREN_ONLY):
+        if not check_dirty_bitmap(guestname, checkpoint_name, logger):
+            logger.error("FAIL: check %s dirty bitmap failed." % checkpoint_name)
+            return 1
+        else:
+            logger.info("PASS: check %s dirty bitmap successful." % checkpoint_name)
+    else:
+        if check_dirty_bitmap(guestname, checkpoint_name, logger):
             logger.error("FAIL: check %s dirty bitmap failed." % checkpoint_name)
             return 1
         else:
@@ -88,11 +109,11 @@ def checkpoint_delete_clean(params):
     if len(dom_list) == 0:
         return 0
     if (flag == libvirt.VIR_DOMAIN_CHECKPOINT_DELETE_METADATA_ONLY and
-            check_dirty_bitmap(checkpoint_name, logger)):
-        cmd = ("virsh qemu-monitor-command test --pretty '"
+            check_dirty_bitmap(guestname, checkpoint_name, logger)):
+        cmd = ("virsh qemu-monitor-command %s --pretty '"
                "{\"execute\" : \"block-dirty-bitmap-remove\", "
                "\"arguments\" : { \"node\" : \"drive-virtio-disk0\", "
-               " \"name\" : \"%s\" }}'" % checkpoint_name)
+               " \"name\" : \"%s\" }}'" % (guestname, checkpoint_name))
         ret, out = utils.exec_cmd(cmd, shell=True)
         if ret:
             logger.error("exec cmd: %s failed." % cmd)
