@@ -26,11 +26,12 @@ def nfs_env(params):
     if ret.exit_status:
         logger.error("Stop firewalld service failed: %s." % ret.stdout)
         return 1
-    cmd = "systemctl stop firewalld"
-    ret, out = utils.remote_exec_pexpect(target_machine, username, password, cmd, 120)
-    if ret:
-        logger.error("Stop remote firewalld failed: %s" % out)
-        return 1
+    if target_machine is not None:
+        cmd = "systemctl stop firewalld"
+        ret, out = utils.remote_exec_pexpect(target_machine, username, password, cmd, 120)
+        if ret:
+            logger.error("Stop remote firewalld failed: %s" % out)
+            return 1
     if not nfs.nfs_setup(server_ip, target_machine, username, password,
                          nfs_path, mount_path, logger):
         return 1
