@@ -3,11 +3,11 @@
 import os
 import shutil
 import time
-
 import libvirt
-from libvirt import libvirtError
 
+from libvirt import libvirtError
 from utils import utils
+from repos.remoteAccess import remote_common
 
 required_params = ('listen_tls',
                    'auth_tls',
@@ -265,6 +265,8 @@ def sasl_user_add(target_machine, username, password, logger):
 def tls_libvirtd_set(target_machine, username, password,
                      listen_tls, auth_tls, logger):
     """ configure libvirtd.conf on tls server """
+    logger.info("Stop remote libvirtd and socket for bug 1741403.")
+    remote_common.stop_remote_libvirtd(target_machine, username, password, logger)
     logger.info("setting libvirtd.conf on tls server")
     # open libvirtd --listen option
     listen_open_cmd = 'echo "LIBVIRTD_ARGS=\\\"--listen\\\"" >> %s' % SYSCONFIG_LIBVIRTD
