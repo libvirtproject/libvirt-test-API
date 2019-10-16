@@ -36,16 +36,17 @@ def sasl_user_add(target_machine, username, password, logger):
 def tcp_libvirtd_set(target_machine, username, password,
                      listen_tcp, auth_tcp, logger):
     """ configure libvirtd.conf on libvirt server """
-    logger.info("Stop remote libvirtd and socket for bug 1741403.")
-    remote_common.stop_remote_libvirtd(target_machine, username, password, logger)
+    #logger.info("Stop remote libvirtd and socket for bug 1741403.")
+    #remote_common.stop_remote_libvirtd(target_machine, username, password, logger)
     logger.info("setting libvirtd.conf on libvirt server")
-    # open libvirtd --listen option
-    listen_open_cmd = 'echo "LIBVIRTD_ARGS=\\\"--listen\\\"" >> %s' % SYSCONFIG_LIBVIRTD
-    ret, output = utils.remote_exec_pexpect(target_machine, username,
-                                            password, listen_open_cmd)
-    if ret:
-        logger.error("failed to uncomment --listen in %s" % SYSCONFIG_LIBVIRTD)
-        return 1
+    if listen_tcp == "enable":
+        # open libvirtd --listen option
+        listen_open_cmd = 'echo "LIBVIRTD_ARGS=\\\"--listen\\\"" >> %s' % SYSCONFIG_LIBVIRTD
+        ret, output = utils.remote_exec_pexpect(target_machine, username,
+                                                password, listen_open_cmd)
+        if ret:
+            logger.error("failed to add '--listen' in %s" % SYSCONFIG_LIBVIRTD)
+            return 1
 
     # set listen_tls
     logger.info("set listen_tls to 0 in %s" % LIBVIRTD_CONF)
@@ -131,7 +132,6 @@ def hypervisor_connecting_test(uri, auth_tcp, username,
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
         ret = 1
-        conn.close()
 
     if ret == 0 and expected_result == 'success':
         logger.info("tcp connnection success")
@@ -150,7 +150,7 @@ def hypervisor_connecting_test(uri, auth_tcp, username,
 
 
 def tcp_setup(params):
-    """ configure libvirt and connect to it through TCP socket"""
+    """ Configure libvirt and connect to it through TCP socket"""
     logger = params['logger']
     target_machine = params['target_machine']
     username = params['username']
@@ -161,12 +161,16 @@ def tcp_setup(params):
     target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
     uri = "qemu+tcp://%s/system" % target_hostname
 
-    logger.info("the hostname of server is %s" % target_machine)
-    logger.info("the value of listen_tcp is %s" % listen_tcp)
-    logger.info("the value of auth_tcp is %s" % auth_tcp)
+    logger.info("Target hostname: %s" % target_machine)
+    logger.info("listen_tcp: %s" % listen_tcp)
+    logger.info("auth_tcp: %s" % auth_tcp)
+
+    if utils.version_compare('libvirt-python', 5, 6, 0, logger):
+        logger.info("Because of bug 1741403, change listen_tcp to disable.")
+        listen_tcp = "disable"
 
     if not utils.do_ping(target_machine, 0):
-        logger.error("failed to ping host %s" % target_machine)
+        logger.error("Failed to ping host %s" % target_machine)
         return 1
 
     if auth_tcp == 'sasl':
@@ -178,9 +182,14 @@ def tcp_setup(params):
         return 1
 
     if listen_tcp == 'disable':
-        if hypervisor_connecting_test(uri, auth_tcp, username,
-                                      password, logger, 'fail'):
-            return 1
+        if utils.version_compare('libvirt-python', 5, 6, 0, logger):
+            if hypervisor_connecting_test(uri, auth_tcp, username,
+                                          password, logger, 'success'):
+                return 1
+        else:
+            if hypervisor_connecting_test(uri, auth_tcp, username,
+                                          password, logger, 'fail'):
+                return 1
     elif listen_tcp == 'enable':
         if hypervisor_connecting_test(uri, auth_tcp, username,
                                       password, logger, 'success'):
@@ -190,7 +199,7 @@ def tcp_setup(params):
 
 
 def tcp_setup_clean(params):
-    """cleanup testing environment"""
+    """ Cleanup testing environment. """
 
     logger = params['logger']
     target_machine = params['target_machine']
@@ -204,18 +213,18 @@ def tcp_setup_clean(params):
         ret, output = utils.remote_exec_pexpect(target_machine, username,
                                                 password, saslpasswd2_delete)
         if ret:
-            logger.error("failed to delete sasl user")
+            logger.error("Failed to delete sasl user")
     libvirtd_conf_retore = "sed -i -n \"/^[ #]/p\" %s" % LIBVIRTD_CONF
     ret, output = utils.remote_exec_pexpect(target_machine, username,
                                             password, libvirtd_conf_retore)
     if ret:
-        logger.error("failed to restore %s" % LIBVIRTD_CONF)
+        logger.error("Failed to restore %s" % LIBVIRTD_CONF)
 
     sysconfig_libvirtd_restore = "sed -i -n \"/^[ #]/p\" %s" % SYSCONFIG_LIBVIRTD
     ret, output = utils.remote_exec_pexpect(target_machine, username,
                                             password, sysconfig_libvirtd_restore)
     if ret:
-        logger.error("failed to restore %s" % SYSCONFIG_LIBVIRTD)
+        logger.error("Failed to restore %s" % SYSCONFIG_LIBVIRTD)
 
     # restart remote libvirtd service
     libvirtd_restart_cmd = "service libvirtd restart"
@@ -223,5 +232,4 @@ def tcp_setup_clean(params):
     ret, output = utils.remote_exec_pexpect(target_machine, username,
                                             password, libvirtd_restart_cmd)
     if ret:
-        logger.error("failed to restart libvirtd service")
-        return 1
+        logger.error("Failed to restart libvirtd service")
