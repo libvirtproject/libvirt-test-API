@@ -1,0 +1,42 @@
+<domain type="kvm">
+  <name>GUESTNAME</name>
+  <memory>2097152</memory>
+  <vcpu>2</vcpu>
+  <os>
+    <type arch='GUESTARCH' machine="GUESTMACHINE">hvm</type>
+    <boot dev="hd"/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
+  <clock offset="utc"/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <disk device="disk" type="file">
+      <driver name="qemu" type='qcow2'/>
+      <source file='DISKPATH'/>
+      <target bus='virtio' dev='vda'/>
+    </disk>
+    <interface type="network">
+      <source network="default"/>
+      <model type='virtio'/>
+    </interface>
+    <console/>
+    <input bus="usb" type="mouse"/>
+    <tpm model='tpm-crb'>
+      <backend type='emulator' version='2.0'/>
+    </tpm>
+    <graphics keymap="en-us" autoport="yes" type="GRAPHIC"/>
+    <channel type='unix'>
+      <source mode='bind' path='/var/lib/libvirt/qemu/channel/target/GUESTNAME.agent'/>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <video>
+      <model type='VIDEO' vram='16384' heads='1'/>
+    </video>
+  </devices>
+</domain>
