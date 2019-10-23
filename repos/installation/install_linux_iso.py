@@ -143,7 +143,6 @@ def install_linux_iso(params):
 
     macaddr = utils.get_rand_mac()
     xmlstr = xmlstr.replace('MACADDR', macaddr)
-    xmlstr_bak = xmlstr
 
     xmlstr = xmlstr.replace('CUSTOMISO', bootcd)
     xmlstr = xmlstr.replace('KS', kscfg)
