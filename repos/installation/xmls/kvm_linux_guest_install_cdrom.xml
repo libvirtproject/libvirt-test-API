@@ -24,7 +24,7 @@
     </disk>
     <disk device="cdrom" type="file">
       <source file='CUSTOMISO'/>
-      <target bus="ide" dev="hdc"/>
+      <target bus="sata" dev="sda"/>
       <readonly/>
     </disk>
     <interface type="network">

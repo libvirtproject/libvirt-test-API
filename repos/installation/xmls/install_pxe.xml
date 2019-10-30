@@ -3,11 +3,8 @@
   <memory>MEMORY</memory>
   <vcpu>VCPU</vcpu>
   <os>
-    <type machine="GUESTMACHINE">hvm</type>
+    <type arch='GUESTARCH' machine="GUESTMACHINE">hvm</type>
     <boot dev="network"/>
-    <boot dev="hd"/>
-    <loader>/usr/share/seabios/bios.bin</loader>
-    <bios userserial='yes' rebootTimeout='-1'/>
   </os>
   <features>
     <acpi/>
