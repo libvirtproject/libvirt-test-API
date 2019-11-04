@@ -182,7 +182,7 @@ def job_stats(params):
             logger.info("Current version don't support VIR_DOMAIN_JOB_MEMORY_POSTCOPY_REQS.")
             return 0
     try:
-        conn = sharedmod.libvirtobj['conn']
+        conn = libvirt.open()
         domobj = conn.lookupByName(guestname)
         if flags == libvirt.VIR_DOMAIN_JOB_STATS_COMPLETED:
             if vm_state == "save":

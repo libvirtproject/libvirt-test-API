@@ -37,11 +37,13 @@ def nfs_env(params):
     mount_path = params['mount_path']
 
     server_ip = utils.get_local_ip()
-    cmd = ("firewall-cmd --add-port=49152-49215/tcp;"
-           "firewall-cmd --permanent --add-service=nfs;"
+    cmd = ("firewall-cmd --permanent --add-service=nfs;"
            "firewall-cmd --permanent --add-service=mountd;"
            "firewall-cmd --permanent --add-service=rpc-bind;"
-           "firewall-cmd --reload")
+           "firewall-cmd --permanent --add-service=ssh;"
+           "firewall-cmd --permanent --add-port=49152-49215/tcp;"
+           "firewall-cmd --reload;"
+           "service libvirtd restart")
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
         logger.error("Failed to add nfs service to firewalld: %s." % ret.stdout)

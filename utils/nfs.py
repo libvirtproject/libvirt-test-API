@@ -9,19 +9,21 @@ from . import utils
 
 
 def local_nfs_exported(nfs_path, logger):
-    if utils.isRelease('7', logger):
-        cmd = "exportfs -o rw,no_root_squash *:%s" % nfs_path
-    else:
-        cmd = "exportfs -o rw,fsid=0,no_root_squash *:%s" % nfs_path
+    cmd = "grep -nr '%s' /etc/exports" % nfs_path
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
-        logger.error("%s failed: %s." % (cmd, ret.stdout))
-        return False
+        cmd = "echo '%s *(rw,no_root_squash,async)' >> /etc/exports" % nfs_path
+        ret = process.run(cmd, shell=True, ignore_status=True)
+        if ret.exit_status:
+            logger.error("%s failed: %s." % (cmd, ret.stdout))
+            return False
+    else:
+        logger.info("%s already set in /etc/exports." % nfs_path)
     return True
 
 
 def local_nfs_exported_clean(nfs_path, logger):
-    cmd = "exportfs -u *:%s" % nfs_path
+    cmd = "sed '/%s/d' /etc/exports" % nfs_path
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
         logger.error("%s failed: %s." % (cmd, ret.stdout))
@@ -59,7 +61,7 @@ def local_is_mounted(nfs_path, mount_path, logger):
 def local_mount(nfs_path, mount_path, logger):
     if local_is_mounted(nfs_path, mount_path, logger):
         local_umount(mount_path, logger)
-    options = "-o rw"
+    options = "-o rw,nfsvers=4"
     cmd = "mount %s -t nfs %s %s" % (options, nfs_path, mount_path)
     ret = process.run(cmd, shell=True)
     if ret.exit_status:
@@ -91,7 +93,7 @@ def local_nfs_setup(nfs_path, mount_path, logger):
         logger.error("%s is not a directory." % mount_path)
         return False
     local_nfs_exported(nfs_path, logger)
-    local_mount("127.0.0.1:" + nfs_path, mount_path, logger)
+    local_mount("%s:" % utils.get_local_ip() + nfs_path, mount_path, logger)
     return True
 
 
@@ -125,7 +127,7 @@ def remote_mount(server_ip, remote_ip, username, password, nfs_path, mount_path,
         if ret:
             logger.error("%s failed: %s" % (cmd, out))
             return False
-    options = "-o rw"
+    options = "-o rw,nfsvers=4"
     cmd = "mount %s -t nfs %s:%s %s" % (options, server_ip, nfs_path, mount_path)
     ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
     if ret:
