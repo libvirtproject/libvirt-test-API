@@ -147,7 +147,7 @@ def install_linux_iso(params):
     xmlstr = xmlstr.replace('CUSTOMISO', bootcd)
     xmlstr = xmlstr.replace('KS', kscfg)
     xmlstr = install_common.get_vmlinuz_initrd(ostree, xmlstr, logger)
-    if hddriver == 'sata':
+    if hddriver == 'sata' or hddriver == 'scsilun' or hddriver == 'usb':
         xmlstr = xmlstr.replace('<target bus="sata" dev="sda"/>', '<target bus="sata" dev="sdb"/>')
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
 
