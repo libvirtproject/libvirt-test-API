@@ -1,73 +1,73 @@
 #!/usr/bin/env python
 
 import functools
+import time
+import libvirt
+import tempfile
 
 from libvirt import libvirtError
-from src import sharedmod
 from utils import utils
 
 required_params = ('guestname', 'username', 'password')
 optional_params = {}
 
 
-def get_num_row(domobj, logger, username, password, ip):
-    #get the current row number of "last reboot"'result
-    cmd = "last reboot | wc -l"
+def check_file(tmp_file, logger, username, password, ip):
+    # Check file in guest
+    cmd = "ls %s" % tmp_file
     ret, output = utils.remote_exec_pexpect(ip, username, password, cmd)
-    if ret:
-        logger.error("fail to remote exec cmd: ret: %s, output: %s"
-                     % (ret, output))
-        return None
-    logger.debug("the cmd output is %s" % output)
-    return int(output)
+    if not ret:
+        logger.error("Fail to check %s in guest. File still exist." % tmp_file)
+        return False
+    return True
 
 
 def reset(params):
-    """Reset a domain immediately without any guest OS shutdown
-       Return 0 on SUCCESS or 1 on FAILURE
-       Note:reset function just a reset of hardware,it don't shutdown guest.
-            Resetting a virtual machine does not apply any pending domain configuration
-            changes. Changes to the domain's configuration only take effect after a
-            complete shutdown and restart of the domain.
     """
-    guestname = params['guestname']
+    Reset a domain immediately without any guest OS shutdown
+    Return 0 on SUCCESS or 1 on FAILURE
+    Note: reset function just a reset of hardware,it don't shutdown guest.
+          Resetting a virtual machine does not apply any pending domain
+          configuration changes. Changes to the domain's configuration only
+          take effect after acomplete shutdown and restart of the domain.
+    """
     logger = params['logger']
-
+    guestname = params['guestname']
     username = params['username']
     password = params['password']
 
-    conn = sharedmod.libvirtobj['conn']
-    domobj = conn.lookupByName(guestname)
-
-    logger.info("get the mac address of vm %s" % guestname)
+    logger.info("Get the MAC address of %s." % guestname)
     mac = utils.get_dom_mac_addr(guestname)
-    logger.info("the mac address of vm %s is %s" % (guestname, mac))
-    logger.info("get ip by mac address")
+    logger.info("MAC address: %s" % mac)
+    logger.info("Get IP by MAC address.")
     ip = utils.mac_to_ip(mac, 180)
-    logger.info("the ip address of vm %s is %s" % (guestname, ip))
+    logger.info("IP: %s" % ip)
 
-    old_times = get_num_row(domobj, logger, username, password, ip)
-    if old_times is None:
-        return 1
-
-    #reset domain
     try:
-        logger.info("reset vm %s now" % guestname)
+        conn = libvirt.open()
+        domobj = conn.lookupByName(guestname)
+        tmp_file = tempfile.mkdtemp()
+        cmd = "rm -rf %s; sync; touch %s; ls %s" % (tmp_file, tmp_file, tmp_file)
+        ret, output = utils.remote_exec_pexpect(ip, username, password, cmd)
+        if ret:
+            logger.error("Fail to create a tmp file in guest.")
+            logger.error("ret: %s, out: %s" % (ret, output))
+            return 1
+        logger.info("Create file in guest: %s" % tmp_file)
+        logger.info("Reset now.")
         domobj.reset(0)
-    except libvirtError as e:
+        time.sleep(10)
+    except libvirtError as err:
         logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
-        logger.error("fail to reset domain")
+                     % (err.get_error_message(), err.get_error_code()))
+        logger.error("Fail to reset domain.")
         return 1
 
-    new_times = utils.wait_for(functools.partial(get_num_row, domobj, logger, username, password, ip), 600)
-    if new_times is None:
-        logger.error('get reboot number failed.')
-        return 1
-    if new_times != old_times + 1:
-        logger.error("fail to reset guest")
+    logger.info("Check file in guest.")
+    ret = utils.wait_for(functools.partial(check_file, tmp_file, logger, username, password, ip), 600)
+    if not ret:
+        logger.error("FAIL: reset guest failed.")
         return 1
 
-    logger.info("vm %s reset successfully" % guestname)
-    logger.info("PASS")
+    logger.info("PASS: reset successfully.")
     return 0
