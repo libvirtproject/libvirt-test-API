@@ -9,6 +9,7 @@ from . import utils
 
 
 def local_nfs_exported(nfs_path, logger):
+    logger.info("Configure /etc/exports.")
     cmd = "grep -nr '%s' /etc/exports" % nfs_path
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
@@ -19,10 +20,12 @@ def local_nfs_exported(nfs_path, logger):
             return False
     else:
         logger.info("%s already set in /etc/exports." % nfs_path)
+    local_restart_service(logger)
     return True
 
 
 def local_nfs_exported_clean(nfs_path, logger):
+    logger.info("Clean /etc/exports.")
     cmd = "sed '/%s/d' /etc/exports" % nfs_path
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
@@ -32,6 +35,7 @@ def local_nfs_exported_clean(nfs_path, logger):
 
 
 def local_restart_service(logger):
+    logger.info("Restart nfs server.")
     if utils.isRelease("8", logger):
         cmd = "systemctl restart nfs-server"
     else:
@@ -40,6 +44,7 @@ def local_restart_service(logger):
     if ret.exit_status:
         logger.error("start nfs service failed: %s." % ret.stdout)
         return False
+    logger.info("Restart rpcbind server.")
     cmd = "systemctl restart rpcbind"
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
@@ -61,6 +66,7 @@ def local_is_mounted(nfs_path, mount_path, logger):
 def local_mount(nfs_path, mount_path, logger):
     if local_is_mounted(nfs_path, mount_path, logger):
         local_umount(mount_path, logger)
+    logger.info("Mount %s to %s." % (nfs_path, mount_path))
     options = "-o rw,nfsvers=4"
     cmd = "mount %s -t nfs %s %s" % (options, nfs_path, mount_path)
     ret = process.run(cmd, shell=True)
@@ -71,6 +77,7 @@ def local_mount(nfs_path, mount_path, logger):
 
 
 def local_umount(mount_path, logger):
+    logger.info("Umount %s." % mount_path)
     cmd = "umount -lf %s" % mount_path
     ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status:
@@ -81,6 +88,7 @@ def local_umount(mount_path, logger):
 
 def local_nfs_setup(nfs_path, mount_path, logger):
     local_restart_service(logger)
+    logger.info("Start setup nfs server on local host.")
     if local_is_mounted(nfs_path, mount_path, logger):
         local_umount(mount_path, logger)
     if not os.path.exists(nfs_path):
@@ -98,6 +106,7 @@ def local_nfs_setup(nfs_path, mount_path, logger):
 
 
 def local_nfs_clean(nfs_path, mount_path, logger):
+    logger.info("Clean nfs server.")
     local_umount(mount_path, logger)
     if os.path.exists(nfs_path):
         local_nfs_exported_clean(nfs_path, logger)
@@ -117,6 +126,7 @@ def remote_is_mounted(remote_ip, username, password, nfs_path, mount_path, logge
 
 
 def remote_mount(server_ip, remote_ip, username, password, nfs_path, mount_path, logger):
+    logger.info("Mount %s to %s on %s." % (nfs_path, mount_path, remote_ip))
     if remote_is_mounted(remote_ip, username, password, nfs_path, mount_path, logger):
         remote_umount(remote_ip, username, password, mount_path, logger)
     cmd = "ls %s" % mount_path
@@ -137,6 +147,7 @@ def remote_mount(server_ip, remote_ip, username, password, nfs_path, mount_path,
 
 
 def remote_umount(remote_ip, username, password, mount_path, logger):
+    logger.info("Umount %s on %s." % (mount_path, remote_ip))
     cmd = "umount -lf %s" % mount_path
     ret, out = utils.remote_exec_pexpect(remote_ip, username, password, cmd)
     if ret:
@@ -146,6 +157,7 @@ def remote_umount(remote_ip, username, password, mount_path, logger):
 
 
 def nfs_setup(server_ip, remote_ip, username, password, nfs_path, mount_path, logger):
+    logger.info("Start setup nfs.")
     if not local_nfs_setup(nfs_path, mount_path, logger):
         logger.error("nfs server setup failed.")
         return False
@@ -168,6 +180,7 @@ def nfs_setup(server_ip, remote_ip, username, password, nfs_path, mount_path, lo
 
 
 def nfs_clean(remote_ip, username, password, nfs_path, mount_path, logger):
+    logger.info("Start clean nfs.")
     if not local_nfs_clean(nfs_path, mount_path, logger):
         logger.error("nfs server clean failed.")
         return False
