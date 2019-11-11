@@ -6,8 +6,6 @@ import libvirt
 import time
 
 from libvirt import libvirtError
-
-from src import sharedmod
 from utils import utils
 from repos.domain import domain_common
 
@@ -131,8 +129,7 @@ def define(params):
         if "lxc" in virt_type:
             conn = libvirt.open("lxc:///")
         else:
-            conn = sharedmod.libvirtobj['conn']
-
+            conn = libvirt.open()
         uri = conn.getURI()
     else:
         domain_common.config_ssh(target_machine, username, password, logger)

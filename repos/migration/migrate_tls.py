@@ -3,7 +3,6 @@
 import libvirt
 
 from libvirt import libvirtError
-from src import sharedmod
 from repos.domain import domain_common
 from utils import utils
 
@@ -77,17 +76,16 @@ def migrate_tls(params):
     target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
     dsturi = "qemu+%s://%s/system" % (transport, target_hostname)
 
-    # Connect to local hypervisor connection URI
-    srcconn = sharedmod.libvirtobj['conn']
-    srcdom = srcconn.lookupByName(guestname)
-    dstconn = libvirt.open(dsturi)
-
     try:
+        # Connect to local hypervisor connection URI
+        srcconn = libvirt.open()
+        srcdom = srcconn.lookupByName(guestname)
+        dstconn = libvirt.open(dsturi)
         logger.info("use migrate() to migrate")
         srcdom.migrate(dstconn, libvirt.VIR_MIGRATE_TLS | libvirt.VIR_MIGRATE_UNSAFE, None, None, 0)
-    except libvirtError as e:
+    except libvirtError as err:
         logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
+                     % (err.get_error_message(), err.get_error_code()))
         logger.error("Migration Failed")
         env_clean(srcconn, dstconn, guestname, logger)
         return 1

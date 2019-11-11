@@ -2,11 +2,10 @@
 
 import json
 import time
-
 import libvirt
+
 from libvirt import libvirtError
 from utils import utils, process
-from src import sharedmod
 from repos.domain import domain_common
 
 required_params = ('transport',
@@ -201,7 +200,7 @@ def migrate(params):
     dsturi = "qemu+%s://%s/system" % (transport, target_hostname)
 
     # Connect to local hypervisor connection URI
-    srcconn = sharedmod.libvirtobj['conn']
+    srcconn = libvirt.open()
 
     time.sleep(10)
     if auth_tcp == '':
@@ -250,9 +249,9 @@ def migrate(params):
         else:
             logger.info("use migrate() to migrate")
             srcdom.migrate(dstconn, migflags, None, None, 0)
-    except libvirtError as e:
+    except libvirtError as err:
         logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
+                     % (err.get_error_message(), err.get_error_code()))
         logger.error("Migration Failed")
         env_clean(srcconn, dstconn, target_machine, guestname, logger)
         return 1

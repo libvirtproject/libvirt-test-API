@@ -8,7 +8,6 @@ import time
 
 from xml.dom import minidom
 from libvirt import libvirtError
-from src import sharedmod
 from utils import utils
 
 required_params = ()

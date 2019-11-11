@@ -5,7 +5,6 @@ import time
 import libvirt
 
 from libvirt import libvirtError
-from src import sharedmod
 from utils import utils
 
 TEST_FILE = "/root/testapi"
@@ -135,7 +134,7 @@ def send_key(params):
     logger.info("the ip address of vm %s is %s" % (guestname, ip))
 
     try:
-        conn = sharedmod.libvirtobj['conn']
+        conn = libvirt.open()
         domobj = conn.lookupByName(guestname)
         #login_guest(guestname, username, password, logger)
         # username: root

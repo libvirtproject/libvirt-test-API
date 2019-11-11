@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
+import libvirt
 import os
 
 from libvirt import libvirtError
-
-from src import sharedmod
 
 required_params = ('ifacename',)
 optional_params = {}
@@ -26,25 +25,24 @@ def undefine(params):
     global logger
     logger = params['logger']
     ifacename = params['ifacename']
-    conn = sharedmod.libvirtobj['conn']
 
     if check_undefine_interface(ifacename):
         logger.error("interface %s have been undefined" % ifacename)
         return 1
 
-    ifaceobj = conn.interfaceLookupByName(ifacename)
-
     try:
+        conn = libvirt.open()
+        ifaceobj = conn.interfaceLookupByName(ifacename)
         ifaceobj.undefine()
         if check_undefine_interface(ifacename):
             logger.info("undefine a interface is successful")
         else:
             logger.error("fail to check undefine interface")
             return 1
-    except libvirtError as e:
+    except libvirtError as err:
         logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
-        logger.error("fail to undefine a interface")
+                     % (err.get_error_message(), err.get_error_code()))
+        logger.error("Fail to undefine a interface.")
         return 1
 
     return 0

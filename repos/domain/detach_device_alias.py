@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # Test detachDeviceAlias() API
 
+import libvirt
 import time
 
 from libvirt import libvirtError
-
-from src import sharedmod
 from repos.domain.domain_common import guest_clean
 from utils.utils import version_compare
 from utils import utils
@@ -63,7 +62,7 @@ def detach_device_alias(params):
     logger.debug("xml:\n%s" % xmlstr)
 
     try:
-        conn = sharedmod.libvirtobj['conn']
+        conn = libvirt.open()
         # if guest exist, clean it
         guest_clean(conn, guestname, logger)
         # define and start a new guest
@@ -93,6 +92,6 @@ def detach_device_alias_clean(params):
     logger = params['logger']
     guestname = params['guestname']
 
-    conn = sharedmod.libvirtobj['conn']
+    conn = libvirt.open()
     guest_clean(conn, guestname, logger)
     return 0

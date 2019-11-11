@@ -7,7 +7,6 @@ import time
 import libvirt
 
 from libvirt import libvirtError
-from src import sharedmod
 from utils import process
 from utils.utils import get_xml_value
 from utils import utils
@@ -118,10 +117,10 @@ def check_blkio_paras(blkio_path, blkio_paras, logger):
     if 'device_weight' in blkio_paras:
         expected_device_weight = blkio_paras['device_weight']
         status, output = get_output("cat %s/blkio.weight_device"
-                                    % domain_blkio_path, logger)
+                                    % blkio_path, logger)
         if not status:
             logger.info("%s/blkio.weight_device is \"%s\""
-                        % (domain_blkio_path, output))
+                        % (blkio_path, output))
         else:
             return 1
 

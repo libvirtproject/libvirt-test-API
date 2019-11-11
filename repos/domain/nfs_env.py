@@ -11,22 +11,6 @@ optional_params = {'target_machine': None,
                    'password': 'redhat'}
 
 
-def stop_firewalld(target_machine, logger):
-    """ Stop firewalld service (not recommended, """
-    """ this will affect virtual network of libvirtd.) """
-    cmd = "systemctl stop firewalld"
-    ret = process.run(cmd, shell=True, ignore_status=True)
-    if ret.exit_status:
-        logger.error("Stop firewalld service failed: %s." % ret.stdout)
-        return 1
-    if target_machine is not None:
-        cmd = "systemctl stop firewalld"
-        ret, out = utils.remote_exec_pexpect(target_machine, username, password, cmd, 120)
-        if ret:
-            logger.error("Stop remote firewalld failed: %s" % out)
-            return 1
-
-
 def nfs_env(params):
     """ migrate a guest back and forth between two machines"""
     logger = params['logger']

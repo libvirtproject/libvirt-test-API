@@ -2,11 +2,9 @@
 # Restore domain from a saved statefile
 
 import libvirt
-import time
 import functools
 
 from libvirt import libvirtError
-from src import sharedmod
 from utils import utils
 
 required_params = ('guestname', 'filepath',)

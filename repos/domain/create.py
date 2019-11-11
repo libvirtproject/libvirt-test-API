@@ -7,8 +7,6 @@ import shutil
 import libvirt
 
 from libvirt import libvirtError
-
-from src import sharedmod
 from utils import utils
 
 NONE = 0
@@ -69,20 +67,19 @@ def create(params):
     shutil.copyfile(imagepath, diskpath)
     os.chown(diskpath, 107, 107)
 
-    conn = sharedmod.libvirtobj['conn']
-
-    # Create domain from xml
     try:
+        conn = libvirt.open()
+        # Create domain from xml
         if flags == "none":
             domobj = conn.createXML(xmlstr, NONE)
         elif flags == "start_paused":
             domobj = conn.createXML(xmlstr, START_PAUSED)
         else:
-            logger.error("flags error")
-    except libvirtError as e:
+            logger.error("Flags error: %s" % flags)
+    except libvirtError as err:
         logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
-        logger.error("fail to create domain %s" % guestname)
+                     % (err.get_error_message(), err.get_error_code()))
+        logger.error("Fail to create domain %s" % guestname)
         return 1
 
     if flags == "start_paused":

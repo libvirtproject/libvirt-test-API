@@ -2,10 +2,9 @@
 # Detach a disk from domain
 
 import time
+import libvirt
 
 from libvirt import libvirtError
-
-from src import sharedmod
 from utils import utils
 from repos.domain.start import start
 
@@ -41,9 +40,6 @@ def detach_disk(params):
     diskpath = volumepath + "/" + volume
     xmlstr = xmlstr.replace('DISKPATH', diskpath)
 
-    conn = sharedmod.libvirtobj['conn']
-    domobj = conn.lookupByName(guestname)
-
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vdb')
     elif hddriver == 'ide':
@@ -60,6 +56,8 @@ def detach_disk(params):
     time.sleep(15)
 
     try:
+        conn = libvirt.open()
+        domobj = conn.lookupByName(guestname)
         domobj.detachDevice(xmlstr)
         # Add sleep to wait detach disk finish
         time.sleep(15)
@@ -70,9 +68,9 @@ def detach_disk(params):
         else:
             logger.error("fail to detach a disk to guest: %s\n" % disk_num2)
             return 1
-    except libvirtError as e:
+    except libvirtError as err:
         logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
+                     % (err.get_error_message(), err.get_error_code()))
         logger.error("detach %s disk from guest %s" % (xmlstr, guestname))
         return 1
 
@@ -88,7 +86,7 @@ def detach_disk_clean(params):
     ret_flag = params.get("ret_flag")
     logger.info("The test return %s, try to cleanup...\n" % ret_flag)
 
-    conn = sharedmod.libvirtobj['conn']
+    conn = libvirt.open()
     guestname = params['guestname']
     domobj = conn.lookupByName(guestname)
 

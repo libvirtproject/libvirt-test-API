@@ -5,7 +5,6 @@ import re
 import libvirt
 
 from libvirt import libvirtError
-from src import sharedmod
 from utils import utils
 
 SPLIT_STR = " -"

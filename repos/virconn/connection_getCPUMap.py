@@ -2,9 +2,9 @@
 # test libvirt getCPUMap API
 
 import libvirt
+
 from libvirt import libvirtError
 from utils import process
-from src import sharedmod
 
 required_params = ()
 optional_params = {'conn': ''}
@@ -30,8 +30,7 @@ def connection_getCPUMap(params):
     logger = params['logger']
 
     try:
-        # get connection firstly.
-        # If conn is not specified, use conn from sharedmod
+        # Get connection
         if 'conn' in params:
             conn = libvirt.open(params['conn'])
         else:
