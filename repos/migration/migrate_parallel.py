@@ -71,7 +71,7 @@ def migrate(srcc, srcd, dstc, guestname, params_list, logger):
 def check_conn(params_list, logger):
     global test_result
     logger.info("Start check network connections.")
-    cmd = "timeout 5 netstat -tunapc | grep 4915 | grep ESTABLISHED | awk '{print $4}' | awk -F: '{print $2}' | sort | uniq"
+    cmd = "timeout 10 netstat -tunapc | grep 4915 | grep ESTABLISHED | awk '{print $4}' | sort | uniq"
     ret = process.run(cmd, shell=True, ignore_status=True)
     logger.info("out: %s" % ret.stdout)
     if ret.exit_status:
