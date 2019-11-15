@@ -265,8 +265,6 @@ def sasl_user_add(target_machine, username, password, logger):
 def tls_libvirtd_set(target_machine, username, password,
                      listen_tls, auth_tls, logger):
     """ configure libvirtd.conf on tls server """
-    #logger.info("Stop remote libvirtd and socket for bug 1741403.")
-    #remote_common.stop_remote_libvirtd(target_machine, username, password, logger)
     logger.info("Setting libvirtd.conf on tls server")
     if listen_tls == "enable":
         # open libvirtd --listen option
@@ -313,51 +311,13 @@ def tls_libvirtd_set(target_machine, username, password,
         logger.error("Failed to set auth_tls in %s" % LIBVIRTD_CONF)
         return 1
 
-    # restart remote libvirtd service
-    libvirtd_restart_cmd = "service libvirtd restart"
-    logger.info("libvirtd restart")
-    ret, output = utils.remote_exec_pexpect(target_machine, username,
-                                            password, libvirtd_restart_cmd)
-    if ret:
-        logger.error("Failed to restart libvirtd service")
+    # Restart remote libvirtd
+    if remote_common.restart_remote_libvirtd(target_machine, username,
+                                             password, logger, 'tls'):
         return 1
 
     time.sleep(3)
     logger.info("Done to libvirtd configuration")
-    return 0
-
-
-def iptables_stop(target_machine, username, password, logger):
-    """ This is a temprory method in favor of migration """
-    logger.info("check local and remote iptables status")
-
-    check_cmd = "systemctl status iptables"
-    logger.debug("cmd : %s" % check_cmd)
-    ret, out = utils.remote_exec_pexpect(target_machine, username,
-                                         password, check_cmd)
-    logger.debug("ret = %s, out = %s" % (ret, out))
-    if ret == 0:
-        logger.info("stop remote iptables temprorily")
-        stop_cmd = "systemctl stop iptables"
-        ret, output = utils.remote_exec_pexpect(target_machine, username,
-                                                password, stop_cmd)
-        if ret:
-            logger.error("failed to stop remote iptables service, %s" % ret)
-            logger.error("output: %s" % output)
-            return 1
-
-    ret, out = utils.exec_cmd(check_cmd, shell=True)
-    logger.debug("ret = %s, out = %s" % (ret, out))
-    if ret == 0:
-        logger.info("stop local iptables temprorily")
-        stop_cmd = "systemctl stop iptables"
-        ret, output = utils.exec_cmd(stop_cmd, shell=True)
-        if ret:
-            logger.error("failed to stop local iptables service, %s" % ret)
-            logger.error("output: %s" % output)
-            return 1
-
-    logger.info("done the iptables stop job")
     return 0
 
 
@@ -413,7 +373,9 @@ def hypervisor_connecting_test(uri, auth_tls, username,
 
 
 def tls_setup(params):
-    """ Generate tls certificates and configure libvirt """
+    """
+    Prepare and test tls env
+    """
     logger = params['logger']
     target_machine = params['target_machine']
     username = params['username']
@@ -430,7 +392,7 @@ def tls_setup(params):
 
     local_machine = utils.get_local_hostname()
     target_hostname = utils.get_target_hostname(target_machine, username, password, logger)
-    uri = "qemu://%s/system" % target_hostname
+    uri = "qemu+tls://%s/system" % target_hostname
     if pkipath:
         uri += "?pkipath=%s" % pkipath
 
@@ -452,9 +414,6 @@ def tls_setup(params):
         shutil.rmtree(TEMP_TLS_FOLDER)
     os.mkdir(TEMP_TLS_FOLDER)
 
-    if iptables_stop(target_machine, username, password, logger):
-        return 1
-
     if CA_setting_up(target_hostname, logger):
         return 1
 
@@ -471,6 +430,9 @@ def tls_setup(params):
     if auth_tls == 'sasl':
         if sasl_user_add(target_machine, username, password, logger):
             return 1
+
+    if remote_common.set_firewall('16514/tcp', target_machine, username, password, logger):
+        return 1
 
     if tls_libvirtd_set(target_machine, username, password,
                         listen_tls, auth_tls, logger):
@@ -505,15 +467,15 @@ def tls_setup_clean(params):
     listen_tls = params['listen_tls']
     auth_tls = params['auth_tls']
 
-    cacert_rm = "rm -f %s/cacert.pem" % CA_FOLDER
+    cmd = "rm -f %s/cacert.pem" % CA_FOLDER
     ret, output = utils.remote_exec_pexpect(target_machine, username,
-                                            password, cacert_rm)
+                                            password, cmd)
     if ret:
         logger.error("Failed to remove cacert.pem on remote machine")
 
-    ca_libvirt_rm = "rm -rf %s" % CERTIFICATE_FOLDER
+    cmd = "rm -rf %s" % CERTIFICATE_FOLDER
     ret, output = utils.remote_exec_pexpect(target_machine, username,
-                                            password, ca_libvirt_rm)
+                                            password, cmd)
     if ret:
         logger.error("Failed to remove libvirt folder")
 
@@ -521,28 +483,24 @@ def tls_setup_clean(params):
     shutil.rmtree(CERTIFICATE_FOLDER)
 
     if auth_tls == 'sasl':
-        saslpasswd2_delete = "%s -a libvirt -d %s" % (SASLPASSWD2, username)
+        cmd = "%s -a libvirt -d %s" % (SASLPASSWD2, username)
         ret, output = utils.remote_exec_pexpect(target_machine, username,
-                                                password, saslpasswd2_delete)
+                                                password, cmd)
         if ret:
             logger.error("Failed to delete sasl user")
 
-    libvirtd_conf_retore = "sed -i -n \"/^[ #]/p\" %s" % LIBVIRTD_CONF
+    cmd = "sed -i -n \"/^[ #]/p\" %s" % LIBVIRTD_CONF
     ret, output = utils.remote_exec_pexpect(target_machine, username,
-                                            password, libvirtd_conf_retore)
+                                            password, cmd)
     if ret:
         logger.error("Failed to restore %s" % LIBVIRTD_CONF)
 
-    sysconfig_libvirtd_restore = "sed -i -n \"/^[ #]/p\" %s" % SYSCONFIG_LIBVIRTD
+    cmd = "sed -i -n \"/^[ #]/p\" %s" % SYSCONFIG_LIBVIRTD
     ret, output = utils.remote_exec_pexpect(target_machine, username,
-                                            password, sysconfig_libvirtd_restore)
+                                            password, cmd)
     if ret:
         logger.error("Failed to restore %s" % SYSCONFIG_LIBVIRTD)
 
-    # restart remote libvirtd service
-    libvirtd_restart_cmd = "service libvirtd restart"
-    logger.info("libvirtd restart")
-    ret, output = utils.remote_exec_pexpect(target_machine, username,
-                                            password, libvirtd_restart_cmd)
-    if ret:
-        logger.error("Failed to restart libvirtd service")
+    # Restart remote libvirtd
+    remote_common.restart_remote_libvirtd(target_machine, username,
+                                          password, logger, 'tls')
