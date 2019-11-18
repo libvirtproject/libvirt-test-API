@@ -309,12 +309,11 @@ def hypervisor_connecting_test(uri, auth_tls, username,
             auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_PASSPHRASE], domain_common.request_credentials, user_data]
             logger.debug("call libvirt.openAuth()")
             conn = libvirt.openAuth(uri, auth, 0)
+        conn.close()
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"
                      % (e.get_error_message(), e.get_error_code()))
         ret = 1
-
-    conn.close()
 
     if ret == 0 and expected_result == 'success':
         logger.info("tls authentication success")

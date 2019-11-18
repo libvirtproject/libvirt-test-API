@@ -24,7 +24,7 @@ def stop_remote_libvirtd(target_machine, username, password, logger):
 def restart_remote_libvirtd(target_machine, username, password, logger, socket_type=None):
     # From libvirt-5.6.0, libvirtd is using systemd socket activation by default.
     # So need to restart remote libvirtd socket.
-    if utils.version_compare('libvirt-python', 5, 6, 0, logger) and not socket_type:
+    if utils.version_compare('libvirt-python', 5, 6, 0, logger) and socket_type:
         logger.info("Restart libvirtd-%s.socket." % socket_type)
         cmd = "systemctl stop libvirtd; systemctl restart libvirtd-%s.socket" % socket_type
         ret, output = utils.remote_exec_pexpect(target_machine, username,
