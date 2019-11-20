@@ -531,8 +531,12 @@ def prepare_env(options, logger):
 
 
 def get_vmlinuz_initrd(ostree, xmlstr, logger):
-    vmlinuzpath = os.path.join(ostree, 'isolinux/vmlinuz')
-    initrdpath = os.path.join(ostree, 'isolinux/initrd.img')
+    if utils.isPower():
+        vmlinuzpath = os.path.join(ostree, 'ppc/ppc64/vmlinuz')
+        initrdpath = os.path.join(ostree, 'ppc/ppc64/initrd.img')
+    else:
+        vmlinuzpath = os.path.join(ostree, 'isolinux/vmlinuz')
+        initrdpath = os.path.join(ostree, 'isolinux/initrd.img')
 
     logger.debug("vmlinuz: %s" % vmlinuzpath)
     logger.debug("initrd: %s" % initrdpath)
