@@ -324,6 +324,7 @@ def start_guest(conn, installtype, xmlstr, logger):
             logger.info('define guest from xml description')
             domobj = conn.defineXML(xmlstr)
 
+            time.sleep(3)
             logger.info('start installation guest ...')
             domobj.create()
         except libvirtError, e:
@@ -396,6 +397,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, installmethod, lo
         domobj.undefine()
         logger.info("undefine %s : \n" % guestname)
 
+    time.sleep(5)
     try:
         conn = domobj._conn
         domobj = conn.defineXML(xmlstr)
@@ -410,7 +412,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, installmethod, lo
                  xmlstr)
 
     logger.info('boot guest up ...')
-
+    time.sleep(3)
     try:
         domobj.create()
     except libvirtError, e:

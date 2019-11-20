@@ -212,6 +212,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
         domobj.undefine()
         logger.info("undefine %s : \n" % guestname)
 
+    time.sleep(5)
     try:
         conn = domobj._conn
         domobj = conn.defineXML(xmlstr)
@@ -225,6 +226,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     logger.debug("the xml description of guest booting off harddisk is %s" %
                  xmlstr)
 
+    time.sleep(3)
     logger.info('boot guest up ...')
 
     try:
