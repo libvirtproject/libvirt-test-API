@@ -110,7 +110,7 @@ def prepare_win_unattended(guestname, guestos, guestarch, envparser, logger):
                 "failed to mount %s to %s" % (WIN_UNATTENDED_IMG, unattended_mount))
             return 1
 
-        win_os = ['win2008', 'win7', 'vista', 'win8', 'win2012', 'win10', 'win2016']
+        win_os = ['win2008', 'win7', 'vista', 'win8', 'win2012', 'win10', 'win2016', 'win2019']
         if any(os in guestos for os in win_os):
             dest_fname = "autounattend.xml"
             if guestos == 'win7' and utils.isRelease("8", logger):
