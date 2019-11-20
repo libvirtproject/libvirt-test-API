@@ -101,8 +101,16 @@ def prepare_conf_ppc(ostree, kscfg, newest, envparser):
                 bootaddr = envparser.get_value('guest', 'rhel6_ppc64_boot')
                 cmd = 'wget -N ' + bootaddr + ' -P ' + TFTPPATH + '/etc/'
             else:
+                tree_ver = ''
+                if 'updates' in ostree:
+                    tree_ver = "rhel8_updates"
+                else:
+                    if 'RHEL-7' in ostree:
+                        tree_ver = "rhel7_"
+                    else:
+                        tree_ver = "rhel8_"
                 arch = re.search(r'ppc.*?/', ostree).group()[:-1]
-                bootaddr = envparser.get_value('guest', 'rhel7_' + arch + '_boot')
+                bootaddr = envparser.get_value('guest', tree_ver + arch + '_boot')
                 cmd = 'wget -N ' + bootaddr + ' -P ' + TFTPPATH + '/boot/grub/'
             ret = process.run(cmd, shell=True, ignore_status=True)
 

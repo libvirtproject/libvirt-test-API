@@ -150,14 +150,17 @@ def get_release_ostree(guestos, guestarch):
 
 def get_version(rhelnewest):
     tree_list = rhelnewest.split("/")
-    if "RHEL-8" in tree_list:
-        return tree_list[6].split("-")[1]
+    if "updates" in rhelnewest:
+        return tree_list[7].split("-")[1]
     else:
-        for ver in tree_list:
-            if "RHEL" in ver and "ALT" in ver:
-                return ver.split("-")[2]
-            elif "RHEL" in ver:
-                return ver.split("-")[1]
+        if "RHEL-8" in tree_list:
+            return tree_list[6].split("-")[1]
+        else:
+            for ver in tree_list:
+                if "RHEL" in ver and "ALT" in ver:
+                    return ver.split("-")[2]
+                elif "RHEL" in ver:
+                    return ver.split("-")[1]
     return ""
 
 
@@ -166,16 +169,18 @@ def get_ostree(rhelnewest, guestos, guestarch, logger):
     if rhelnewest is None:
         ostree = get_release_ostree(guestos, guestarch)
     else:
-        release_ver_list = get_value_from_global("other", "release_ver").split()
-        location = utils.get_local_hostname()
-        version = get_version(rhelnewest)
-        for release_ver in release_ver_list:
-            if version == release_ver:
-                guestos = "rhel" + version.replace('.', 'u')
-                ostree = get_release_ostree(guestos, guestarch)
-                logger.info("Install source: %s" % ostree)
-                return ostree
-        ostree = rhelnewest + "/%s/os" % guestarch
+        if "updates" in rhelnewest:
+            ostree = rhelnewest + "/%s/os" % guestarch
+        else:
+            release_ver_list = get_value_from_global("other", "release_ver").split()
+            version = get_version(rhelnewest)
+            for release_ver in release_ver_list:
+                if version == release_ver:
+                    guestos = "rhel" + version.replace('.', 'u')
+                    ostree = get_release_ostree(guestos, guestarch)
+                    logger.info("Install source: %s" % ostree)
+                    return ostree
+            ostree = rhelnewest + "/%s/os" % guestarch
     logger.info("Install source: %s" % ostree)
     return ostree
 
@@ -186,18 +191,21 @@ def get_kscfg(rhelnewest, guestos, guestarch, installmethod, logger):
     if rhelnewest is None:
         kscfg = get_value_from_global("guest", os_arch + "_%s_ks" % installmethod)
     else:
-        release_ver_list = get_value_from_global("other", "release_ver").split()
-        location = utils.get_local_hostname()
         version = get_version(rhelnewest)
-        for release_ver in release_ver_list:
-            if version == release_ver:
-                guestos = "rhel" + version.replace('.', 'u')
-                os_arch = guestos + "_" + guestarch
-                kscfg = get_value_from_global("guest", os_arch + "_%s_ks" % installmethod)
-                logger.info('Kisckstart file: %s' % kscfg)
-                return kscfg
-        kscfg = get_value_from_global("guest", "rhel%s_newest_%s_%s_ks" %
-                                      (version.split(".")[0], guestarch, installmethod))
+        if "updates" in rhelnewest:
+            kscfg = get_value_from_global("guest", "rhel%s_updates_%s_%s_ks" %
+                                          (version.split(".")[0], guestarch, installmethod))
+        else:
+            release_ver_list = get_value_from_global("other", "release_ver").split()
+            for release_ver in release_ver_list:
+                if version == release_ver:
+                    guestos = "rhel" + version.replace('.', 'u')
+                    os_arch = guestos + "_" + guestarch
+                    kscfg = get_value_from_global("guest", os_arch + "_%s_ks" % installmethod)
+                    logger.info('Kisckstart file: %s' % kscfg)
+                    return kscfg
+            kscfg = get_value_from_global("guest", "rhel%s_newest_%s_%s_ks" %
+                                          (version.split(".")[0], guestarch, installmethod))
     logger.info('Kisckstart file: %s' % kscfg)
     return kscfg
 
