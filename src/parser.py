@@ -21,7 +21,6 @@ import re
 import os
 import sys
 import copy
-import string
 
 from . import exception
 from . import env_parser
@@ -145,8 +144,7 @@ class CaseFileParser(object):
                 varname = val[1:]
                 self.debug_print("found variable %s" % varname)
                 try:
-                    value = self.env.get_value("variables", varname)
-                    value = string.strip(value)
+                    value = self.env.get_value("variables", varname).strip()
                     self.variables[varname] = value
                     if value == "":
                         self.debug_print("variable %s is empty" % varname)
