@@ -42,6 +42,10 @@ def check_pool_sources(xmlstr):
         source_cmp.update({path_list[i]: name_list[i]})
 
     logger.debug("pvs command output dict is: %s" % source_cmp)
+    for key in source_cmp.copy():
+        if not key.startswith('/dev/'):
+            logger.debug("del %s: %s" % (key, source_cmp[key]))
+            del source_cmp[key]
 
     if source_val == source_cmp:
         logger.info("source dict match with pvs command output")

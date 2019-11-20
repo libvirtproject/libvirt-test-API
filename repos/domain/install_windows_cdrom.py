@@ -309,7 +309,11 @@ def install_windows_cdrom(params):
 
     # Get iso file based on guest os and arch from global.cfg
     envparser = env_parser.Envparser(envfile)
-    iso_file = envparser.get_value("guest", guestos + '_' + guestarch)
+    iso_url = envparser.get_value("guest", guestos + '_' + guestarch)
+    web_con = requests.get(iso_url)
+    match = re.compile(r'<a href=".*">.*.iso</a>')
+    iso_name = re.findall(match, web_con.content)[0].split("\"")[1]
+    iso_file = "%s/%s" % (iso_url, iso_name)
 
     if "win7" in guestos or "win2008" in guestos:
         cdkey = envparser.get_value("guest", "%s_%s_key" % (guestos, guestarch))
