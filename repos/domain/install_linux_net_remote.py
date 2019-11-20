@@ -275,6 +275,10 @@ def install_linux_net_remote(params):
     # and installation method from global.cfg
 
     os_arch = guestos + "_" + guestarch
+    local_url = envparser.get_value("other", "local_url")
+    remote_url = envparser.get_value("other", "remote_url")
+    location = utils.get_local_hostname()
+
     rhelnewest = params.get("rhelnewest")
     logger.info("rhel newest: %s" % rhelnewest)
     if installmethod == 'http':
@@ -282,7 +286,10 @@ def install_linux_net_remote(params):
             ostree = rhelnewest + "x86_64/os"
             ks = envparser.get_value("guest", "rhel7_newest_http_ks")
         else:
-            ostree = envparser.get_value("guest", os_arch)
+            if "pek2" in location:
+                ostree = local_url + envparser.get_value("guest", os_arch)
+            else:
+                ostree = remote_url + envparser.get_value("guest", os_arch)
             ks = envparser.get_value("guest", os_arch + "_http_ks")
         nettype = "network"
         netsource = "default"
@@ -291,17 +298,27 @@ def install_linux_net_remote(params):
             ostree = rhelnewest + "x86_64/os"
             ks = envparser.get_value("guest", "rhel7_newest_ftp_ks")
         else:
-            ostree = envparser.get_value("guest", os_arch)
+            if "pek2" in location:
+                ostree = local_url + envparser.get_value("guest", os_arch)
+            else:
+                ostree = remote_url + envparser.get_value("guest", os_arch)
             ks = envparser.get_value("guest", os_arch + "_ftp_ks")
         nettype = "network"
         netsource = "default"
     elif installmethod == "nfs":
         if rhelnewest is not None and "RHEL-7" in rhelnewest:
             ostree = rhelnewest + "x86_64/os"
-            ks = envparser.get_value("guest", "rhel7_newest_nfs_ks")
+            if "pek2" in location:
+                ks = envparser.get_value("guest", "rhel7_newest_local_nfs_ks")
+            else:
+                ks = envparser.get_value("guest", "rhel7_newest_remote_nfs_ks")
         else:
-            ostree = envparser.get_value("guest", os_arch)
-            ks = envparser.get_value("guest", os_arch + "_nfs_ks")
+            if "pek2" in location:
+                ostree = local_url + envparser.get_value("guest", os_arch)
+                ks = envparser.get_value("guest", os_arch + "_local_nfs_ks")
+            else:
+                ostree = remote_url + envparser.get_value("guest", os_arch)
+                ks = envparser.get_value("guest", os_arch + "_remote_nfs_ks")
         nettype = "bridge"
         netsource = "br0"
         interface = get_interface(logger)

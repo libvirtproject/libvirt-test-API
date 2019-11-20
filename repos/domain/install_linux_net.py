@@ -26,7 +26,6 @@ optional_params = {'memory': 1048576,
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
                    'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
-                   'netmethod': 'http',
                    'type': 'define',
                    'xml': 'xmls/kvm_linux_guest_install_net.xml',
                    'graphic': "spice",
@@ -108,7 +107,7 @@ def check_domain_state(conn, guestname, logger):
 
 
 def install_linux_net(params):
-    """install a new virtual machine"""
+    """install a new virtual machine by http method"""
     # Initiate and check parameters
     logger = params['logger']
     guestname = params.get('guestname')
@@ -165,19 +164,19 @@ def install_linux_net(params):
     rhelnewest = params.get("rhelnewest")
     logger.info("rhel newest: %s" % rhelnewest)
     os_arch = guestos + "_" + guestarch
-    if installmethod == 'http':
-        if rhelnewest is not None and "RHEL-7" in rhelnewest:
-            ostree = rhelnewest + "x86_64/os"
-            ks = envparser.get_value("guest", "rhel7_newest_http_ks")
+    local_url = envparser.get_value("other", "local_url")
+    remote_url = envparser.get_value("other", "remote_url")
+    location = utils.get_local_hostname()
+    logger.info("location: %s" % location)
+    if rhelnewest is None or "RHEL-7.2" in rhelnewest:
+        if "pek2" in location:
+            ostree = local_url + envparser.get_value("guest", os_arch)
         else:
-            ostree = envparser.get_value("guest", os_arch)
-            ks = envparser.get_value("guest", os_arch + "_http_ks")
-    elif installmethod == 'ftp':
-        ks = envparser.get_value("guest", os_arch + "_ftp_ks")
-        ostree = envparser.get_value("guest", os_arch)
-    elif installmethod == "nfs":
-        ks = envparser.get_value("guest", os_arch + "_nfs_ks")
-        ostree = envparser.get_value("guest", os_arch)
+            ostree = remote_url + envparser.get_value("guest", os_arch)
+        ks = envparser.get_value("guest", os_arch + "_http_ks")
+    else:
+        ostree = rhelnewest + "x86_64/os"
+        ks = envparser.get_value("guest", "rhel7_newest_http_ks")
 
     xmlstr = xmlstr.replace('KS', ks)
 

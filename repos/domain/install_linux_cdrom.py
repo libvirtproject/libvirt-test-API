@@ -333,31 +333,20 @@ def install_linux_cdrom(params):
     logger = params['logger']
 
     guestname = params.get('guestname')
-    logger.info("guestname: %s" % guestname)
-
     guestos = params.get('guestos')
-    logger.info("guestos: %s" % guestos)
-
     guestarch = params.get('guestarch')
-    logger.info("guestarch: %s" % guestarch)
-
     bridge = params.get('bridgename', 'virbr0')
     xmlstr = params['xml']
 
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
 
+    nicdriver = params.get('nicdriver', 'virtio')
     hddriver = params.get('hddriver', 'virtio')
-    logger.info("hddriver: %s" % hddriver)
-
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-    logger.info("diskpath: %s" % diskpath)
-
     if hddriver != "lun" and hddriver != 'scsilun':
-        logger.info("disk image is %s" % diskpath)
         seeksize = params.get('disksize', 10)
         imageformat = params.get('imageformat', 'raw')
-        logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
         disk_create = ("qemu-img create -f %s %s %sG"
                        % (imageformat, diskpath, seeksize))
         logger.debug("the command line of creating disk images is '%s'"
@@ -369,19 +358,22 @@ def install_linux_cdrom(params):
             return 1
 
     os.chown(diskpath, 107, 107)
-    logger.info("creating disk images file is successful.")
 
     xmlstr = set_xml(xmlstr, hddriver, diskpath, logger)
 
     graphic = params.get('graphic', 'spice')
-    logger.info('graphical: %s' % graphic)
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
 
     video = params.get('video', 'qxl')
-    logger.info("video: %s" % video)
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
+
+    logger.info("guestname: %s" % guestname)
+    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s" %
+                (guestos, guestarch, nicdriver, hddriver, imageformat,
+                 graphic, video))
+    logger.info("disk path: %s" % diskpath)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
@@ -390,13 +382,19 @@ def install_linux_cdrom(params):
 
     rhelnewest = params.get('rhelnewest')
     logger.info("rhel newest: %s", rhelnewest)
-    if rhelnewest is not None and "RHEL-7" in rhelnewest:
+    if rhelnewest is None or "RHEL-7.2" in rhelnewest:
+        local_url = envparser.get_value("other", "local_url")
+        remote_url = envparser.get_value("other", "remote_url")
+        location = utils.get_local_hostname()
+        os_arch = guestos + "_" + guestarch
+        if "pek2" in location:
+            ostree = local_url + envparser.get_value("guest", os_arch)
+        else:
+            ostree = remote_url + envparser.get_value("guest", os_arch)
+        kscfg = envparser.get_value("guest", os_arch + "_http_ks")
+    else:
         ostree = rhelnewest + "/x86_64/os"
         kscfg = envparser.get_value("guest", "rhel7_newest_http_ks")
-    else:
-        os_arch = guestos + "_" + guestarch
-        ostree = envparser.get_value("guest", os_arch)
-        kscfg = envparser.get_value("guest", os_arch + "_http_ks")
 
     logger.info('install source:    %s' % ostree)
     logger.info('kisckstart file:    %s' % kscfg)
@@ -421,7 +419,6 @@ def install_linux_cdrom(params):
 
     installtype = params.get('type', 'define')
     if installtype == 'define':
-        logger.info('define guest from xml description')
         try:
             logger.info('define guest from xml description')
             domobj = conn.defineXML(xmlstr)

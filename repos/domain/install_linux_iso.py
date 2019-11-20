@@ -250,23 +250,29 @@ def install_linux_iso(params):
     logger.info("the environment file is %s" % envfile)
     envparser = env_parser.Envparser(envfile)
 
+    local_url = envparser.get_value("other", "local_url")
+    remote_url = envparser.get_value("other", "remote_url")
+    location = utils.get_local_hostname()
     rhelnewest = params.get('rhelnewest')
     logger.info("rhel newest: %s" % rhelnewest)
-    if rhelnewest is not None and guestarch == 'x86_64':
-        ostree = rhelnewest + "x86_64/os"
+    if rhelnewest is not None:
+        if local_url in rhelnewest:
+            repo_name = rhelnewest.split('/')[7]
+        elif remote_url in rhelnewest:
+            repo_name = rhelnewest.split('/')[4]
+        ostree = rhelnewest + guestarch +"/os"
         ks = envparser.get_value("guest", "rhel7_newest_iso_ks")
-        repo_name = rhelnewest.split('/')[4]
-        isolink = rhelnewest + "x86_64/iso/" + repo_name + "-Server-x86_64-dvd1.iso"
-    elif rhelnewest is not None and guestarch == 'i386':
-        ostree = rhelnewest + "i386/os"
-        ks = envparser.get_value("guest", "rhel7_newest_iso_ks")
-        repo_name = rhelnewest.split('/')[4]
-        isolink = rhelnewest + "i386/iso/" + repo_name + "-Server-x86_64-dvd1.iso"
+        isolink = ("%s%s/iso/%s-Server-%s-dvd1.iso" %
+                   (rhelnewest, guestarch, repo_name, guestarch))
     else:
         os_arch = guestos + "_" + guestarch
-        ostree = envparser.get_value("guest", os_arch)
+        if "pek2" in location:
+            ostree = local_url + envparser.get_value("guest", os_arch)
+            isolink = local_url + envparser.get_value("guest", os_arch + "_iso")
+        else:
+            ostree = remote_url + envparser.get_value("guest", os_arch)
+            isolink = remote_url + envparser.get_value("guest", os_arch + "_iso")
         ks = envparser.get_value("guest", os_arch + "_iso_ks")
-        isolink = envparser.get_value("guest", os_arch + "_iso")
 
     logger.info('install source:    %s' % ostree)
     logger.info('kisckstart file:    %s' % ks)
