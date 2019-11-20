@@ -286,8 +286,34 @@ def install_linux_net_remote(params):
             ks = envparser.get_value("guest", os_arch + "_http_ks")
         nettype = "network"
         netsource = "default"
+
+        ks_name = os.path.basename(ks)
+        nfs_server = envparser.get_value("other", "nfs_server")
+        cmd = "mount -t nfs %s:/srv/www/html/test-api-ks/tmp-ks /mnt" % nfs_server
+        (stat, out) = commands.getstatusoutput(cmd)
+        if stat:
+            logger.error("mount failed: %s" % cmd)
+            return 1
+        if os.path.exists("/mnt/%s" % ks_name):
+            os.remove("/mnt/%s" % ks_name)
+
+        urllib.urlretrieve(ks, "/mnt/%s" % ks_name)
+        old_ks_fp = open('/mnt/%s' % ks_name, "rw+")
+        new_ks_fp = open("/mnt/test_api_http_ks.cfg", "w")
+        old_ks_file = old_ks_fp.read()
+        old_ks_file = old_ks_file.replace("url --url=", "url --url=%s" % ostree)
+        old_ks_file = old_ks_file.replace("baseurl=", "baseurl=%s" % ostree)
+        new_ks_fp.write(old_ks_file)
+        new_ks_fp.close()
+        old_ks_fp.close()
+        shutil.move("/mnt/test_api_http_ks.cfg", "/mnt/%s" % ks_name)
+        cmd = "umount /mnt"
+        (stat, out) = commands.getstatusoutput(cmd)
+        if stat:
+            logger.error("umount failed: %s" % cmd)
+            return 1
+        xmlstr = xmlstr.replace('KS', 'http://%s/test-api-ks/tmp-ks/%s' % (nfs_server, ks_name))
     elif installmethod == 'ftp':
-        ks = envparser.get_value("guest", os_arch + "_ftp_ks")
         if rhelnewest is not None and "RHEL-7" in rhelnewest:
             ostree = rhelnewest + "x86_64/os"
             ks = envparser.get_value("guest", "rhel7_newest_ftp_ks")
@@ -296,6 +322,7 @@ def install_linux_net_remote(params):
             ks = envparser.get_value("guest", os_arch + "_ftp_ks")
         nettype = "network"
         netsource = "default"
+        xmlstr = xmlstr.replace('KS', ks)
     elif installmethod == "nfs":
         if rhelnewest is not None and "RHEL-7" in rhelnewest:
             ostree = rhelnewest + "x86_64/os"
@@ -307,8 +334,7 @@ def install_linux_net_remote(params):
         netsource = "br0"
         interface = get_interface(logger)
         xmlstr = xmlstr.replace('INTERFACE', interface)
-
-    xmlstr = xmlstr.replace('KS', ks)
+        xmlstr = xmlstr.replace('KS', ks)
 
     logger.debug('install source:\n    %s' % ostree)
     logger.debug('kisckstart file:\n    %s' % ks)

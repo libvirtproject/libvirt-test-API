@@ -61,6 +61,7 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     """
     xmlstr = xmlstr.replace('<boot dev="cdrom"/>', '<boot dev="hd"/>')
     xmlstr = re.sub('<disk device="cdrom".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
+    xmlstr = re.sub('<cmdline>.*</cmdline>', '', xmlstr)
 
     if installtype != 'create':
         domobj.undefine()
