@@ -14,6 +14,7 @@ from src import sharedmod
 from src import env_parser
 from utils import utils, process
 from repos.domain import domain_common
+from repos.installation import install_common
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
@@ -344,6 +345,8 @@ def install_linux_cdrom(params):
     graphic = params.get('graphic', 'spice')
     video = params.get('video', 'qxl')
     installtype = params.get('type', 'define')
+    rhelnewest = params.get('rhelnewest')
+    rhelalt = params.get('rhelalt')
 
     logger.info("guestname: %s" % guestname)
     params_info = "%s, %s, " % (guestos, guestarch)
@@ -351,6 +354,7 @@ def install_linux_cdrom(params):
     params_info += "%s, %s, " % (imageformat, graphic)
     params_info += "%s, %s(storage)" % (video, 'local')
     logger.info("%s" % params_info)
+    logger.info("rhelnewest: %s" % rhelnewest)
 
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
@@ -415,32 +419,10 @@ def install_linux_cdrom(params):
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     logger.info("the environment file is %s" % envfile)
 
-    os_arch = guestos + "_" + guestarch
-    rhelnewest = params.get('rhelnewest')
-    rhelalt = params.get('rhelalt')
-    logger.info("rhelnewest: %s" % rhelnewest)
-
     envparser = env_parser.Envparser(envfile)
-    if rhelnewest is not None:
-        ostree = rhelnewest + "%s/os" % guestarch
-        version = re.search(r'RHEL.*?/', rhelnewest).group()[:-1]
-        num = version.split("-")[1].split('.')[0]
-        kscfg = envparser.get_value("guest", "rhel" + num + "_newest_" + guestarch + "_http_ks")
-    elif rhelalt is not None:
-        ostree = rhelalt + "%s/os" % guestarch
-        version = re.search(r'RHEL-ALT.*?/', rhelalt).group()[:-1]
-        num = version.split("-")[2].split('.')[0]
-        kscfg = envparser.get_value("guest", "rhel_alt" + num + "_newest_" + guestarch + "_http_ks")
-    else:
-        ostree = envparser.get_value("guest", os_arch)
-        kscfg = envparser.get_value("guest", os_arch + "_http_ks")
-
-    logger.debug('install source:\n    %s' % ostree)
-    logger.debug('kisckstart file:\n    %s' % kscfg)
-
-    if ostree == 'http://':
-        logger.error("no os tree defined in %s for %s" % (envfile, os_arch))
-        return 1
+    ostree = install_common.get_ostree(rhelnewest, guestos, guestarch, logger)
+    kscfg = install_common.get_kscfg(rhelnewest, guestos, guestarch, "iso", logger)
+    isolink = install_common.get_iso_link(rhelnewest, guestos, guestarch, logger)
 
     logger.info('prepare installation...')
     cache_folder = envparser.get_value("variables", "domain_cache_folder")
