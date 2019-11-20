@@ -68,7 +68,7 @@ def prepare_iso(iso_file):
 
 
 def prepare_floppy_image(guestname, guestos, guestarch,
-                         windows_unattended_path, FLOOPY_IMG):
+                         windows_unattended_path, cdkey, FLOOPY_IMG):
     """Making corresponding floppy images for the given guestname
     """
     if os.path.exists(FLOOPY_IMG):
@@ -103,7 +103,7 @@ def prepare_floppy_image(guestname, guestos, guestarch,
             return 1
 
         if '2008' in guestos or '7' in guestos or 'vista' in guestos \
-                or 'win8' in guestos or "win2012" in guestos:
+                or 'win8' in guestos or "win2012" in guestos or "win10" in guestos:
             dest_fname = "autounattend.xml"
             source = os.path.join(windows_unattended_path, "%s_%s.xml" %
                                   (guestos, guestarch))
@@ -120,6 +120,10 @@ def prepare_floppy_image(guestname, guestos, guestarch,
         dest = os.path.join(floppy_mount, dest_fname)
 
         unattended_contents = open(source).read()
+        dummy_cdkey_re = r'\bLIBVIRT_TEST_CDKEY\b'
+        if re.search(dummy_cdkey_re, unattended_contents):
+            unattended_contents = re.sub(dummy_cdkey_re, cdkey,
+                                         unattended_contents)
 
         logger.debug("Unattended install %s contents:" % dest_fname)
         logger.debug(unattended_contents)
@@ -264,16 +268,26 @@ def install_windows_cdrom(params):
     hddriver = params.get('hddriver', 'virtio')
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
-        driverpath = params.get('driverpath', '/usr/share/virtio-win/virtio-win_amd64.vfd')
-        xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd',
-                                driverpath)
+        if guestarch == "x86_64":
+            driverpath = params.get('driverpath', '/usr/share/virtio-win/virtio-win_amd64.vfd')
+            xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd',
+                                    driverpath)
+        else:
+            driverpath = params.get('driverpath', '/usr/share/virtio-win/virtio-win_x86.vfd')
+            xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_x86.vfd',
+                                    driverpath)
     elif hddriver == 'ide':
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
         xmlstr = xmlstr.replace('DEV', 'sda')
-        driverpath = params.get('driverpath', '/usr/share/virtio-win/virtio-win_amd64.vfd')
-        xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd',
-                                driverpath)
+        if guestarch == "x86_64":
+            driverpath = params.get('driverpath', '/usr/share/virtio-win/virtio-win_amd64.vfd')
+            xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_amd64.vfd',
+                                    driverpath)
+        else:
+            driverpath = params.get('driverpath', '/usr/share/virtio-win/virtio-win_x86.vfd')
+            xmlstr = xmlstr.replace('/usr/share/virtio-win/virtio-win_x86.vfd',
+                                    driverpath)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
@@ -295,6 +309,11 @@ def install_windows_cdrom(params):
     envparser = env_parser.Envparser(envfile)
     iso_file = envparser.get_value("guest", guestos + '_' + guestarch)
 
+    if "win7" in guestos or "win2008" in guestos:
+        cdkey = envparser.get_value("guest", "%s_%s_key" % (guestos, guestarch))
+    else:
+        cdkey = ""
+
     windows_unattended_path = os.path.join(HOME_PATH,
                                            "repos/domain/windows_unattended")
 
@@ -305,7 +324,7 @@ def install_windows_cdrom(params):
     xmlstr = xmlstr.replace('WINDOWSISO', iso_local_path)
 
     status = prepare_floppy_image(guestname, guestos, guestarch,
-                                  windows_unattended_path, FLOOPY_IMG)
+                                  windows_unattended_path, cdkey, FLOOPY_IMG)
     if status:
         logger.error("making floppy image failed")
         return 1
