@@ -235,7 +235,11 @@ def install_windows_cdrom(params):
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
     seeksize = params.get('disksize', 20)
-    imageformat = params.get('imageformat', 'qcow2')
+
+    if "win2008" in guestos:
+        imageformat = "raw"
+    else:
+        imageformat = params.get('imageformat', 'qcow2')
 
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
     if os.path.exists(diskpath):

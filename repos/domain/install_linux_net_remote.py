@@ -35,7 +35,8 @@ optional_params = {'memory': 1048576,
                    'user': 'root',
                    'password': 'redhat',
                    'disksymbol': 'sdb',
-                   'diskpath': "/var/lib/libvirt/images/libvirt-test-api"
+                   'diskpath': "/var/lib/libvirt/images/libvirt-test-api",
+                   'rhelnewest': '',
                    }
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
@@ -165,19 +166,14 @@ def install_linux_net_remote(params):
 
     graphic = params.get('graphic', 'spice')
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    logger.info('the graphic type of VM is %s' % graphic)
 
     video = params.get('video', 'qxl')
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
 
-    logger.info('the video type of VM is %s' % video)
-
     diskpath = params.get('diskpath', "/var/lib/libvirt/images/libvirt-test-api")
 
-    logger.info("the name of guest is %s" % guestname)
-    logger.info("the installation method is %s" % installmethod)
     #Remote or local installation
     if hostip == "127.0.0.1":
         conn = sharedmod.libvirtobj['conn']
@@ -198,8 +194,6 @@ def install_linux_net_remote(params):
     check_domain_state(conn, guestname, logger)
     macaddr = utils.get_rand_mac()
 
-    logger.info("the macaddress is %s" % macaddr)
-
     # Seize the path and command
     # Beware of that the generation will replace the DISKPATH automatically
     xmlstr = xmlstr.replace(diskpath, "DISKPATH")
@@ -208,7 +202,6 @@ def install_linux_net_remote(params):
         logger.info("disk image is %s" % diskpath)
         seeksize = params.get('disksize', 6)
         imageformat = params.get('imageformat', 'qcow2')
-        logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
         disk_create = "qemu-img create -f %s %s %sG" % \
             (imageformat, diskpath, seeksize)
         logger.debug("the command line of creating disk images is '%s'" %
@@ -227,6 +220,16 @@ def install_linux_net_remote(params):
             return 1
 
         logger.info("creating disk images file is successful.")
+
+    nicdriver = params.get('nicdriver', 'virtio')
+
+    logger.info("guestname: %s" % guestname)
+    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s" %
+                (guestos, guestarch, nicdriver, hddriver, imageformat,
+                 graphic, video))
+    logger.info("disk path: %s" % diskpath)
+    logger.info("the installation method is %s" % installmethod)
+    logger.info("the macaddress is %s" % macaddr)
 
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
@@ -272,17 +275,34 @@ def install_linux_net_remote(params):
     # and installation method from global.cfg
 
     os_arch = guestos + "_" + guestarch
-
+    rhelnewest = params.get("rhelnewest")
+    logger.info("rhel newest: %s" % rhelnewest)
     if installmethod == 'http':
-        ks = envparser.get_value("guest", os_arch + "_http_ks")
+        if rhelnewest is not None and "RHEL-7" in rhelnewest:
+            ostree = rhelnewest + "x86_64/os"
+            ks = envparser.get_value("guest", "rhel7_newest_http_ks")
+        else:
+            ostree = envparser.get_value("guest", os_arch)
+            ks = envparser.get_value("guest", os_arch + "_http_ks")
         nettype = "network"
         netsource = "default"
     elif installmethod == 'ftp':
         ks = envparser.get_value("guest", os_arch + "_ftp_ks")
+        if rhelnewest is not None and "RHEL-7" in rhelnewest:
+            ostree = rhelnewest + "x86_64/os"
+            ks = envparser.get_value("guest", "rhel7_newest_ftp_ks")
+        else:
+            ostree = envparser.get_value("guest", os_arch)
+            ks = envparser.get_value("guest", os_arch + "_ftp_ks")
         nettype = "network"
         netsource = "default"
     elif installmethod == "nfs":
-        ks = envparser.get_value("guest", os_arch + "_nfs_ks")
+        if rhelnewest is not None and "RHEL-7" in rhelnewest:
+            ostree = rhelnewest + "x86_64/os"
+            ks = envparser.get_value("guest", "rhel7_newest_nfs_ks")
+        else:
+            ostree = envparser.get_value("guest", os_arch)
+            ks = envparser.get_value("guest", os_arch + "_nfs_ks")
         nettype = "bridge"
         netsource = "br0"
         interface = get_interface(logger)
@@ -290,7 +310,6 @@ def install_linux_net_remote(params):
 
     xmlstr = xmlstr.replace('KS', ks)
 
-    ostree = envparser.get_value("guest", os_arch)
     logger.debug('install source:\n    %s' % ostree)
     logger.debug('kisckstart file:\n    %s' % ks)
 

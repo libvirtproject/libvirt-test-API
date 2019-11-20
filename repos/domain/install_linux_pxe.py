@@ -28,6 +28,7 @@ optional_params = {
                    'graphic': "spice",
                    'video': 'qxl',
                    'guestmachine': 'pc',
+                   'rhelnewest': '',
                   }
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
@@ -153,32 +154,21 @@ def install_linux_pxe(params):
     guestarch = params.get('guestarch')
     xmlstr = params['xml']
 
-    logger.info("the name of guest is %s" % guestname)
-
     graphic = params.get('graphic', 'spice')
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    logger.info('the graphic type of VM is %s' % graphic)
 
     video = params.get('video', 'qxl')
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
 
-    logger.info('the video type of VM is %s' % video)
-
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
 
-    logger.info("the macaddress is %s" %
-                params.get('macaddr', '52:54:00:97:e4:28'))
-
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-    logger.info("disk image is %s" % diskpath)
     clean_env(diskpath, logger)
     seeksize = params.get('disksize', 10)
     imageformat = params.get('imageformat', 'qcow2')
-    logger.info("create disk image with size %sG, format %s" %
-                (seeksize, imageformat))
     disk_create = "qemu-img create -f %s %s %sG" % (imageformat,
                                                     diskpath, seeksize)
     logger.debug("the command line of creating disk images is '%s'" %
@@ -190,7 +180,6 @@ def install_linux_pxe(params):
         return 1
 
     os.chown(diskpath, 107, 107)
-    logger.info("creating disk images file is successful.")
 
     hddriver = params.get('hddriver', 'virtio')
     if hddriver == 'virtio':
@@ -200,6 +189,14 @@ def install_linux_pxe(params):
     elif hddriver == 'scsi':
         xmlstr = xmlstr.replace('DEV', 'sda')
 
+    nicdriver = params.get('nicdriver', 'virtio')
+
+    logger.info("guestname: %s" % guestname)
+    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s" %
+                (guestos, guestarch, nicdriver, hddriver, imageformat,
+                 graphic, video))
+    logger.info("disk path: %s" % diskpath)
+
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     logger.info("the environment file is %s" % envfile)
@@ -207,7 +204,11 @@ def install_linux_pxe(params):
     os_arch = guestos + "_" + guestarch
 
     envparser = env_parser.Envparser(envfile)
-    default_file = envparser.get_value("guest", os_arch + "_pxe_default")
+    rhelnewest = params.get("rhelnewest", "")
+    if rhelnewest is not None and "RHEL-7" in rhelnewest:
+        default_file = envparser.get_value("guest", "rhelnewest_x86_64_pxe_default")
+    else:
+        default_file = envparser.get_value("guest", os_arch + "_pxe_default")
     logger.debug('default file:\n    %s' % default_file)
 
     logger.info("begin to prepare network")
