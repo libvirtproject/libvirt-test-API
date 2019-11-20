@@ -23,6 +23,7 @@ IOMMU = "/sys/kernel/iommu_groups/"
 VFIO = "/dev/vfio/vfio"
 KVM = "/dev/kvm"
 KVM_CHECK_EXTENSION = 44547
+KVM_CHECK_EXTENSION_PPC = 536915459
 KVM_CAP_IOMMU = 18
 maxcpu = 0
 
@@ -112,16 +113,20 @@ def generate_hash(emulatorbin, logger):
     logger.debug("Cache file is %s" % QEMU_CAPS)
 
 
-def get_maxcpu(machine, logger):
+def get_maxcpu(machine, conn, virttype, logger):
     """
     return maxcpu for given machine type from QEMU_CAPS xml
     """
     global maxcpu
-    xml = minidom.parse(QEMU_CAPS)
-    qemu = xml.getElementsByTagName('qemuCaps')[0]
-    for item in qemu.getElementsByTagName('machine'):
-        if item.getAttribute('name') == machine:
-            maxcpu = int(item.getAttribute('maxCpus'))
+    if utils.isPower():
+        # Because of bug 1455363, get max vcpu by getMaxVcpu()
+        maxcpu = conn.getMaxVcpus(virttype)
+    else:
+        xml = minidom.parse(QEMU_CAPS)
+        qemu = xml.getElementsByTagName('qemuCaps')[0]
+        for item in qemu.getElementsByTagName('machine'):
+            if item.getAttribute('name') == machine:
+                maxcpu = int(item.getAttribute('maxCpus'))
     return True
 
 
@@ -220,8 +225,12 @@ def supportsPassthroughKVM(logger):
         logger.error("File %s is not exist" % KVM)
         return False
     with open(KVM, "r") as kvmfd:
-        if fcntl.ioctl(kvmfd, KVM_CHECK_EXTENSION, KVM_CAP_IOMMU) == 1:
-            return True
+        if utils.isPower():
+            if fcntl.ioctl(kvmfd, KVM_CHECK_EXTENSION_PPC, KVM_CAP_IOMMU) == 1:
+                return True
+        else:
+            if fcntl.ioctl(kvmfd, KVM_CHECK_EXTENSION, KVM_CAP_IOMMU) == 1:
+                return True
     return False
 
 
@@ -315,7 +324,7 @@ def check_os(arch, logger):
 
 
 # src/qemu/qemu_capabilites.c/virQEMUCapsFillDomainDeviceDiskCaps()
-def check_disk(logger):
+def check_disk(given_list, logger):
     """
     check the disk part in <devices>
     """
@@ -344,6 +353,11 @@ def check_disk(logger):
         alldevice.remove("lun")
     if not usb_storage:
         allbus.remove("usb")
+    if 'ppc' in given_list[2]:
+        alldevice.remove("floppy")
+        allbus.remove("ide")
+        allbus.remove("fdc")
+
     logger.debug("Got diskDevice list: %s" % device_api)
     logger.debug("Got bus list: %s" % bus_api)
     if not device_api == alldevice:
@@ -434,11 +448,12 @@ def connection_getDomainCapabilities(params):
         logger.info("The specified machine is %s" % machine)
         logger.info("The specified virttype is %s" % virttype)
 
+        conn = sharedmod.libvirtobj['conn']
         generate_hash(emulatorbin, logger)
         if not os.path.exists(QEMU_CAPS):
             logger.error("cache file, %s is not exist" % QEMU_CAPS)
             return 1
-        if not get_maxcpu(machine, logger):
+        if not get_maxcpu(machine, conn, virttype, logger):
             logger.debug("get maxcpu: Fail")
             return 1
         if not get_os_flags(logger):
@@ -456,7 +471,6 @@ def connection_getDomainCapabilities(params):
         else:
             logger.debug("Successed to compare caps")
 
-        conn = sharedmod.libvirtobj['conn']
         caps_from_api = conn.getDomainCapabilities(emulatorbin, arch, machine, virttype, 0)
 
         logger.debug("The return of API: %s" % caps_from_api)
@@ -475,7 +489,7 @@ def connection_getDomainCapabilities(params):
             return 1
         else:
             logger.info("Successed to validate os block")
-        if not check_disk(logger):
+        if not check_disk(given_list, logger):
             logger.info("Failed to validate disk block")
             return 1
         else:

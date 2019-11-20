@@ -250,6 +250,13 @@ def cpu_affinity(params):
     for i in range(physical_cpu_num):
         cpu_affinity = cpu_affinity + (False,)
 
+    cmd = "lscpu | grep 'POWER8'"
+    status, output = commands.getstatusoutput(cmd)
+    if status:
+        cpu_power8 = False
+    else:
+        cpu_power8 = True
+
     retflag = 0
     for i in range(physical_cpu_num):
         cpu_affinity_test = ()
@@ -285,6 +292,10 @@ def cpu_affinity(params):
                 logger.error("vcpu affinity checking failed.")
             else:
                 logger.info("vcpu affinity checking successed.")
+        if cpu_power8:
+            i = i + 8
+        else:
+            i = i + 1
 
     if retflag:
         return 1

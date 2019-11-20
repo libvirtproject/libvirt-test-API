@@ -104,15 +104,16 @@ def check_domain_kernel_line(guestname, username, password, logger):
         logger.error("vm %s fail to get ip address" % guestname)
         return 1
 
-    if os.path.exists("/boot/grub2"):
-        grub_file = "/boot/grub2/grub.cfg"
-        grub_etc = "/etc/grub2.cfg"
+    guest_kernel = utils.get_remote_kernel(ipaddr, username, password)
+    if 'el6' in guest_kernel:
+	grub_etc = /etc/grub.conf
+        cmd = "cat /boot/grub/grub.conf"
     else:
-        grub_file = "/boot/grub/grub.conf"
-        grub_etc = "/etc/grub.conf"
-    cmd = "cat %s" % grub_file
+	grub_etc = /etc/grub2.conf
+        cmd = "cat /boot/grub2/grub.cfg"
     ret, output = utils.remote_exec_pexpect(ipaddr, username, password, cmd)
     if ret:
+        logger.error("output: %s" % output)
         return 1
 
     if "WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!" in output:

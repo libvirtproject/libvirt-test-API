@@ -188,7 +188,10 @@ def get_host_frequency():
         print("warning:os error")
         sys.exit(1)
     else:
-        cmd = "cat /proc/cpuinfo | grep 'cpu MHz'|uniq"
+        if isPower():
+            cmd = cmd = "cat /proc/cpuinfo | grep -E 'cpu MHz|clock' | sort | uniq"
+        else:
+            cmd = "cat /proc/cpuinfo | grep 'cpu MHz'|uniq"
         output = process.system_output(cmd, shell=True, ignore_status=True)
         if output:
             freq = output.split(":")[1].split(" ")[1]
@@ -1695,3 +1698,14 @@ def get_version():
     else:
         release = out[0].split(' ')[5]
     return release.split('.')
+
+
+def isPower():
+    cmd = "lscpu | grep 'Architecture:'"
+    ret, out = exec_cmd(cmd, shell=True)
+    if ret != 0:
+        return False
+    if "ppc" in out[0]:
+        return True
+    else:
+        return False

@@ -114,28 +114,29 @@ def install_linux_check(params):
         return Test_Result
 
     # Check whether mem in guest is equal to the value set in domain config xml
-    logger.info("check point4: check whether mem in guest is equal to \
-                 the value set in domain config xml")
-    mem_expect = int(utils.get_size_mem(domain_name))
-    logger.info("current mem size in domain config xml - %s is %s" %
-                (domain_name, mem_expect))
-    cmd = "dmidecode -t 17 | awk -F: '/Size/ {print $2}'"
-    out = utils.remote_exec_pexpect(ipaddr, "root", "redhat", cmd)
-    if out[0]:
-        logger.error("CMD failed: %s, out: %s" % (cmd, out[1]))
-        return 1
+    if not utils.isPower():
+        logger.info("check point4: check whether mem in guest is equal to \
+                    the value set in domain config xml")
+        mem_expect = int(utils.get_size_mem(domain_name))
+        logger.info("current mem size in domain config xml - %s is %s" %
+                    (domain_name, mem_expect))
+        cmd = "dmidecode -t 17 | awk -F: '/Size/ {print $2}'"
+        out = utils.remote_exec_pexpect(ipaddr, "root", "redhat", cmd)
+        if out[0]:
+            logger.error("CMD failed: %s, out: %s" % (cmd, out[1]))
+            return 1
 
-    mem_actual = int(out[1].split(" ")[0]) * 1024
-    logger.info("The actual mem size in guest - %s is %s" %
-                (domain_name, mem_actual))
-    if mem_expect == mem_actual:
-        logger.info("The actual mem size in guest is equal to the\
-                    setting your domain config xml")
-    else:
-        logger.error("Error: The actual mem size in guest is NOT equal to \
-                      the setting your domain config xml")
-        Test_Result = 1
-        return Test_Result
+        mem_actual = int(out[1].split(" ")[0]) * 1024
+        logger.info("The actual mem size in guest - %s is %s" %
+                    (domain_name, mem_actual))
+        if mem_expect == mem_actual:
+            logger.info("The actual mem size in guest is equal to the\
+                        setting your domain config xml")
+        else:
+            logger.error("Error: The actual mem size in guest is NOT equal to \
+                          the setting your domain config xml")
+            Test_Result = 1
+            return Test_Result
 
     # Check nic and blk driver in guest
     if 'kvm' in virt_type or 'xenfv' in virt_type:

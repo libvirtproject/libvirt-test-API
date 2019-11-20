@@ -100,6 +100,10 @@ def install_linux_import(params):
 
     logger.info("the name of guest is %s" % guestname)
 
+    if utils.isPower():
+        guestmachine = "persies"
+        xmlstr = xmlstr.replace('GUESTMACHINE', guestmachine)
+
     conn = libvirt.open()
     check_domain_state(conn, guestname, logger)
 

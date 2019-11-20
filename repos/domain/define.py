@@ -79,6 +79,12 @@ def define(params):
     guestname = params['guestname']
 
     xmlstr = params['xml']
+    if utils.isPower():
+        guestarch = "ppc64le"
+        guestmachine = "persies"
+        xmlstr = xmlstr.replace('GUESTARCH', guestarch)
+        xmlstr = xmlstr.replace('GUESTMACHINE', guestmachine)
+
     logger.debug("domain xml:\n%s" % xmlstr)
 
     imagepath = params.get('imagepath', '/var/lib/libvirt/images/libvirt-ci.qcow2')

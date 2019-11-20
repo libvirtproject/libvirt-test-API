@@ -68,10 +68,12 @@ def vcpupin_config(params):
     logger.info("the given cpulist is %s" % cpulist)
 
     global maxcpu
-    maxcpu = utils.get_host_cpus()
-    logger.info("%s physical cpu on host" % maxcpu)
-
     conn = sharedmod.libvirtobj['conn']
+    if utils.isPower():
+        maxcpu = conn.getMaxVcpus('kvm')
+    else:
+        maxcpu = utils.get_host_cpus()
+    logger.info("%s physical cpu on host" % maxcpu)
 
     try:
         domobj = conn.lookupByName(guestname)

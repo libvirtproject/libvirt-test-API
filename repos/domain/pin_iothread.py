@@ -110,15 +110,38 @@ def pin_iothread(params):
         logger.info("get connection to libvirtd")
         guest = params['guestname']
         vm = conn.lookupByName(guest)
-        hostcpu = utils.get_host_cpus()
-        tu_cpu = ()
-        logger.info("test guest name: %s" % guest)
 
-        for i in range(hostcpu):
-            if i % 2 == 0:
-                tu_cpu += (1,)
-            else:
-                tu_cpu += (0,)
+        if utils.isPower():
+            # retrieve cpu total amount
+            cmd = "lscpu | grep ^CPU\(s\) | awk '{print $2}'"
+            (status, output) = utils.exec_cmd(cmd, shell=True)
+            if status != 0:
+                logger.info("Exec_cmd failed: %s" % cmd)
+            hostcpu = int(output.pop())
+
+            # retrieve amount of online cpu only
+            cmd = "cat /proc/cpuinfo | grep ^processor | awk '{print $3}'"
+            (status, hostcpuid) = utils.exec_cmd(cmd, shell=True)
+            if status != 0:
+                logger.info("Exec_cmd failed: %s" % cmd)
+
+            tu_cpu = [0] * hostcpu
+            for index in range(len(hostcpuid)):
+                if index % 2 == 0:
+                    tu_cpu[int(hostcpuid[index])] = 1
+                else:
+                    tu_cpu[int(hostcpuid[index])] = 0
+
+            tu_cpu = tuple(tu_cpu)
+        else:
+            hostcpu = utils.get_host_cpus()
+            tu_cpu = ()
+
+            for i in range(hostcpu):
+                if i % 2 == 0:
+                    tu_cpu += (1,)
+                else:
+                    tu_cpu += (0,)
 
         """ test effect a running guest"""
         if vm.isActive() == 1:

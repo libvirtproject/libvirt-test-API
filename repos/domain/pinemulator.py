@@ -57,7 +57,11 @@ def pinemulator(params):
     logger.info("the name of virtual machine is %s" % guestname)
     logger.info("the given cpulist is %s" % cpulist)
 
-    maxcpu = utils.get_host_cpus()
+    conn = sharedmod.libvirtobj['conn']
+    if utils.isPower():
+        maxcpu = conn.getMaxVcpus('kvm')
+    else:
+        maxcpu = utils.get_host_cpus()
     logger.info("%s physical cpu on host" % maxcpu)
 
     cpumap = utils.param_to_tuple(cpulist, maxcpu)
@@ -65,7 +69,7 @@ def pinemulator(params):
         logger.error("cpulist: Invalid format")
         return 1
 
-    conn = sharedmod.libvirtobj['conn']
+
 
     try:
         domobj = conn.lookupByName(guestname)

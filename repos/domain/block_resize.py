@@ -85,8 +85,15 @@ def block_resize(params):
             return 1
 
     except libvirtError as e:
-        logger.error("API error message: %s, error code is %s"
-                     % (e.get_error_message(), e.get_error_code()))
-        return 1
+        if "this feature or command is not currently supported" in e.get_error_message():
+            if old_info[0] > tmp_disksize:
+                logger.info("Shrink test : disk size is %s, resize to %s."
+                            % (old_info[0], tmp_disksize))
+                logger.info("Expect result : %s" % e.get_error_message())
+                return 0
+        else:
+            logger.error("API error message: %s, error code is %s"
+                         % (e.get_error_message(), e.get_error_code()))
+            return 1
 
     return 0
