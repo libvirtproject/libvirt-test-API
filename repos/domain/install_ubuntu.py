@@ -20,11 +20,11 @@ from utils import utils
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
-    'memory': 1048576,
-    'vcpu': 1,
-    'disksize': 10,
-    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
-    'imageformat': 'raw',
+                   'memory': 1048576,
+                   'vcpu': 1,
+                   'disksize': 10,
+                   'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
+                   'imageformat': 'raw',
                    'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
