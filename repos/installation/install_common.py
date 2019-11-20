@@ -150,11 +150,14 @@ def get_release_ostree(guestos, guestarch):
 
 def get_version(rhelnewest):
     tree_list = rhelnewest.split("/")
-    for ver in tree_list:
-        if "RHEL" in ver and "ALT" in ver:
-            return ver.split("-")[2]
-        elif "RHEL" in ver:
-            return ver.split("-")[1]
+    if "RHEL-8" in tree_list:
+        return tree_list[6].split("-")[1]
+    else:
+        for ver in tree_list:
+            if "RHEL" in ver and "ALT" in ver:
+                return ver.split("-")[2]
+            elif "RHEL" in ver:
+                return ver.split("-")[1]
     return ""
 
 
