@@ -29,6 +29,8 @@ optional_params = {'memory': 1048576,
                    'netmethod': 'http',
                    'type': 'define',
                    'xml': 'xmls/kvm_linux_guest_install_net.xml',
+                   'graphic': "spice",
+                   'video': 'qxl',
                    'guestmachine': 'pc',
                    }
 
@@ -118,6 +120,17 @@ def install_linux_net(params):
 
     logger.info("the name of guest is %s" % guestname)
     logger.info("the installation method is %s" % installmethod)
+
+    graphic = params.get('graphic', 'spice')
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
+    logger.info('the graphic type of VM is %s' % graphic)
+
+    video = params.get('video', 'qxl')
+    if video == "qxl":
+        video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
+        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
+
+    logger.info('the video type of VM is %s' % video)
 
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)

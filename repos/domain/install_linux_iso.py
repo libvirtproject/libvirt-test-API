@@ -19,10 +19,10 @@ from utils import utils
 
 required_params = ('guestname', 'guestos', 'guestarch')
 optional_params = {
-    'memory': 1048576,
-    'vcpu': 1,
-    'disksize': 10,
-    'imageformat': 'qcow2',
+                   'memory': 1048576,
+                   'vcpu': 1,
+                   'disksize': 10,
+                   'imageformat': 'qcow2',
                    'qcow2version': 'v3',
                    'hddriver': 'virtio',
                    'nicdriver': 'virtio',
@@ -30,6 +30,7 @@ optional_params = {
                    'xml': 'xmls/kvm_linux_guest_install_iso.xml',
                    'guestmachine': 'pc',
                    'graphic': 'spice',
+                   'video': 'qxl',
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'disksymbol': 'sdb',
 }
@@ -121,7 +122,6 @@ def install_linux_iso(params):
     guestname = params.get('guestname')
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
-    graphic = params.get('graphic', 'spice')
     nicdriver = params.get('nicdriver', 'virtio')
     xmlstr = params['xml']
 
@@ -190,12 +190,17 @@ def install_linux_iso(params):
         xmlstr = xmlstr.replace('SDX', disksymbol)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
 
-    # Checking the graphic type
-    if graphic == 'vnc' or graphic == 'spice':
-        logger.info('The format of graphic is %s' % graphic)
-    else:
-        logger.error('unsupported kind graphic')
-        return 1
+    graphic = params.get('graphic', 'spice')
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
+    logger.info('the graphic type of VM is %s' % graphic)
+
+    video = params.get('video', 'qxl')
+    if video == "qxl":
+        video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
+        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
+
+    logger.info('the video type of VM is %s' % video)
+
     # Checking the nicdriver define
     if nicdriver == 'virtio' or nicdriver == 'e1000' or nicdriver == 'rtl8139':
         logger.info('The kind of nicdriver is %s' % nicdriver)

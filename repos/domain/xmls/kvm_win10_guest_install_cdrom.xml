@@ -4,11 +4,11 @@
   <vcpu>VCPU</vcpu>
   <os>
     <type machine="GUESTMACHINE">hvm</type>
-    <kernel>KERNEL</kernel>
-    <initrd>INITRD</initrd>
-    <cmdline>ks=KS</cmdline>
     <boot dev="cdrom"/>
   </os>
+  <cpu mode='custom' match='exact'>
+    <model fallback='allow'>IvyBridge</model>
+  </cpu>
   <features>
     <acpi/>
     <apic/>
@@ -25,8 +25,18 @@
       <target bus='HDDRIVER' dev='DEV'/>
     </disk>
     <disk device="cdrom" type="file">
-      <source file='CUSTOMISO'/>
+      <source file='WINDOWSISO'/>
       <target bus="ide" dev="hdc"/>
+      <readonly/>
+    </disk>
+    <disk type="file" device='floppy'>
+      <driver name='qemu' type='raw'/>
+      <source file='DRIVERPATH'/>
+      <target dev='fda' bus='fdc'/>
+    </disk>
+    <disk device="floppy" type="file">
+      <source file='FLOPPY'/>
+      <target bus="fdc" dev="fdb"/>
       <readonly/>
     </disk>
     <interface type="network">
@@ -40,5 +50,5 @@
     <video>
       <model type='cirrus' vram='16384' heads='1'/>
     </video>
-  </devices>
+    </devices>
 </domain>

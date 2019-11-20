@@ -31,7 +31,10 @@
     </interface>
     <console/>
     <input bus="ps2" type="mouse"/>
-    <graphics keymap="en-us" port="-1" type="vnc"/>
+    <graphics port="-1" autoport="yes" type="GRAPHIC"/>
+    <video>
+      <model type='cirrus' vram='16384' heads='1'/>
+    </video>
     <channel type='unix'>
       <source mode='bind' path='/var/lib/libvirt/qemu/channel/target/GUESTNAME.agent'/>
       <target type='virtio' name='org.qemu.guest_agent.0'/>

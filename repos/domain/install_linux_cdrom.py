@@ -18,11 +18,11 @@ from utils import utils
 
 required_params = ('guestname', 'guestos', 'guestarch',)
 optional_params = {
-    'memory': 1048576,
-    'vcpu': 1,
-    'disksize': 10,
-    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
-    'imageformat': 'raw',
+                   'memory': 1048576,
+                   'vcpu': 1,
+                   'disksize': 10,
+                   'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
+                   'imageformat': 'raw',
                    'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
@@ -33,6 +33,7 @@ optional_params = {
                    'networksource': 'default',
                    'bridgename': 'virbr0',
                    'graphic': "spice",
+                   'video': 'qxl',
                    'disksymbol': 'sdb'
 }
 
@@ -365,9 +366,15 @@ def install_linux_cdrom(params):
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
 
     graphic = params.get('graphic', 'spice')
-    if graphic == 'spice':
-        xmlstr = xmlstr.replace('vnc', 'spice')
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
     logger.info('the graphic type of VM is %s' % graphic)
+
+    video = params.get('video', 'qxl')
+    if video == "qxl":
+        video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
+        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
+
+    logger.info('the video type of VM is %s' % video)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')

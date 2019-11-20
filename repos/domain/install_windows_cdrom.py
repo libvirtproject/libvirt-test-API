@@ -38,7 +38,8 @@ optional_params = {'memory': 1048576,
                    'xml': 'xmls/kvm_windows_guest_install_cdrom.xml',
                    'guestmachine': 'pc',
                    'driverpath': '/usr/share/virtio-win/virtio-win_amd64.vfd',
-                   'graphic': 'vnc',
+                   'graphic': 'spice',
+                   'video': 'qxl',
                    }
 
 
@@ -219,7 +220,11 @@ def install_windows_cdrom(params):
     guestname = params.get('guestname')
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
-    xmlstr = params['xml']
+
+    if guestos == "win10": 
+        xmlstr = params.get('xml', 'xmls/kvm_win10_guest_install_cdrom.xml')
+    else:
+        xmlstr = params.get('xml')
 
     logger.info("the name of guest is %s" % guestname)
 
@@ -279,13 +284,16 @@ def install_windows_cdrom(params):
     logger.info("the environment file is %s" % envfile)
 
     # Graphic type
-    graphic = params.get('graphic', 'vnc')
-    if graphic != 'vnc' and graphic != 'spice':
-        logger.error("the %s is unspported" % graphic)
-        return 1
-    else:
-        xmlstr = xmlstr.replace('vnc', graphic)
-    logger.info("the graphic of guests is %s" % graphic)
+    graphic = params.get('graphic', 'spice')
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
+    logger.info('the graphic type of VM is %s' % graphic)
+
+    video = params.get('video', 'qxl')
+    if video == "qxl":
+        video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
+        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
+
+    logger.info('the video type of VM is %s' % video)
 
     # Get iso file based on guest os and arch from global.cfg
     envparser = env_parser.Envparser(envfile)

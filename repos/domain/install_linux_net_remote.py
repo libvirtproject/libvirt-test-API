@@ -30,6 +30,7 @@ optional_params = {'memory': 1048576,
                    'xml': 'xmls/kvm_linux_guest_install_net.xml',
                    'guestmachine': 'pc',
                    'graphic': 'spice',
+                   'video': 'qxl',
                    'hostip': '127.0.0.1',
                    'user': 'root',
                    'password': 'redhat',
@@ -161,7 +162,17 @@ def install_linux_net_remote(params):
     hostip = params.get('hostip', '127.0.0.1')
     user = params.get('user', 'root')
     password = params.get('password', 'redhat')
+
     graphic = params.get('graphic', 'spice')
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
+    logger.info('the graphic type of VM is %s' % graphic)
+
+    video = params.get('video', 'qxl')
+    if video == "qxl":
+        video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
+        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
+
+    logger.info('the video type of VM is %s' % video)
 
     diskpath = params.get('diskpath', "/var/lib/libvirt/images/libvirt-test-api")
 
