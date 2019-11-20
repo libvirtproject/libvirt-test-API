@@ -8,6 +8,7 @@ import time
 import commands
 import shutil
 import urllib
+import requests
 
 import libvirt
 from libvirt import libvirtError
@@ -109,12 +110,19 @@ def prepare_floppy(ks_path, mount_point, floppy_path, logger):
     return 0
 
 
+def get_file_from_url(url):
+    web_con = requests.get(url)
+    match = re.compile(r'<a href=".*">.*.iso</a>')
+    iso_name = re.findall(match, web_con.content)[0].split("\"")[1]
+    iso_file = "%s/%s" % (url, iso_name)
+    return iso_file
+
+
 def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_folder, logger):
     """ to customize boot.iso file to add kickstart
         file into it for automatic guest installation
     """
     new_dir = cache_folder + "/" + ostree.split("/")[-1].split(".iso")[0]
-
     # prepare the cache_folder
     if not os.path.exists(cache_folder):
         os.makedirs(cache_folder)
@@ -130,13 +138,14 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
     # mount point is /mnt/custom
     mount_point = "/mnt/custom"
     cleanup(mount_point, logger)
-    iso_path = new_dir + "/" + ostree.split("/")[-1]
+    iso_path = get_file_from_url(ostree)
+    local_iso = new_dir + "/" + iso_path.split("/")[-1]
     logger.info("Downloading the iso file")
-    cmd = "wget " + ostree + " -P " + new_dir
+    cmd = "wget " + iso_path + " -P " + new_dir
     utils.exec_cmd(cmd, shell=True)
 
     # copy iso file
-    mount_command = "mount -o loop %s %s" % (iso_path, mount_point)
+    mount_command = "mount -o loop %s %s" % (local_iso, mount_point)
     (status, message) = commands.getstatusoutput(mount_command)
     if status:
         logger.error("mount iso failure")
@@ -189,7 +198,7 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
         logger.error("makeing iso failure")
         return 1
 
-    os.remove(iso_path)
+    os.remove(local_iso)
     (status, text) = commands.getstatusoutput("umount -l /mnt/floppy")
     if status:
         logger.error(
