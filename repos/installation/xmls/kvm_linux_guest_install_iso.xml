@@ -4,7 +4,7 @@
   <memory>MEMORY</memory>
   <vcpu>VCPU</vcpu>
   <os>
-    <type machine="GUESTMACHINE">hvm</type>
+    <type arch='GUESTARCH' machine="GUESTMACHINE">hvm</type>
     <kernel>KERNEL</kernel>
     <initrd>INITRD</initrd>
     <cmdline>ks=KS</cmdline>
