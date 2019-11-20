@@ -233,8 +233,34 @@ def install_windows_cdrom(params):
     logger = params['logger']
 
     guestname = params.get('guestname')
+    logger.info("guestname: %s" % guestname)
+
     guestos = params.get('guestos')
+    logger.info("guestos: %s" % guestos)
+
     guestarch = params.get('guestarch')
+    logger.info("guestarch: %s" % guestarch)
+
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    logger.info("diskpath: %s" % diskpath)
+    if os.path.exists(diskpath):
+        os.remove(diskpath)
+
+    seeksize = params.get('disksize', 20)
+    logger.info("disksize: %s" % seeksize)
+
+    imageformat = params.get('imageformat', 'qcow2')
+    logger.info("imageformat: %s" % imageformat)
+
+    disk_create = ("qemu-img create -f %s %s %sG" %
+                   (imageformat, diskpath, seeksize))
+    logger.debug("cmd: '%s'" % disk_create)
+    (status, message) = commands.getstatusoutput(disk_create)
+    if status != 0:
+        logger.debug(message)
+
+    os.chown(diskpath, 107, 107)
+    logger.info("create disk image file is successful.")
 
     xmlstr = params.get('xml')
     if guestos == "win10":
@@ -242,46 +268,33 @@ def install_windows_cdrom(params):
                                 "'custom' match='exact'>\n    <model fallback="
                                 "'allow'>Westmere</model>\n  </cpu>\n  <features>")
 
-    logger.info("the name of guest is %s" % guestname)
-
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname)
 
-    logger.info("the macaddress is %s" %
-                params.get('macaddr', '52:54:00:97:e4:28'))
-
-    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-
-    logger.info("disk image is %s" % diskpath)
-    seeksize = params.get('disksize', 20)
-    imageformat = params.get('imageformat', 'qcow2')
-    if os.path.exists(diskpath):
-        os.remove(diskpath)
-
-    logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
-    disk_create = "qemu-img create -f %s %s %sG" % \
-        (imageformat, diskpath, seeksize)
-    logger.debug("the command line of creating disk images is '%s'" %
-                 disk_create)
-
-    (status, message) = commands.getstatusoutput(disk_create)
-    if status != 0:
-        logger.debug(message)
-
-    os.chown(diskpath, 107, 107)
-    logger.info("creating disk images file is successful.")
-
     # NICDRIVER
     nicdriver = params.get('nicdriver', 'virtio')
+    logger.info('nicdriver: %s' % nicdriver)
     if nicdriver == 'virtio' or nicdriver == 'e1000' or nicdriver == 'rtl8139':
         xmlstr = xmlstr.replace("type='virtio'", "type='%s'" % nicdriver)
     else:
         logger.error('the %s is unspported by KVM' % nicdriver)
         return 1
-    logger.info('the nicdriver is %s' % nicdriver)
+
+    # Graphic type
+    graphic = params.get('graphic', 'spice')
+    logger.info('graphic: %s' % graphic)
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
+
+    # Video type
+    video = params.get('video', 'qxl')
+    logger.info('video: %s' % video)
+    if video == "qxl":
+        video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
+        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
 
     # Hard disk type
     hddriver = params.get('hddriver', 'virtio')
+    logger.info("hddriver: %s" % hddriver)
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
         if guestarch == "x86_64":
@@ -291,27 +304,20 @@ def install_windows_cdrom(params):
     elif hddriver == 'ide':
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
+    elif hddriver == 'sata':
         xmlstr = xmlstr.replace('DEV', 'sda')
         if guestarch == "x86_64":
             xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_64)
         else:
             xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
+    elif hddriver == 'lun':
+        xmlstr = xmlstr.replace('DEV', 'vda')
+    elif hddriver = 'scsilun':
+        xmlstr = xmlstr.replace('DEV', 'sda')
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     logger.info("the environment file is %s" % envfile)
-
-    # Graphic type
-    graphic = params.get('graphic', 'spice')
-    xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    logger.info('the graphic type of VM is %s' % graphic)
-
-    video = params.get('video', 'qxl')
-    if video == "qxl":
-        video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
-        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
-
-    logger.info('the video type of VM is %s' % video)
 
     # Get iso file based on guest os and arch from global.cfg
     envparser = env_parser.Envparser(envfile)
@@ -343,32 +349,24 @@ def install_windows_cdrom(params):
     # Generate guest xml
     installtype = params.get('type', 'define')
     if installtype == 'define':
-        logger.info('define guest from xml description')
         try:
+            logger.info('define guest from xml description')
             domobj = conn.defineXML(xmlstr)
-        except libvirtError, e:
-            logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
-            logger.error("fail to define domain %s" % guestname)
-            return 1
 
-        logger.info('start installation guest ...')
-
-        try:
+            logger.info('start installation guest ...')
             domobj.create()
+
         except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
-            logger.error("fail to start domain %s" % guestname)
             return 1
     elif installtype == 'create':
-        logger.info('create guest from xml description')
         try:
+            logger.info('create guest from xml description')
             conn.createXML(xmlstr, 0)
         except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
-            logger.error("fail to define domain %s" % guestname)
             return 1
 
     interval = 0

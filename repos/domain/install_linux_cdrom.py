@@ -34,7 +34,8 @@ optional_params = {
                    'bridgename': 'virbr0',
                    'graphic': "spice",
                    'video': 'qxl',
-                   'disksymbol': 'sdb'
+                   'disksymbol': 'sdb',
+                   'rhelnewest': '',
 }
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
@@ -216,6 +217,13 @@ def prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger):
     urllib.urlretrieve(kscfg, '%s/%s' % (new_dir, ks_name))
     logger.info("the url of kickstart is %s" % kscfg)
 
+    if rhelnewest != '':
+        ks_fp = open('%s/%s' % (new_dir, ks_name), "rw+")
+        ks_file = ks_fp.read()
+        ks_file = ks_file.replace("url --url=", "usr --url=%s" % ostree)
+        ks_fp.write(ks_file)
+        ks_fp.close()
+
     src_path = os.getcwd()
 
     logger.debug("enter folder: %s" % new_dir)
@@ -296,26 +304,62 @@ def check_domain_state(conn, guestname, logger):
     return 0
 
 
+def set_xml(xmlstr, hddriver, diskpath, logger):
+    if hddriver == 'virtio':
+        xmlstr = xmlstr.replace('DEV', 'vda')
+    elif hddriver == 'ide':
+        xmlstr = xmlstr.replace('DEV', 'hda')
+    elif hddriver == 'scsi':
+        xmlstr = xmlstr.replace('DEV', 'sda')
+    elif hddriver == "sata":
+        xmlstr = xmlstr.replace("DEV", 'sda')
+    elif hddriver == 'lun':
+        xmlstr = xmlstr.replace("'lun'", "'virtio'")
+        xmlstr = xmlstr.replace('DEV', 'vda')
+        xmlstr = xmlstr.replace('"file"', '"block"')
+        xmlstr = xmlstr.replace('"disk"', '"lun"')
+        xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='/dev/SDX'")
+        disksymbol = params.get('disksymbol', 'sdb')
+        xmlstr = xmlstr.replace('SDX', disksymbol)
+        xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
+    elif hddriver == 'scsilun':
+        xmlstr = xmlstr.replace("'scsilun'", "'scsi'")
+        xmlstr = xmlstr.replace('DEV', 'sda')
+        xmlstr = xmlstr.replace('"file"', '"block"')
+        xmlstr = xmlstr.replace('"disk"', '"lun"')
+        xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='/dev/SDX'")
+        disksymbol = params.get('disksymbol', 'sdb')
+        xmlstr = xmlstr.replace('SDX', disksymbol)
+        xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
+
+    return xmlstr
+
+
 def install_linux_cdrom(params):
     """ install a new virtual machine """
     logger = params['logger']
 
     guestname = params.get('guestname')
+    logger.info("guestname: %s" % guestname)
+
     guestos = params.get('guestos')
+    logger.info("guestos: %s" % guestos)
+
     guestarch = params.get('guestarch')
+    logger.info("guestarch: %s" % guestarch)
+
     bridge = params.get('bridgename', 'virbr0')
     xmlstr = params['xml']
-
-    logger.info("the name of guest is %s" % guestname)
 
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
 
-    logger.info("the macaddress is %s" %
-                params.get('macaddr', '52:54:00:97:e4:28'))
-
     hddriver = params.get('hddriver', 'virtio')
+    logger.info("hddriver: %s" % hddriver)
+
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    logger.info("diskpath: %s" % diskpath)
+
     if hddriver != "lun" and hddriver != 'scsilun':
         logger.info("disk image is %s" % diskpath)
         seeksize = params.get('disksize', 10)
@@ -334,68 +378,43 @@ def install_linux_cdrom(params):
     os.chown(diskpath, 107, 107)
     logger.info("creating disk images file is successful.")
 
-    if hddriver == 'virtio':
-        xmlstr = xmlstr.replace('DEV', 'vda')
-    elif hddriver == 'ide':
-        xmlstr = xmlstr.replace('DEV', 'hda')
-    elif hddriver == 'scsi':
-        xmlstr = xmlstr.replace('DEV', 'sda')
-    elif hddriver == "sata":
-        xmlstr = xmlstr.replace("DEV", 'sda')
-    elif hddriver == 'lun':
-        xmlstr = xmlstr.replace("'lun'", "'virtio'")
-        xmlstr = xmlstr.replace('DEV', 'vda')
-        xmlstr = xmlstr.replace('"file"', '"block"')
-        xmlstr = xmlstr.replace('"disk"', '"lun"')
-        tmp = params.get('diskpath', '/var/lib/libvirt/images')
-        xmlstr = xmlstr.replace("file='%s'" % tmp,
-                                "dev='/dev/SDX'")
-        disksymbol = params.get('disksymbol', 'sdb')
-        xmlstr = xmlstr.replace('SDX', disksymbol)
-        xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
-    elif hddriver == 'scsilun':
-        xmlstr = xmlstr.replace("'scsilun'", "'scsi'")
-        xmlstr = xmlstr.replace('DEV', 'sda')
-        xmlstr = xmlstr.replace('"file"', '"block"')
-        xmlstr = xmlstr.replace('"disk"', '"lun"')
-        tmp = params.get('diskpath', '/var/lib/libvirt/images')
-        xmlstr = xmlstr.replace("file='%s'" % tmp,
-                                "dev='/dev/SDX'")
-        disksymbol = params.get('disksymbol', 'sdb')
-        xmlstr = xmlstr.replace('SDX', disksymbol)
-        xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
+    xmlstr = set_xml(xmlstr, hddriver, diskpath, logger)
 
     graphic = params.get('graphic', 'spice')
+    logger.info('graphical: %s' % graphic)
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    logger.info('the graphic type of VM is %s' % graphic)
 
     video = params.get('video', 'qxl')
+    logger.info("video: %s" % video)
     if video == "qxl":
         video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
         xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
 
-    logger.info('the video type of VM is %s' % video)
-
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     logger.info("the environment file is %s" % envfile)
-
-    os_arch = guestos + "_" + guestarch
-
     envparser = env_parser.Envparser(envfile)
-    ostree = envparser.get_value("guest", os_arch)
-    kscfg = envparser.get_value("guest", os_arch + "_http_ks")
 
-    logger.debug('install source:\n    %s' % ostree)
-    logger.debug('kisckstart file:\n    %s' % kscfg)
+    rhelnewest = params.get('rhelnewest')
+    if rhelnewest != '' and guestarch == 'x86_64':
+        ostree = rhelnewest + "x86_64/os"
+        kscfg = envparser.get_value("guest", "rhelnewest_http_ks")
+    elif rhelnewest != '' and guestarch == 'i386':
+        ostree = rhelnewest + "i386/os"
+        kscfg = envparser.get_value("guest", "rhelnewest_http_ks")
+    else:
+        os_arch = guestos + "_" + guestarch
+        ostree = envparser.get_value("guest", os_arch)
+        kscfg = envparser.get_value("guest", os_arch + "_http_ks")
+
+    logger.info('install source:    %s' % ostree)
+    logger.info('kisckstart file:    %s' % ks)
 
     if ostree == 'http://':
         logger.error("no os tree defined in %s for %s" % (envfile, os_arch))
         return 1
 
-    logger.info('prepare installation...')
     cache_folder = envparser.get_value("variables", "domain_cache_folder")
-
     logger.info("begin to customize the custom.iso file")
     try:
         prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger)
@@ -413,21 +432,14 @@ def install_linux_cdrom(params):
     if installtype == 'define':
         logger.info('define guest from xml description')
         try:
+            logger.info('define guest from xml description')
             domobj = conn.defineXML(xmlstr)
-        except libvirtError, e:
-            logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
-            logger.error("fail to define domain %s" % guestname)
-            return 1
 
-        logger.info('start installation guest ...')
-
-        try:
+            logger.info('start installation guest ...')
             domobj.create()
         except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
-            logger.error("fail to start domain %s" % guestname)
             return 1
     elif installtype == 'create':
         logger.info('create guest from xml description')

@@ -33,6 +33,7 @@ optional_params = {
                    'video': 'qxl',
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
                    'disksymbol': 'sdb',
+                   'rhelnewest': '',
 }
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
@@ -115,52 +116,35 @@ def check_domain_state(conn, guestname, logger):
     return 0
 
 
-def install_linux_iso(params):
-    """ install a new virtual machine """
-    logger = params['logger']
+def create_image(params, diskpath, logger):
+    seeksize = params.get('disksize', 10)
+    logger.info("disksize: %s" % seeksize)
 
-    guestname = params.get('guestname')
-    guestos = params.get('guestos')
-    guestarch = params.get('guestarch')
-    nicdriver = params.get('nicdriver', 'virtio')
-    xmlstr = params['xml']
+    imageformat = params.get('imageformat', 'qcow2')
+    logger.info("imageformat: %s" % imageformat)
 
-    logger.info("the name of guest is %s" % guestname)
+    qcow2version = params.get('qcow2version', 'v3')
+    # qcow2version includes "v3","v3_lazy_refcounts"
+    if qcow2version.startswith('v3'):
+        qcow2_options = "-o compat=1.1"
+        if qcow2version.endswith('lazy_refcounts'):
+            qcow2_options = qcow2_options + " -o lazy_refcounts=on"
+        else:
+            qcow2_options = ""
+    disk_create = ("qemu-img create -f %s %s %s %sG" %
+                   (imageformat, qcow2_options, diskpath, seeksize))
+    logger.debug("cmd: %s" % disk_create)
+    (status, message) = commands.getstatusoutput(disk_create)
+    if status != 0:
+        logger.debug(message)
+        return 1
 
-    conn = sharedmod.libvirtobj['conn']
-    check_domain_state(conn, guestname, logger)
-    macaddr = utils.get_rand_mac()
+    os.chown(diskpath, 107, 107)
+    logger.info("create disk image file is successful.")
+    return 0
 
-    logger.info("the macaddress is %s" % macaddr)
 
-    diskpath = params.get('diskpath', "/var/lib/libvirt/images/libvirt-test-api")
-    hddriver = params.get('hddriver', 'virtio')
-    if hddriver != "lun" and hddriver != "scsilun":
-        logger.info("disk image is %s" % diskpath)
-        seeksize = params.get('disksize', 10)
-        imageformat = params.get('imageformat', 'qcow2')
-        qcow2version = params.get('qcow2version', 'v3')
-        logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
-        # qcow2version includes "v3","v3_lazy_refcounts"
-        if qcow2version.startswith('v3'):
-            qcow2_options = "-o compat=1.1"
-            if qcow2version.endswith('lazy_refcounts'):
-                qcow2_options = qcow2_options + " -o lazy_refcounts=on"
-            else:
-                qcow2_options = ""
-        disk_create = "qemu-img create -f %s %s %s %sG" % \
-            (imageformat, qcow2_options, diskpath, seeksize)
-        logger.debug("the command line of creating disk images is '%s'" %
-                     disk_create)
-
-        (status, message) = commands.getstatusoutput(disk_create)
-        if status != 0:
-            logger.debug(message)
-            return 1
-
-        os.chown(diskpath, 107, 107)
-        logger.info("creating disk images file is successful.")
-
+def set_xml(xmlstr, hddriver, diskpath, logger):
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
     elif hddriver == 'ide':
@@ -174,8 +158,7 @@ def install_linux_iso(params):
         xmlstr = xmlstr.replace('DEV', 'vda')
         xmlstr = xmlstr.replace('"file"', '"block"')
         xmlstr = xmlstr.replace('"disk"', '"lun"')
-        xmlstr = xmlstr.replace("file='%s'" % params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api'),
-                                "dev='/dev/SDX'")
+        xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='/dev/SDX'")
         disksymbol = params.get('disksymbol', 'sdb')
         xmlstr = xmlstr.replace('SDX', disksymbol)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
@@ -184,23 +167,29 @@ def install_linux_iso(params):
         xmlstr = xmlstr.replace('DEV', 'sda')
         xmlstr = xmlstr.replace('"file"', '"block"')
         xmlstr = xmlstr.replace('"disk"', '"lun"')
-        xmlstr = xmlstr.replace("file='%s'" % params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api'),
-                                "dev='/dev/SDX'")
+        xmlstr = xmlstr.replace("file='%s'" % diskpath, "dev='/dev/SDX'")
         disksymbol = params.get('disksymbol', 'sdb')
         xmlstr = xmlstr.replace('SDX', disksymbol)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
 
-    graphic = params.get('graphic', 'spice')
-    xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    logger.info('the graphic type of VM is %s' % graphic)
+    return xmlstr
 
-    video = params.get('video', 'qxl')
-    if video == "qxl":
-        video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
-        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
 
-    logger.info('the video type of VM is %s' % video)
+def install_linux_iso(params):
+    """ install a new virtual machine """
+    logger = params['logger']
 
+    guestname = params.get('guestname')
+    logger.info("guestname: %s" % guestname)
+
+    guestos = params.get('guestos')
+    logger.info("guestos: %s" % guestos)
+
+    guestarch = params.get('guestarch')
+    logger.info("guestarch: %s" % guestarch)
+
+    nicdriver = params.get('nicdriver', 'virtio')
+    logger.info("nicdriver: %s" % nicdriver)
     # Checking the nicdriver define
     if nicdriver == 'virtio' or nicdriver == 'e1000' or nicdriver == 'rtl8139':
         logger.info('The kind of nicdriver is %s' % nicdriver)
@@ -208,31 +197,68 @@ def install_linux_iso(params):
         logger.error('unsupported nicdirver')
         return 1
 
+    xmlstr = params['xml']
+
+    conn = sharedmod.libvirtobj['conn']
+    check_domain_state(conn, guestname, logger)
+
+    macaddr = utils.get_rand_mac()
+    logger.info("the macaddress is %s" % macaddr)
+
+    diskpath = params.get('diskpath', "/var/lib/libvirt/images/libvirt-test-api")
+    logger.info("diskpath: %s" % diskpath)
+
+    hddriver = params.get('hddriver', 'virtio')
+    logger.info("hddriver: %s" % hddriver)
+    if hddriver != "lun" and hddriver != "scsilun":
+        ret = create_image(params, diskpath, logger)
+        if ret:
+            return 1
+
+    xmlstr = set_xml(xmlstr, hddriver, diskpath, logger)
+
+    graphic = params.get('graphic', 'spice')
+    logger.info("graphic: %s" % graphic)
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
+
+    video = params.get('video', 'qxl')
+    logger.info("video: %s" % video)
+    if video == "qxl":
+        video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
+        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
+
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     logger.info("the environment file is %s" % envfile)
-
-    os_arch = guestos + "_" + guestarch
-
     envparser = env_parser.Envparser(envfile)
-    ostree = envparser.get_value("guest", os_arch)
-    ks = envparser.get_value("guest", os_arch + "_iso_ks")
 
-    logger.debug('install source:\n    %s' % ostree)
-    logger.debug('kisckstart file:\n    %s' % ks)
+    rhelnewest = params.get('rhelnewest')
+    if rhelnewest != '' and guestarch == 'x86_64':
+        ostree = rhelnewest + "x86_64/os"
+        ks = envparser.get_value("guest", "rhelnewest_iso_ks")
+        repo_name = rhelnewest.split('/')[4]
+        isolink = rhelnewest + "x86_64/iso/" + repo_name + "-Server-x86_64-dvd1.iso"
+    elif rhelnewest != '' and guestarch == 'i386':
+        ostree = rhelnewest + "i386/os"
+        ks = envparser.get_value("guest", "rhelnewest_iso_ks")
+        repo_name = rhelnewest.split('/')[4]
+        isolink = rhelnewest + "i386/iso/" + repo_name + "-Server-x86_64-dvd1.iso"
+    else:
+        os_arch = guestos + "_" + guestarch
+        ostree = envparser.get_value("guest", os_arch)
+        ks = envparser.get_value("guest", os_arch + "_iso_ks")
+        ioslink = envparser.get_value("guest", os_arch + "_iso")
+
+    logger.info('install source:    %s' % ostree)
+    logger.info('kisckstart file:    %s' % ks)
+    logger.info("iso link:    %s" % ioslink)
 
     if (ostree == 'http://'):
         logger.error("no os tree defined in %s for %s" % (envfile, os_arch))
         return 1
 
-    logger.info('prepare installation...')
-    cache_folder = envparser.get_value("variables", "domain_cache_folder")
-
     logger.info("begin to download the iso file")
-    ioslink = envparser.get_value("guest", os_arch + "_iso")
-    logger.info("iso link is %s" % ioslink)
     cache_floder = "/var/lib/libvirt/images/"
-
     bootcd = cache_floder + ioslink.split("/")[-1]
     if not os.path.exists(bootcd):
         prepare_iso(ioslink, cache_floder)
@@ -270,21 +296,15 @@ def install_linux_iso(params):
     if installtype == 'define':
         logger.info('define guest from xml description')
         try:
+            logger.info('define guest from xml description')
             domobj = conn.defineXML(xmlstr)
-        except libvirtError, e:
-            logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
-            logger.error("fail to define domain %s" % guestname)
-            return 1
 
-        logger.info('start installation guest ...')
-
-        try:
+            logger.info('start installation guest ...')
             domobj.create()
+
         except libvirtError, e:
             logger.error("API error message: %s, error code is %s"
                          % (e.message, e.get_error_code()))
-            logger.error("fail to start domain %s" % guestname)
             return 1
     elif installtype == 'create':
         logger.info('create guest from xml description')
@@ -400,7 +420,14 @@ def install_linux_iso_clean(params):
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     os_arch = guestos + "_" + guestarch
     envparser = env_parser.Envparser(envfile)
-    ioslink = envparser.get_value("guest", os_arch + "_iso")
+    if "rhel7u3" in guestos or "rhel6u8" in guestos:
+        rhelnewest = params.get('rhelnewest')
+        repo_name = rhelnewest.split('/')[4]
+        isolink = rhelnewest + "iso/" + repo_name + "-Server-x86_64-dvd1.iso"
+    else:
+        os_arch = guestos + "_" + guestarch
+        ioslink = envparser.get_value("guest", os_arch + "_iso")
+
     isopath = '/var/lib/libvirt/images/' + ioslink.split('/')[-1]
     if os.path.exists(isopath):
         os.remove(isopath)
