@@ -1,12 +1,17 @@
 #!/usr/bin/evn python
 
+import os
+import libvirt
+
 from libvirt import libvirtError
 from src import sharedmod
 from xml.dom import minidom
 from utils import utils
 
-required_params = ('ephemeral', 'private', 'secretUUID', 'diskpath',)
+required_params = ('ephemeral', 'private', 'secretUUID', 'usagetype',)
 optional_params = {'xml': 'xmls/secret.xml',
+                   'diskpath': '',
+                   'tlsname': '',
                    }
 
 
@@ -25,7 +30,7 @@ def check_defineSecret(secret_params, secretobj):
     else:
         logger.error("The value of ephemeral is wrong, please input \"yes\" "
                      "or \"no\" for this value")
-        return 0
+        return 1
 
     secret_xml['ephemeral'] = (XMLFile.getElementsByTagName('secret')[0]).\
         getAttribute('ephemeral')
@@ -33,14 +38,23 @@ def check_defineSecret(secret_params, secretobj):
         getAttribute('private')
     secret_xml['secretUUID'] = (XMLFile.getElementsByTagName('uuid')[0]).\
         childNodes[0].data
-    secret_xml['diskpath'] = (XMLFile.getElementsByTagName('volume')[0]).\
-        childNodes[0].data
+
+    if secret_params['usage_type'] == 'volume':
+        secret_xml['diskpath'] = (XMLFile.getElementsByTagName('volume')[0]).\
+            childNodes[0].data
+    elif secret_params['usage_type'] == 'tls':
+        if utils.version_compare("libvirt-python", 2, 5, 0, logger):
+            secret_xml['tlsname'] = (XMLFile.getElementsByTagName('name')[0]).\
+                childNodes[0].data
+    else:
+        logger.error("unexpected secret usage type: %s" % usage_type)
+        return 1
 
     for i in secret_xml.keys():
         if secret_xml[i] != secret_params[i]:
-            return 0
+            return 1
 
-    return 1
+    return 0
 
 
 def defineSecret(params):
@@ -52,27 +66,34 @@ def defineSecret(params):
     secret_params['ephemeral'] = params['ephemeral']
     secret_params['private'] = params['private']
     secret_params['secretUUID'] = params['secretUUID']
-    secret_params['diskpath'] = params['diskpath']
-    xmlstr = params['xml']
-    logger.debug("secret xml:\n%s" % xmlstr)
+    secret_params['usage_type'] = params['usagetype']
 
-    """Create the volume
-    """
-    disk_create = "qemu-img create %s 10M" % secret_params['diskpath']
-    print disk_create
-    logger.debug("the command line of creating disk images is '%s'" %
-                 disk_create)
-    (status, message) = utils.exec_cmd(disk_create, shell=True)
-    if status != 0:
-        logger.debug(message)
+    if secret_params['usage_type'] == 'volume':
+        secret_params['diskpath'] = params['diskpath']
+        disk_create = "qemu-img create %s 10M" % secret_params['diskpath']
+        logger.info("create disk: %s" % secret_params['diskpath'])
+        (status, message) = utils.exec_cmd(disk_create, shell=True)
+        if status != 0:
+            logger.debug(message)
+            return 1
+    elif secret_params['usage_type'] == 'tls':
+        if utils.version_compare("libvirt-python", 2, 5, 0, logger):
+            secret_params['tlsname'] = params['tlsname']
+        else:
+            logger.info("Current libvirt-python don't support 'tls'.")
+            return 0
+    else:
+        logger.error("unexpected secret usage type: %s" % usage_type)
         return 1
 
+    xmlstr = params['xml']
+    logger.debug("secret xml:\n%s" % xmlstr)
     conn = sharedmod.libvirtobj['conn']
 
     try:
         secretobj = conn.secretDefineXML(xmlstr, 0)
 
-        if check_defineSecret(secret_params, secretobj):
+        if not check_defineSecret(secret_params, secretobj):
             logger.info("define secret %s is successful:\n %s" %
                         (secret_params['secretUUID'], secretobj.XMLDesc(0)))
         else:
@@ -85,3 +106,18 @@ def defineSecret(params):
         return 1
 
     return 0
+
+
+def defineSecret_clean(params):
+    """clean env"""
+    secretUUID = params['secretUUID']
+    usage_type = params['usagetype']
+
+    if usage_type == 'volume':
+        diskpath = params['diskpath']
+        os.remove(diskpath)
+    elif usage_type == 'tls':
+        if utils.version_compare("libvirt-python", 2, 5, 0, logger):
+            conn = libvirt.open(None)
+            secretobj = conn.secretLookupByUUIDString(secretUUID)
+            secretobj.undefine()

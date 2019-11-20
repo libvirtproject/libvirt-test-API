@@ -13,7 +13,9 @@ import re
 
 required_params = ('guestname', 'vcpuquota', 'vcpuperiod', 'emulatorperiod',
                    'emulatorquota', 'cpushares', 'flag',)
-optional_params = {}
+optional_params = {'iothreadperiod': '',
+                   'iothreadquota': '',
+                   }
 
 CGROUP_PATH = '/sys/fs/cgroup/cpu,cpuacct/machine.slice/'
 CGROUP_RE = 'machine-qemu.*?%s.scope'
@@ -30,6 +32,20 @@ def get_cgroup_path(guestname, logger):
     return False
 
 
+def get_iothread_path(cgroup_path, logger):
+    cmd = "find %s -name 'iothread*'" % cgroup_path.replace("\\", "\\\\")
+    status, out = utils.exec_cmd(cmd, shell=True)
+    if status:
+        logger.error("Failed to get iothread path. out: %s" % out)
+        return False
+
+    if len(out) < 1:
+        logger.error("iothread path is not exist.")
+        return False
+
+    return os.path.basename(out[0])
+
+
 def check_sched_params_flag(guestname, domobj, sched_params_after, domstate,
                             flags_value):
     """Check scheduler parameters validity after setting
@@ -41,28 +57,40 @@ def check_sched_params_flag(guestname, domobj, sched_params_after, domstate,
            As for the other condition, the value can be checked with the domain
            config xml
         """
-
         if os.path.exists("/cgroup"):
             """ Add the judgment method, since the cgroup path is different on
                 rhel6 and rhel7.
                 if the folder cgroup is existed, it means the host os is rhel6,
                 if not existed, it means the the host of is rhel7
             """
-
             cgroup_path = "cat /cgroup/cpu/libvirt/qemu/%s/" % guestname
         else:
             cgroup_path = get_cgroup_path(guestname, logger)
-            if cgroup_path:
-                cgroup_path = "cat " + cgroup_path.replace("\\", "\\\\")
+            if not cgroup_path:
+                logger.error("cgroup path don't exist.")
+                return 1
 
-        sched_dicts = {'vcpu_quota': 'vcpu0/cpu.cfs_quota_us',
-                       'vcpu_period': 'vcpu0/cpu.cfs_period_us',
-                       'emulator_period': 'emulator/cpu.cfs_period_us',
-                       'emulator_quota': 'emulator/cpu.cfs_quota_us',
-                       'cpu_shares': 'cpu.shares'}
+        if utils.version_compare("libvirt-python", 2, 5, 0, logger):
+            iothread_path = get_iothread_path(cgroup_path, logger)
+            if not iothread_path:
+                return 1
+
+            sched_dicts = {'vcpu_quota': 'vcpu0/cpu.cfs_quota_us',
+                           'vcpu_period': 'vcpu0/cpu.cfs_period_us',
+                           'emulator_period': 'emulator/cpu.cfs_period_us',
+                           'emulator_quota': 'emulator/cpu.cfs_quota_us',
+                           'cpu_shares': 'cpu.shares',
+                           'iothread_period': '%s/cpu.cfs_period_us' % iothread_path,
+                           'iothread_quota': '%s/cpu.cfs_quota_us' % iothread_path}
+        else:
+            sched_dicts = {'vcpu_quota': 'vcpu0/cpu.cfs_quota_us',
+                           'vcpu_period': 'vcpu0/cpu.cfs_period_us',
+                           'emulator_period': 'emulator/cpu.cfs_period_us',
+                           'emulator_quota': 'emulator/cpu.cfs_quota_us',
+                           'cpu_shares': 'cpu.shares'}
 
         for sched_key in sched_dicts:
-            cmd = cgroup_path + sched_dicts[sched_key]
+            cmd = "cat " + cgroup_path.replace("\\", "\\\\") + sched_dicts[sched_key]
             status, cmd_value = utils.exec_cmd(cmd, shell=True)
             if status:
                 logger.error("failed to get ***%s*** value" % sched_key)
@@ -78,10 +106,18 @@ def check_sched_params_flag(guestname, domobj, sched_params_after, domstate,
 
         xmlrootnode = minidom.parseString(guestxml)
 
-        sched_dicts = {'vcpu_quota': 'quota', 'vcpu_period': 'period',
-                       'emulator_period': 'emulator_period',
-                       'emulator_quota': 'emulator_quota',
-                       'cpu_shares': 'shares'}
+        if utils.version_compare("libvirt-python", 2, 5, 0, logger):
+            sched_dicts = {'vcpu_quota': 'quota', 'vcpu_period': 'period',
+                           'emulator_period': 'emulator_period',
+                           'emulator_quota': 'emulator_quota',
+                           'cpu_shares': 'shares',
+                           'iothread_period': 'iothread_period',
+                           'iothread_quota': 'iothread_quota'}
+        else:
+            sched_dicts = {'vcpu_quota': 'quota', 'vcpu_period': 'period',
+                           'emulator_period': 'emulator_period',
+                           'emulator_quota': 'emulator_quota',
+                           'cpu_shares': 'shares'}
 
         for sched_key in sched_dicts:
             node = xmlrootnode.getElementsByTagName(sched_dicts[sched_key])[0]
@@ -101,11 +137,22 @@ def sched_params_flag(params):
     global logger
     logger = params['logger']
     guestname = params['guestname']
-    dicts = {'vcpu_quota': int(params['vcpuquota']),
-             'vcpu_period': int(params['vcpuperiod']),
-             'emulator_period': int(params['emulatorperiod']),
-             'emulator_quota': int(params['emulatorquota']),
-             'cpu_shares': int(params['cpushares'])}
+
+    if utils.version_compare("libvirt-python", 2, 5, 0, logger):
+        dicts = {'vcpu_quota': int(params['vcpuquota']),
+                 'vcpu_period': int(params['vcpuperiod']),
+                 'emulator_period': int(params['emulatorperiod']),
+                 'emulator_quota': int(params['emulatorquota']),
+                 'cpu_shares': int(params['cpushares']),
+                 'iothread_period': int(params['iothreadperiod']),
+                 'iothread_quota': int(params['iothreadquota'])}
+    else:
+        dicts = {'vcpu_quota': int(params['vcpuquota']),
+                 'vcpu_period': int(params['vcpuperiod']),
+                 'emulator_period': int(params['emulatorperiod']),
+                 'emulator_quota': int(params['emulatorquota']),
+                 'cpu_shares': int(params['cpushares'])}
+
     flags = params['flag']
 
     try:

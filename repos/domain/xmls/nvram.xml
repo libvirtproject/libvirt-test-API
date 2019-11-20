@@ -1,0 +1,45 @@
+<domain type="kvm">
+  <name>GUESTNAME</name>
+  <uuid>05867c1a-afeb-300e-e55e-2673391ae080</uuid>
+  <memory>1048576</memory>
+  <vcpu>1</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc-q35-rhel7.3.0'>hvm</type>
+    <loader readonly='yes' secure='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.secboot.fd</loader>
+    <nvram template='/usr/share/OVMF/OVMF_VARS.fd'>/var/lib/libvirt/qemu/nvram/test_VARS.fd</nvram>
+    <boot dev='hd'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+    <vmport state='on'/>
+    <smm state='on'/>
+  </features>
+  <clock offset="utc"/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <disk device="disk" type="file">
+      <driver name="qemu" type='qcow2'/>
+      <source file='/var/lib/libvirt/images/libvirt-test-api'/>
+      <target bus='virtio' dev='vda'/>
+    </disk>
+    <interface type="network">
+      <source network="default"/>
+      <mac address='54:52:00:4a:c1:22'/>
+      <model type='virtio'/>
+    </interface>
+    <console/>
+    <input bus="ps2" type="mouse"/>
+    <graphics keymap="en-us" port="-1" autoport="yes" type="vnc"/>
+    <channel type='unix'>
+      <source mode='bind' path='/var/lib/libvirt/qemu/channel/target/GUESTNAME.agent'/>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <video>
+      <model type='cirrus' vram='16384' heads='1'/>
+    </video>
+  </devices>
+</domain>

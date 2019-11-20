@@ -1,56 +1,78 @@
 #!/usr/bin/env python
 # To test setPerfEvents() API
 
-import os
 import libvirt
 
 from xml.dom import minidom
 from libvirt import libvirtError
+from src import sharedmod
+from utils import utils
 
-required_params = ('guestname', 'flags',)
-optional_params = {'cmt': 'True',
-                   'mbmt': 'True',
-                   'mbml': 'True'}
+required_params = ('guestname',)
+optional_params = {'flags': 'current',
+                   'cmt': '',
+                   'mbmt': '',
+                   'mbml': '',
+                   'cpu_cycles': '',
+                   'instructions': '',
+                   'cache_references': '',
+                   'cache_misses': ''}
 
 XML_PATH = "/var/run/libvirt/qemu/"
 
 
-def compare_value(name, value, event):
-    if value == "no" and not event:
-        return 0
-    elif value == "yes" and not event:
-        return 0
+def check_events(events, event_list, guestname, flags, domstate, dom, logger):
+    values = {}
+    if ((domstate == libvirt.VIR_DOMAIN_RUNNING) and
+        ((flags == libvirt.VIR_DOMAIN_AFFECT_CURRENT) or
+         (flags == libvirt.VIR_DOMAIN_AFFECT_LIVE))):
+        xmlstr = minidom.parse("%s%s.xml" % (XML_PATH, guestname))
     else:
-        return 1
+        guestxml = dom.XMLDesc(libvirt.VIR_DOMAIN_XML_INACTIVE)
+        xmlstr = minidom.parseString(guestxml)
 
+    perf = xmlstr.getElementsByTagName('perf')
+    if perf:
+        perf = xmlstr.getElementsByTagName('perf')[0]
+        for item in perf.getElementsByTagName('event'):
+            for i in event_list:
+                if item.getAttribute('name') == i:
+                    if item.getAttribute('enabled') == "yes":
+                        values[i] = True
+                    elif item.getAttribute('enabled') == "no":
+                        values[i] = False
 
-def check_events(events, guestname):
-    cmt = "no"
-    mbml = "no"
-    mbmt = "no"
-    xmlstr = minidom.parse("%s%s.xml" % (XML_PATH, guestname))
-    perf = xmlstr.getElementsByTagName('perf')[0]
-    for item in perf.getElementsByTagName('event'):
-        if item.getAttribute('name') == "cmt":
-            cmt = item.getAttribute('enabled')
-        if item.getAttribute('name') == "mbmt":
-            mbmt = item.getAttribute('enabled')
-        if item.getAttribute('name') == "mbml":
-            mbml = item.getAttribute('enabled')
-
-    if 'cmt' in events.keys():
-        if compare_value('cmt', cmt, events['cmt']):
-            return 1
-
-    if 'mbml' in events.keys():
-        if compare_value('mbml', mbml, events['mbml']):
-            return 1
-
-    if 'mbmt' in events.keys():
-        if compare_value('mbmt', mbmt, events['mbmt']):
-            return 1
+    logger.info("values: %s" % values)
+    for i in event_list:
+        if i in values.keys() and i in events.keys():
+            if values[i] != events[i]:
+                return 1
 
     return 0
+
+
+def parse_flag(params, logger):
+    flags = params.get('flags', 'current')
+    logger.info("Flag: %s" % flags)
+    if flags == "current":
+        return libvirt.VIR_DOMAIN_AFFECT_CURRENT
+    elif flags == "live":
+        return libvirt.VIR_DOMAIN_AFFECT_LIVE
+    elif flags == "config":
+        return libvirt.VIR_DOMAIN_AFFECT_CONFIG
+    else:
+        logger.error("Not support flag: %s" % flags)
+        return -1
+
+
+def get_params(name, params):
+    value = params.get(name, '')
+    if value == 'enabled':
+        return True
+    elif value == 'disabled':
+        return False
+    else:
+        return None
 
 
 def set_perf_events(params):
@@ -58,33 +80,34 @@ def set_perf_events(params):
     """
     logger = params['logger']
     guestname = params['guestname']
-    flags = params['flags']
+
+    if not utils.version_compare("libvirt-python", 1, 3, 5, logger):
+        logger.info("Current libvirt-python don't support this API.")
+        return 0
 
     events = {}
-    cmt = params.get('cmt')
-    if cmt == 'enable':
-        events['cmt'] = True
-    elif cmt == 'disable':
-        events['cmt'] = False
+    if utils.version_compare("libvirt-python", 2, 5, 0, logger):
+        params_list = ('cmt', 'mbmt', 'mbml', 'cpu_cycles', 'instructions',
+                       'cache_references', 'cache_misses')
+    else:
+        params_list = ('cmt', 'mbmt', 'mbml')
 
-    mbmt = params.get('mbmt')
-    if mbmt == 'enable':
-        events['mbmt'] = True
-    elif mbmt == 'disable':
-        events['mbmt'] = False
+    for i in params_list:
+        if get_params(i, params) is None:
+            continue
+        else:
+            events[i] = get_params(i, params)
+    logger.info("events: %s" % events)
 
-    mbml = params.get('mbml')
-    if mbml == 'enable':
-        events['mbml'] = True
-    elif mbml == 'disable':
-        events['mbml'] = False
+    flags = parse_flag(params, logger)
+    if flags == -1:
+        return 1
 
     try:
-        conn = libvirt.open('qemu:///system')
+        conn = sharedmod.libvirtobj['conn']
         dom = conn.lookupByName(guestname)
-        dom.setPerfEvents(events, int(flags))
-        logger.info("set perf events: %s" % events)
-
+        domstate = dom.state(0)[0]
+        dom.setPerfEvents(events, flags)
     except libvirtError, e:
         logger.error("API error message: %s, error code: %s" %
                      (e.message, e.get_error_code()))
@@ -105,7 +128,7 @@ def set_perf_events(params):
 
         return 1
 
-    if check_events(events, guestname):
+    if check_events(events, params_list, guestname, flags, domstate, dom, logger):
         logger.error("Fail: set perf events failed.")
         return 1
     else:

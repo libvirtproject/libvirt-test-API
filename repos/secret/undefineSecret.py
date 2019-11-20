@@ -36,14 +36,10 @@ def undefineSecret(params):
     secretobj = conn.secretLookupByUUIDString(secretUUID)
     ephemeral = minidom.parseString(secretobj.XMLDesc(0)).\
         getElementsByTagName('secret')[0].getAttribute('ephemeral')
-    diskpath = minidom.parseString(secretobj.XMLDesc(0)).\
-        getElementsByTagName('volume')[0].childNodes[0].data
     try:
         secretobj.undefine()
         if check_undefineSecret(ephemeral, secretUUID):
             logger.info("undefine the secret %s is successful" % secretUUID)
-            logger.info("remove the related volume %s" % diskpath)
-            os.remove(diskpath)
         else:
             logger.error("fail to check secret undefine")
             return 1

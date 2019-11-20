@@ -5,11 +5,30 @@ import time
 import libxml2
 import libvirt
 from libvirt import libvirtError
-
+from utils import utils
 from src import sharedmod
 
-required_params = ('guestname', 'bytes_sec', 'iops_sec')
-optional_params = {}
+required_params = ('guestname',)
+optional_params = {'total_bytes_sec': '',
+                   'read_bytes_sec': '',
+                   'write_bytes_sec': '',
+                   'total_iops_sec': '',
+                   'read_iops_sec': '',
+                   'write_iops_sec': '',
+                   'total_bytes_sec_max': '',
+                   'read_bytes_sec_max': '',
+                   'write_bytes_sec_max': '',
+                   'total_iops_sec_max': '',
+                   'read_iops_sec_max': '',
+                   'write_iops_sec_max': '',
+                   'size_iops_sec': '',
+                   'total_bytes_sec_max_length': '',
+                   'read_bytes_sec_max_length': '',
+                   'write_bytes_sec_max_length': '',
+                   'total_iops_sec_max_length': '',
+                   'read_iops_sec_max_length': '',
+                   'write_iops_sec_max_length': ''
+                   }
 
 
 def check_guest_status(domobj):
@@ -23,22 +42,30 @@ def check_guest_status(domobj):
         return True
 
 
-def prepare_block_iotune(param, wbs, rbs, tbs, wis, ris, tis, logger):
+def prepare_block_iotune(params, logger):
     """prepare the block iotune parameter
     """
-    logger.info("write_bytes_sec : %s" % wbs)
-    param['write_bytes_sec'] = wbs
-    logger.info("read_bytes_sec  : %s" % rbs)
-    param['read_bytes_sec'] = rbs
-    logger.info("total_bytes_sec : %s" % tbs)
-    param['total_bytes_sec'] = tbs
-    logger.info("write_iops_sec  : %s" % wis)
-    param['write_iops_sec'] = wis
-    logger.info("read_iops_sec   : %s" % ris)
-    param['read_iops_sec'] = ris
-    logger.info("total_iops_sec  : %s\n" % tis)
-    param['total_iops_sec'] = tis
-    return 0
+    params_list = {}
+    # libvirt-python version >= 2.5.0
+    if utils.version_compare("libvirt-python", 2, 5, 0, logger):
+        name_list = ('total_bytes_sec', 'read_bytes_sec', 'write_bytes_sec',
+                     'total_iops_sec', 'read_iops_sec', 'write_iops_sec',
+                     'total_bytes_sec_max', 'read_bytes_sec_max',
+                     'write_bytes_sec_max', 'total_iops_sec_max',
+                     'read_iops_sec_max', 'write_iops_sec_max',
+                     'size_iops_sec', 'total_bytes_sec_max_length',
+                     'read_bytes_sec_max_length', 'write_bytes_sec_max_length',
+                     'total_iops_sec_max_length', 'read_iops_sec_max_length',
+                     'write_iops_sec_max_length')
+    else:
+        name_list = ('total_bytes_sec', 'read_bytes_sec', 'write_bytes_sec',
+                     'total_iops_sec', 'read_iops_sec', 'write_iops_sec')
+    for i in name_list:
+        if params.get(i) is not None:
+            params_list[i] = int(params.get(i))
+
+    logger.info("Params list: %s" % params_list)
+    return params_list
 
 
 def check_iotune(expected_param, result_param):
@@ -54,8 +81,6 @@ def block_iotune(params):
     """Domain block device iotune"""
     logger = params['logger']
     guestname = params['guestname']
-    bytes_sec = int(params['bytes_sec'])
-    iops_sec = int(params['iops_sec'])
     flag = 0
 
     conn = sharedmod.libvirtobj['conn']
@@ -76,38 +101,15 @@ def block_iotune(params):
         vdevs = cont.xpathEval("/domain/devices/disk/target/@dev")
         vdev = vdevs[0].content
 
-        iotune_para = {'write_bytes_sec': 0L,
-                       'total_iops_sec': 0L,
-                       'read_iops_sec': 0L,
-                       'read_bytes_sec': 0L,
-                       'write_iops_sec': 0L,
-                       'total_bytes_sec': 0L
-                       }
-
         logger.info("prepare block iotune:")
-        prepare_block_iotune(iotune_para, bytes_sec, bytes_sec, 0,
-                             iops_sec, iops_sec, 0, logger)
+        iotune_param = prepare_block_iotune(params, logger)
 
         logger.info("start to set block iotune:")
-        domobj.setBlockIoTune(vdev, iotune_para, flag)
+        domobj.setBlockIoTune(vdev, iotune_param, flag)
 
         res = domobj.blockIoTune(vdev, flag)
-        ret = check_iotune(iotune_para, res)
-        if not ret:
-            logger.info("set pass")
-        else:
-            logger.error("fails to set")
-            return 1
-
-        logger.info("prepare block iotune:")
-        prepare_block_iotune(iotune_para, 0, 0, bytes_sec,
-                             0, 0, iops_sec, logger)
-
-        logger.info("start to set block iotune:")
-        domobj.setBlockIoTune(vdev, iotune_para, flag)
-
-        res = domobj.blockIoTune(vdev, flag)
-        ret = check_iotune(iotune_para, res)
+        logger.info("Set block iotune: %s" % res)
+        ret = check_iotune(iotune_param, res)
         if not ret:
             logger.info("set pass")
         else:

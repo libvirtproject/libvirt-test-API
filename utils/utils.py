@@ -33,14 +33,12 @@ import subprocess
 import hashlib
 import libvirt
 import math
-import shutil
 
 from xml.dom import minidom
 from urlparse import urlparse
+from src import env_parser
 
 subproc_flag = 0
-
-LIBVIRT_LIB_VERSION = 0
 
 
 def get_hypervisor():
@@ -243,7 +241,7 @@ def get_rand_mac():
 
 def get_rand_str(length=32):
     ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    chars=[]
+    chars = []
     for i in xrange(16):
         chars.append(random.choice(ALPHABET))
     return chars
@@ -1199,9 +1197,9 @@ def parse_flags(params, default=0, param_name="flags"):
     return flag_bit
 
 
-def version_compare(major, minor, update, logger):
+def version_compare(package_name, major, minor, update, logger):
     """
-    Determine/use the current libvirt library version on the system
+    Determine/use the package version on the system
     and compare input major, minor, and update values against it.
     If the running version is greater than or equal to the input
     params version, then return True; otherwise, return False
@@ -1214,23 +1212,23 @@ def version_compare(major, minor, update, logger):
     :param minor: Minor version to compare against
     :param update: Update value to compare against
     :return: True if running version is greater than or
-                  equal to the input libvirt version
+                  equal to the input package version
     """
-    global LIBVIRT_LIB_VERSION
+    package_ver = 0
 
-    if LIBVIRT_LIB_VERSION == 0:
+    if package_ver == 0:
         try:
-            cmd = "rpm -q libvirt"
+            cmd = "rpm -q %s" % package_name
             ret, out = exec_cmd(cmd, shell=True)
             if ret != 0:
-                logger.error("Get libvirt version failed.")
+                logger.error("Get %s version failed." % package_name)
                 return 1
 
             package = out[0].split('-')
             for item in package:
                 if not item.isalnum() and ".x86_64" not in item:
                     ver = item.split('.')
-                    LIBVIRT_LIB_VERSION = int(ver[0]) * 1000000 + \
+                    package_ver = int(ver[0]) * 1000000 + \
                         int(ver[1]) * 1000 + int(ver[2])
                     break
         except (ValueError, TypeError, AttributeError):
@@ -1239,7 +1237,7 @@ def version_compare(major, minor, update, logger):
 
     compare_version = major * 1000000 + minor * 1000 + update
 
-    if LIBVIRT_LIB_VERSION >= compare_version:
+    if package_ver >= compare_version:
         return True
     return False
 
@@ -1318,18 +1316,18 @@ def is_gluster_vol_avail(vol_name, logger):
     ret, out = commands.getstatusoutput(cmd)
     volume_name = re.findall(r'Volume Name: (%s)\n' % vol_name, out)
     if volume_name:
-       return gluster_vol_start(vol_name, logger)
+        return gluster_vol_start(vol_name, logger)
 
 
 def gluster_vol_create(vol_name, ip, brick_path, logger, force=False):
     if is_gluster_vol_avail(vol_name, logger):
         gluster_vol_stop(vol_name, logger, True)
         gluster_vol_delete(vol_name, logger)
-        
+
     if force:
-       force_opt = "force"
+        force_opt = "force"
     else:
-       force_opt = ""
+        force_opt = ""
 
     cmd = "gluster volume create %s %s:/%s %s" % (vol_name, ip,
                                                   brick_path, force_opt)
@@ -1372,6 +1370,7 @@ def set_fusefs(logger):
         return 1
     return 0
 
+
 def setup_gluster(vol_name, ip, brick_path, logger):
     """
     Set up glusterfs environment on localhost
@@ -1393,7 +1392,7 @@ def cleanup_gluster(vol_name, logger):
 
 
 def mount_gluster(vol_name, ip, path, logger):
-    cmd = "mount -t glusterfs %s:%s %s" %(ip, vol_name, path)
+    cmd = "mount -t glusterfs %s:%s %s" % (ip, vol_name, path)
     ret, out = commands.getstatusoutput(cmd)
     if ret:
         logger.error("cmd failed: %s" % cmd)
@@ -1489,7 +1488,7 @@ def iscsi_get_sessions(logger):
 def is_login(target, logger):
     sessions = iscsi_get_sessions(logger)
     login = False
-    if target in map(lambda x:x[1], sessions):
+    if target in map(lambda x: x[1], sessions):
         login = True
     return login
 
@@ -1586,3 +1585,10 @@ def cleanup_iscsi(target, mountpath, logger):
     if os.path.exists(mountpath):
         umount_iscsi(mountpath, logger)
     return 0
+
+
+def get_env(section, option):
+    pwd = os.getcwd()
+    envfile = os.path.join(pwd, 'global.cfg')
+    envparser = env_parser.Envparser(envfile)
+    return envparser.get_value(section, option)

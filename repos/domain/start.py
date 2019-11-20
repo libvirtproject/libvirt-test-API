@@ -18,6 +18,8 @@ noping = False
 
 
 def parse_flags(logger, params):
+    global noping
+
     flags = params.get('flags', 'none')
     logger.info('start with flags :%s' % flags)
     if flags == 'none':
@@ -91,6 +93,8 @@ def start(params):
 
         Return 0 on SUCCESS or 1 on FAILURE
     """
+    global noping
+
     domname = params['guestname']
     logger = params['logger']
     flags = parse_flags(logger, params)
