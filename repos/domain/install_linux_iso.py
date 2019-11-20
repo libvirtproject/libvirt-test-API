@@ -116,6 +116,7 @@ def install_linux_iso(params):
                imageformat, graphic, video, diskpath, seeksize, storage]
     install_common.prepare_env(options, logger)
 
+    logger.info("rhelnewest: %s" % rhelnewest)
     mountpath = tempfile.mkdtemp()
     diskpath = install_common.setup_storage(params, mountpath, logger)
     xmlstr = xmlstr.replace('/var/lib/libvirt/images/libvirt-test-api', diskpath)

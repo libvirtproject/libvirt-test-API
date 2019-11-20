@@ -139,7 +139,7 @@ def mk_kickstart_iso(kscfg, guestos, logger):
             new_cfg.write(line)
 
         #use different isolinux.cfg for rhel7 ,rhel6 and rhel5 guest
-        if 'rhel7' in guestos:
+        if 'rhel7' in guestos or 'rhel8' in guestos:
             # Disable new style of network interface naming on rhel7
             kernel_args = kernel_args + ' net.ifnames=0'
 

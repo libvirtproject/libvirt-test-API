@@ -104,6 +104,7 @@ def install_linux_pxe(params):
     rhelnewest = params.get('rhelnewest')
 
     options = [guestname, guestos, guestarch, nicdriver, hddriver, imageformat, graphic, video, diskpath, seeksize, "local"]
+    logger.info("rhelnewest: %s" % rhelnewest)
     install_common.prepare_env(options, logger)
 
     clean_env(diskpath, logger)

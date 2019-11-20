@@ -50,6 +50,7 @@ def install_linux_http(params):
               imageformat, graphic, video, diskpath, seeksize, "local"]
     install_common.prepare_env(options, logger)
 
+    logger.info("rhelnewest: %s" % rhelnewest)
     install_common.remove_all(diskpath, logger)
     install_common.create_image(diskpath, seeksize, imageformat, logger)
 

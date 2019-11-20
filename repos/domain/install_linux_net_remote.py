@@ -125,7 +125,6 @@ def install_linux_net_remote(params):
 
     logger.info("the installation method is %s" % installmethod)
     logger.info("the macaddress is %s" % macaddr)
-    logger.info("rhel newest: %s" % rhelnewest)
 
     xmlstr = set_xml(rhelnewest, xmlstr, installmethod, guestos, guestarch, logger)
 
