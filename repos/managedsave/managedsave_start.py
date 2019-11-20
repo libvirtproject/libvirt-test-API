@@ -110,6 +110,7 @@ def managedsave_start(params):
 
             try:
                 domobj.resume()
+                time.sleep(60)
 
             except libvirtError, e:
                 logger.error("API error message: %s, error code is %s"

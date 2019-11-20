@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 from libvirt import libvirtError
 
 from src import sharedmod
@@ -111,3 +112,23 @@ def snapshot_delete(params):
         return 1
 
     return 0
+
+
+def snapshot_delete_clean(params):
+    logger = params['logger']
+    guestname = params['guestname']
+    snapshotname = params['snapshotname']
+    flags = params['flags']
+
+    if os.path.exists('/tmp/test_api_snapshot.mem'):
+        os.remove('/tmp/test_api_snapshot.mem')
+
+    snapshot_file = "/mnt/libvirt-test-api." + snapshotname
+    logger.debug("%s" % snapshot_file)
+    if os.path.exists(snapshot_file):
+        os.remove(snapshot_file)
+
+    snapshot_file = "/var/lib/libvirt/images/libvirt-test-api." + snapshotname
+    logger.debug("%s" % snapshot_file)
+    if os.path.exists(snapshot_file):
+        os.remove(snapshot_file)

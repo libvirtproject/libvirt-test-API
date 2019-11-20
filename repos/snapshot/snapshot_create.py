@@ -10,9 +10,14 @@ from repos.snapshot.common import check_domain_image
 from repos.snapshot.common import convert_flags
 
 required_params = ('guestname', 'flags', )
-optional_params = {'snapshotname': '',
-                   'xml': 'xmls/snapshot.xml',
-                   }
+optional_params = {
+                   'snapshotname': '',
+                   'xml': 'xmls/snapshot_memory_disk.xml',
+                   'memorytype': 'no',
+                   'disktype': 'no',
+                   'snapshotmem': '',
+                  }
+
 
 FLAGDICT = {0: "no flag", 1: " --redefine", 2: " --current", 4: " --no-metadata",
             8: " --halt", 16: " --disk-only", 32: " --reuse-external",
@@ -113,7 +118,7 @@ def snapshot_create(params):
     #if snapshotname isn't given in test suit, use current time as snapshotname
     if not params.has_key('snapshotname'):
         snapshotname = str(int(time.time()))
-        xmlstr = xmlstr.replace('SNAPSHOTNAME', str(int(time.time())))
+        xmlstr = xmlstr.replace('SNAPSHOTNAME', snapshotname)
     else:
         snapshotname = params.get('snapshotname')
 
@@ -121,6 +126,21 @@ def snapshot_create(params):
     if not check_domain_image(domobj, guestname, "qcow2", logger):
         logger.error("Checking failed")
         return 1
+
+    if params.has_key('snapshotmem'):
+        snapshotmem = params.get('snapshotmem')
+        xmlstr = xmlstr.replace('SNAPSHOTMEM', snapshotmem)
+    else:
+        xmlstr = xmlstr.replace('<memory snapshot=\'MEMORYTYPE\' file=\'SNAPSHOTMEM\'/>',
+                                '<memory snapshot=\'MEMORYTYPE\'/>')
+
+    if params.has_key('memorytype'):
+        memorytype = params.get('memorytype')
+        xmlstr = xmlstr.replace('MEMORYTYPE', memorytype)
+
+    if params.has_key('disktype'):
+        disktype = params.get('disktype')
+        xmlstr = xmlstr.replace('DISKTYPE', disktype)
 
     logger.debug("%s snapshot xml:\n%s" % (guestname, xmlstr))
 
@@ -136,7 +156,7 @@ def snapshot_create(params):
             domobj.snapshotCreateXML(xmlstr, flagn)
 
         #Guarantee creating snapshot is complete before check
-        time.sleep(5)
+        time.sleep(30)
 
         if check_created_snapshot(domobj, flagn, snapshotname) and \
                 check_current_snapshot(domobj):

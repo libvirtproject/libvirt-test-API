@@ -1,0 +1,5 @@
+<domainsnapshot>
+  <name>SNAPSHOTNAME</name>
+  <memory snapshot='MEMORYTYPE' file='SNAPSHOTMEM'/>
+  <disk name='vdb' snapshot='DISKTYPE'/>
+</domainsnapshot>
