@@ -2,6 +2,8 @@
 import os
 import shutil
 import tempfile
+import re
+import requests
 
 from utils import utils
 
@@ -59,3 +61,11 @@ def get_iscsi_disk_path(portal, target):
             if disk in dev:
                 return (dev_path + dev)
     return ""
+
+
+def get_path_from_url(url, key):
+    web_con = requests.get(url)
+    match = re.compile(r'<a href=".*">.*%s</a>' % key)
+    name = re.findall(match, web_con.content)[0].split("\"")[1]
+    path = "%s/%s" % (url, name)
+    return path

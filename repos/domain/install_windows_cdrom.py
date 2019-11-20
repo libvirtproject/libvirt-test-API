@@ -232,14 +232,6 @@ def check_domain_state(conn, guestname):
         domobj.undefine()
 
 
-def get_file_from_url(url):
-    web_con = requests.get(url)
-    match = re.compile(r'<a href=".*">.*.iso</a>')
-    iso_name = re.findall(match, web_con.content)[0].split("\"")[1]
-    iso_file = "%s/%s" % (url, iso_name)
-    return iso_file
-
-
 def install_windows_cdrom(params):
     """ install a windows guest virtual machine by using iso file """
     # Initiate and check parameters
@@ -346,7 +338,7 @@ def install_windows_cdrom(params):
     # Get iso file based on guest os and arch from global.cfg
     envparser = env_parser.Envparser(envfile)
     iso_url = envparser.get_value("guest", guestos + '_' + guestarch)
-    iso_file = get_file_from_url(iso_url)
+    iso_file = install_common.get_path_from_url(iso_url, ".iso")
 
     if "win7" in guestos or "win2008" in guestos:
         cdkey = envparser.get_value("guest", "%s_%s_key" % (guestos, guestarch))
@@ -504,7 +496,7 @@ def install_windows_cdrom_clean(params):
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     envparser = env_parser.Envparser(envfile)
     iso_url = envparser.get_value("guest", guestos + '_' + guestarch)
-    iso_file = get_file_from_url(iso_url)
+    iso_file = install_common.get_path_from_url(iso_url, ".iso")
     iso_local_path = prepare_iso(iso_file)
     if os.path.exists(iso_local_path):
         os.remove(iso_local_path)

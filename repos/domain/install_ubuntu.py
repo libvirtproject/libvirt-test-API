@@ -12,6 +12,7 @@ import requests
 
 import libvirt
 from libvirt import libvirtError
+from repos.domain import install_common
 
 from src import sharedmod
 from src import env_parser
@@ -110,14 +111,6 @@ def prepare_floppy(ks_path, mount_point, floppy_path, logger):
     return 0
 
 
-def get_file_from_url(url):
-    web_con = requests.get(url)
-    match = re.compile(r'<a href=".*">.*.iso</a>')
-    iso_name = re.findall(match, web_con.content)[0].split("\"")[1]
-    iso_file = "%s/%s" % (url, iso_name)
-    return iso_file
-
-
 def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_folder, logger):
     """ to customize boot.iso file to add kickstart
         file into it for automatic guest installation
@@ -138,10 +131,9 @@ def prepare_cdrom(ostree, ks, guestname, guestos, guestarch, hddriver, cache_fol
     # mount point is /mnt/custom
     mount_point = "/mnt/custom"
     cleanup(mount_point, logger)
-    iso_path = get_file_from_url(ostree)
-    local_iso = new_dir + "/" + iso_path.split("/")[-1]
+    local_iso = new_dir + "/" + ostree.split("/")[-1]
     logger.info("Downloading the iso file")
-    cmd = "wget " + iso_path + " -P " + new_dir
+    cmd = "wget " + ostree + " -P " + new_dir
     utils.exec_cmd(cmd, shell=True)
 
     # copy iso file
@@ -357,8 +349,10 @@ def install_ubuntu(params):
     os_arch = guestos + "_" + guestarch
 
     envparser = env_parser.Envparser(envfile)
-    ostree = envparser.get_value("guest", os_arch + "_iso")
-    ks = envparser.get_value("guest", os_arch + "_iso_ks")
+    ostree_path = envparser.get_value("guest", os_arch + "_iso")
+    ostree = install_common.get_path_from_url(ostree_path, '.iso')
+    ks_path = envparser.get_value("guest", os_arch + "_iso_ks")
+    ks = install_common.get_path_from_url(ks_path, '.cfg')
 
     logger.debug('install source:\n    %s' % ostree)
     logger.debug('kisckstart file:\n    %s' % ks)
@@ -519,7 +513,8 @@ def install_ubuntu_clean(params):
     envfile = os.path.join(HOME_PATH, 'global.cfg')
     envparser = env_parser.Envparser(envfile)
     ostree_search = params.get('guestos') + "_" + params.get('guestarch') + "_iso"
-    ostree = envparser.get_value("guest", ostree_search)
+    ostree_path = envparser.get_value("guest", ostree_search)
+    ostree = install_common.get_path_from_url(ostree_path, '.iso')
     cache_folder = envparser.get_value("variables", "domain_cache_folder") + "/" +\
         ostree.split("/")[-1].split(".iso")[0]
     if os.path.exists(cache_folder):
