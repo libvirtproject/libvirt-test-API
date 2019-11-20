@@ -44,10 +44,6 @@ def install_linux_http(params):
     installmethod = params.get('installmethod', 'http')
     rhelnewest = params.get('rhelnewest')
 
-    if guestarch == "ppc64" and guestos == "rhel7u6":
-        logger.info("Don't support ppc64 for RHEL-ALT-7.6.")
-        return 0
-
     options = [guestname, guestos, guestarch, nicdriver, hddriver,
                imageformat, graphic, video, diskpath, seeksize, "local"]
     install_common.prepare_env(options, logger)

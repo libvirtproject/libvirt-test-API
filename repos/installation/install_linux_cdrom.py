@@ -28,7 +28,7 @@ optional_params = {
                    'macaddr': '52:54:00:97:e4:28',
                    'uuid': '7c502278-af7d-4c5a-9a35-1c79ebdd974b',
                    'type': 'define',
-                   'xml': 'xmls/kvm_linux_guest_install_cdrom_ppc.xml',
+                   'xml': 'xmls/install_cdrom_ppc.xml',
                    'guestmachine': 'pseries',
                    'networksource': 'default',
                    'bridgename': 'virbr0',
