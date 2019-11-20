@@ -96,22 +96,7 @@ def mk_kickstart_iso(kscfg, guestos, logger):
     new_cfg = open('tmp_cfg', 'w')
 
     logger.debug("copy kickstart to custom work directory")
-    old_kscfg, new_kscfg = open(kscfg, 'r'), open(custom_iso_dir + '/' + kscfg, 'w')
-    network_configed = False
-    for line in old_kscfg:
-        if line.startswith('network'):
-            network_configed = True
-        if '%post' in line and kscfg.startswith('ks-rhel7'):
-            logger.debug("setting qemu-guest-agent autostart")
-            line = '%post \nsystemctl enable qemu-guest-agent.service\n'
-        new_kscfg.write(line)
-        # Always use traditional naming style and enable eth0
-    if not network_configed:
-        new_kscfg.write('network --bootproto=dhcp --device=eth0 --onboot=on\n')
-
-    old_kscfg.close()
-    new_kscfg.close()
-    remove_all(kscfg)
+    shutil.move(kscfg, custom_iso_dir + '/' + kscfg)
 
     # yaboot.conf is only owned by rhel6_ppc, rhel7_ppc has no this file
     if "PBOOT" in vlmid:
@@ -151,8 +136,11 @@ def mk_kickstart_iso(kscfg, guestos, logger):
         old_cfg_filename = custom_iso_dir + "/boot/grub/grub.cfg"
         old_cfg = open(old_cfg_filename, 'r')
         for line in old_cfg:
-            if re.search(r'linux /ppc/ppc64/vmlinuz  ro', line):
+            if re.search(r'linux /ppc/ppc64/vmlinuz.*? ro', line):
                 if 'rhel7' in guestos:
+                    line = re.sub('inst.stage2=hd.*?%s' % vlmid.split()[1], '', line)
+                    line = line.replace('ro', 'inst.repo=cdrom:sr0 inst.ks=cdrom:sr0:/%s ro' % kscfg)
+                elif 'rhel8' in guestos:
                     line = line.replace('ro', 'inst.repo=cdrom:sr0 inst.ks=cdrom:sr0:/%s ro' % kscfg)
                 else:
                     line = line.replace('ro', 'inst.ks=cdrom:/%s ro' % kscfg)
@@ -360,60 +348,11 @@ def install_linux_cdrom(params):
     check_domain_state(conn, guestname, logger)
 
     if hddriver != "lun" and hddriver != 'scsilun':
-        logger.info("disk image is %s" % diskpath)
-        logger.info("create disk image with size %sG, format %s" % (seeksize, imageformat))
-        disk_create = ("qemu-img create -f %s %s %sG"
-                       % (imageformat, diskpath, seeksize))
-        logger.debug("the command line of creating disk images is '%s'"
-                     % disk_create)
-        ret = process.run(disk_create, shell=True, ignore_status=True)
-        if ret.exit_status != 0:
-            logger.debug(ret.stdout)
-            logger.info("creating disk images file is fail")
+        if not install_common.create_image(diskpath, seeksize, imageformat, logger, ver='v3'):
             return 1
 
-    os.chown(diskpath, 107, 107)
-    logger.info("creating disk images file is successful.")
-
-    if hddriver == 'virtio':
-        xmlstr = xmlstr.replace('DEV', 'vda')
-    elif hddriver == 'ide':
-        xmlstr = xmlstr.replace('DEV', 'hda')
-    elif hddriver == 'scsi':
-        xmlstr = xmlstr.replace('DEV', 'sda')
-    elif hddriver == "sata":
-        xmlstr = xmlstr.replace("DEV", 'sda')
-    elif hddriver == 'lun':
-        xmlstr = xmlstr.replace("'lun'", "'virtio'")
-        xmlstr = xmlstr.replace('DEV', 'vda')
-        xmlstr = xmlstr.replace('"file"', '"block"')
-        xmlstr = xmlstr.replace('"disk"', '"lun"')
-        tmp = params.get('diskpath', '/var/lib/libvirt/images')
-        xmlstr = xmlstr.replace("file='%s'" % tmp,
-                                "dev='/dev/SDX'")
-        disksymbol = params.get('disksymbol', 'sdb')
-        xmlstr = xmlstr.replace('SDX', disksymbol)
-        xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
-    elif hddriver == 'scsilun':
-        xmlstr = xmlstr.replace("'scsilun'", "'scsi'")
-        xmlstr = xmlstr.replace('DEV', 'sda')
-        xmlstr = xmlstr.replace('"file"', '"block"')
-        xmlstr = xmlstr.replace('"disk"', '"lun"')
-        tmp = params.get('diskpath', '/var/lib/libvirt/images')
-        xmlstr = xmlstr.replace("file='%s'" % tmp,
-                                "dev='/dev/SDX'")
-        disksymbol = params.get('disksymbol', 'sdb')
-        xmlstr = xmlstr.replace('SDX', disksymbol)
-        xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
-
+    xmlstr = install_common.set_disk_xml(hddriver, xmlstr, diskpath, logger)
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    logger.info('the graphic type of VM is %s' % graphic)
-
-    if video == "qxl":
-        video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
-        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
-
-    logger.info('the video type of VM is %s' % video)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')
@@ -421,33 +360,17 @@ def install_linux_cdrom(params):
 
     envparser = env_parser.Envparser(envfile)
     ostree = install_common.get_ostree(rhelnewest, guestos, guestarch, logger)
-    kscfg = install_common.get_kscfg(rhelnewest, guestos, guestarch, "iso", logger)
+    kscfg = install_common.get_kscfg(rhelnewest, guestos, guestarch, "bootiso", logger)
     isolink = install_common.get_iso_link(rhelnewest, guestos, guestarch, logger)
 
     logger.info('prepare installation...')
     cache_folder = envparser.get_value("variables", "domain_cache_folder")
 
-    if rhelnewest is not None:
-        if 'rhel7' in guestos and 'ppc64le' in guestarch:
-            bootaddr = envparser.get_value("guest", 'rhel7_newest_ppc64le_bootiso')
-        if 'rhel7' in guestos and 'ppc64' in guestarch:
-            bootaddr = envparser.get_value("guest", 'rhel7_newest_ppc64_bootiso')
-        if 'rhel6' in guestos and 'ppc64':
-            bootaddr = envparser.get_value("guest", 'rhel6_newest_ppc64_bootiso')
-    if rhelalt is not None:
-        bootaddr = envparser.get_value("guest", 'rhel_alt7_newest_ppc64le_bootiso')
-
     logger.info("begin to customize the custom.iso file")
     bootcd = os.path.join(cache_folder, guestname + "_folder")
-
     custom_iso = 'custom.iso'
     try:
-        if (rhelnewest or rhelalt) is None:
-            prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger)
-        else:
-            cmd = ('wget -N %s -P %s' % (bootaddr, bootcd))
-            custom_iso = bootaddr.split('/')[-1]
-            ret = process.run(cmd, shell=True, ignore_status=True)
+        prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger)
     except TestError as err:
         logger.error("Failed to prepare boot cdrom!")
         return 1
@@ -520,27 +443,14 @@ def install_linux_cdrom(params):
                 logger.info('%s seconds passed away...' % interval)
 
     if interval == 2400:
-        if 'rhel3u9' in guestname:
-            logger.info(
-                "guest installaton will be destoryed forcelly for rhel3u9 guest")
-            domobj.destroy()
-            logger.info("boot guest vm off harddisk")
-            ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger)
-            if ret:
-                logger.info("booting guest vm off harddisk failed")
-                return 1
-        else:
-            logger.info("guest installation timeout 2400s")
-            return 1
-    else:
-        logger.info("guest is booting up")
+        logger.info("guest installation timeout 2400s")
+        return 1
 
     logger.info("get the mac address of vm %s" % guestname)
     mac = utils.get_dom_mac_addr(guestname)
     logger.info("the mac address of vm %s is %s" % (guestname, mac))
 
     timeout = 300
-
     while timeout:
         time.sleep(10)
         timeout -= 10

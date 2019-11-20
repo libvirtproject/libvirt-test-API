@@ -141,7 +141,10 @@ def prepare_kernel_ppc(ostree, logger):
         conf_path = urllib.request.urlopen(ostree + '/etc/').geturl()
     else:
         conf_path = urllib.request.urlopen(ostree + '/boot/').geturl()
-    wget_paramter = "-m -np -nH --cut-dirs=6 -R 'index.html*' -P "
+    if '/released/' in ostree:
+        wget_paramter = "-m -np -nH --cut-dirs=6 -R 'index.html*' -P "
+    else:
+        wget_paramter = "-m -np -nH --cut-dirs=9 -R 'index.html*' -P "
     wget_command = 'wget ' + wget_paramter + TFTPPATH + ' ' + conf_path
     logger.debug('%s' % (wget_command))
     ret = process.run(wget_command, shell=True, ignore_status=True)
@@ -149,38 +152,16 @@ def prepare_kernel_ppc(ostree, logger):
         logger.error(ret.stdout)
 
     ppc_path = urllib.request.urlopen(ostree + '/ppc/').geturl()
-    if 'RHEL-6' in ostree:
-        wget_paramter = "-m -np -nH --cut-dirs=6 -R 'index.html*' -A initrd.img,vmlinuz,yaboot -P "
+    if '/released/' in ostree:
+        if 'RHEL-6' in ostree:
+            wget_paramter = "-m -np -nH --cut-dirs=6 -R 'index.html*' -A initrd.img,vmlinuz,yaboot -P "
+        else:
+            wget_paramter = "-m -np -nH --cut-dirs=6 -R 'index.html*' -A initrd.img,vmlinuz -P "
     else:
-        wget_paramter = "-m -np -nH --cut-dirs=6 -R 'index.html*' -A initrd.img,vmlinuz -P "
+        wget_paramter = "-m -np -nH --cut-dirs=9 -R 'index.html*' -A initrd.img,vmlinuz -P "
     wget_command = 'wget ' + wget_paramter + TFTPPATH + ' ' + ppc_path
     logger.debug('%s' % (wget_command))
     ret = process.run(wget_command, shell=True, ignore_status=True)
-    if ret.exit_status != 0:
-        logger.error(ret.stdout)
-
-
-def prepare_install(default_file, logger):
-    if not os.path.exists(TFTPPATH + "/pxelinux.cfg"):
-        logger.info("%s not exists, create it" % (TFTPPATH + "/pxelinux.cfg"))
-        os.makedirs(TFTPPATH + "/pxelinux.cfg")
-
-    cmd = "wget " + default_file + " -P " + TFTPPATH + "/pxelinux.cfg/"
-    logger.info("%s" % cmd)
-    ret = process.run(cmd, shell=True, ignore_status=True)
-    if ret.exit_status != 0:
-        logger.error(ret.stdout)
-
-    xmlpath = os.path.join(HOME_PATH, 'repos/installation/xmls/pxeboot.xml')
-    cmd = "virsh net-define %s" % xmlpath
-    logger.info("%s" % cmd)
-    ret = process.run(cmd, shell=True, ignore_status=True)
-    if ret.exit_status != 0:
-        logger.error(ret.stdout)
-
-    cmd = "virsh net-start pxeboot"
-    logger.info("%s" % cmd)
-    ret = process.run(cmd, shell=True, ignore_status=True)
     if ret.exit_status != 0:
         logger.error(ret.stdout)
 
@@ -271,36 +252,17 @@ def install_linux_pxe_ppc(params):
     logger.info("%s" % params_info)
 
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
-    if video == "qxl":
-        video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
-        xmlstr = xmlstr.replace("<model type='VIDEO' vram='16384' heads='1'/>", video_model)
-    else:
-        xmlstr = xmlstr.replace("VIDEO", video)
+    xmlstr = xmlstr.replace("VIDEO", video)
 
     conn = sharedmod.libvirtobj['conn']
     check_domain_state(conn, guestname, logger)
 
     logger.info("disk image is %s" % diskpath)
     clean_env(diskpath, logger)
-    disk_create = "qemu-img create -f %s %s %sG" % (imageformat,
-                                                    diskpath, seeksize)
-    logger.debug("the command line of creating disk images is '%s'" %
-                 disk_create)
-
-    ret = process.run(disk_create, shell=True, ignore_status=True)
-    if ret.exit_status != 0:
-        logger.debug(ret.stdout)
+    if not install_common.create_image(diskpath, seeksize, imageformat, logger):
         return 1
 
-    os.chown(diskpath, 107, 107)
-    logger.info("creating disk images file is successful.")
-
-    if hddriver == 'virtio':
-        xmlstr = xmlstr.replace('DEV', 'vda')
-    elif hddriver == 'ide':
-        xmlstr = xmlstr.replace('DEV', 'hda')
-    elif hddriver == 'scsi':
-        xmlstr = xmlstr.replace('DEV', 'sda')
+    xmlstr = install_common.set_disk_xml(hddriver, xmlstr, diskpath, logger)
 
     logger.info("get system environment information")
     envfile = os.path.join(HOME_PATH, 'global.cfg')

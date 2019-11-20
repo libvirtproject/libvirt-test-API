@@ -316,11 +316,12 @@ def create_image(diskpath, seeksize, imageformat, logger, ver='v3'):
     logger.info("cmd: %s" % cmd)
     ret, out = utils.exec_cmd(cmd, shell=True)
     if ret:
-        logger.debug(out)
-        logger.info("creating disk image file is fail")
+        logger.error("creating disk image file is fail")
+        logger.error(out)
         return False
 
     os.chown(diskpath, 107, 107)
+    logger.info("creating disk images file is successful.")
     return True
 
 
