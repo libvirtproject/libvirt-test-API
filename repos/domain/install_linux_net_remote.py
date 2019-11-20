@@ -34,7 +34,7 @@ optional_params = {'memory': 1048576,
                    'user': 'root',
                    'password': 'redhat',
                    'disksymbol': 'sdb',
-                   'diskpath': "/var/lib/libvirt/images"
+                   'diskpath': "/var/lib/libvirt/images/libvirt-test-api"
                    }
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
@@ -46,6 +46,21 @@ BOOT_DIR = "/var/lib/libvirt/boot"
 VMLINUZ = os.path.join(BOOT_DIR, 'vmlinuz')
 INITRD = os.path.join(BOOT_DIR, 'initrd.img')
 HOME_PATH = os.getcwd()
+
+
+def get_interface(logger):
+    # ip addr show | grep 'state UP' | awk '{print $2}' | cut -d':' -f1
+    cmd = ("ip addr show | grep \'state UP\' | awk \'{print $2}\'"
+           "| cut -d\':\' -f1")
+    logger.info(cmd)
+    ret, out = commands.getstatusoutput(cmd)
+    logger.info("get interface: %s" % out)
+    if ret == 1:
+        logger.error("fail to get interface.")
+        return 1
+
+    interface = out.split('\n')
+    return interface[0]
 
 
 def get_remote_hypervisor_uri(hostip, user, password):
@@ -148,7 +163,7 @@ def install_linux_net_remote(params):
     password = params.get('password', 'redhat')
     graphic = params.get('graphic', 'spice')
 
-    diskpath = params.get('diskpath', "/var/lib/libvirt/images")
+    diskpath = params.get('diskpath', "/var/lib/libvirt/images/libvirt-test-api")
 
     logger.info("the name of guest is %s" % guestname)
     logger.info("the installation method is %s" % installmethod)
@@ -177,7 +192,6 @@ def install_linux_net_remote(params):
     # Seize the path and command
     # Beware of that the generation will replace the DISKPATH automatically
     xmlstr = xmlstr.replace(diskpath, "DISKPATH")
-    diskpath = diskpath + "/" + guestname
     hddriver = params.get('hddriver', 'virtio')
     if hddriver != 'lun' and hddriver != 'scsilun':
         logger.info("disk image is %s" % diskpath)
@@ -260,6 +274,8 @@ def install_linux_net_remote(params):
         ks = envparser.get_value("guest", os_arch + "_nfs_ks")
         nettype = "bridge"
         netsource = "br0"
+        interface = get_interface(logger)
+        xmlstr = xmlstr.replace('INTERFACE', interface)
 
     xmlstr = xmlstr.replace('KS', ks)
 
@@ -427,7 +443,7 @@ def install_linux_net_remote_clean(params):
     logger = params['logger']
     guestname = params.get('guestname')
 
-    diskpath = params.get('diskpath', "/var/lib/libvirt/images") + "/" + guestname
+    diskpath = params.get('diskpath', "/var/lib/libvirt/images/libvirt-test-api")
 
     (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
     if not status:

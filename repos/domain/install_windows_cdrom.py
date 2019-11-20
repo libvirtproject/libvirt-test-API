@@ -29,7 +29,7 @@ optional_params = {'memory': 1048576,
                    'vcpu': 1,
                    'disksize': 20,
                    'diskpath': '/var/lib/libvirt/images/libvirt-test-api',
-                   'imageformat': 'raw',
+                   'imageformat': 'qcow2',
                    'hddriver': 'virtio',
                    'nicdriver': 'virtio',
                    'macaddr': '52:54:00:97:e4:28',
@@ -233,7 +233,7 @@ def install_windows_cdrom(params):
 
     logger.info("disk image is %s" % diskpath)
     seeksize = params.get('disksize', 20)
-    imageformat = params.get('imageformat', 'raw')
+    imageformat = params.get('imageformat', 'qcow2')
     if os.path.exists(diskpath):
         os.remove(diskpath)
 
@@ -418,7 +418,6 @@ def install_windows_cdrom_clean(params):
     guestname = params.get('guestname')
 
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-    diskpath = diskpath + params['guestname']
 
     (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
     if not status:

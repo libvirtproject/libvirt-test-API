@@ -4,9 +4,6 @@
   <vcpu>VCPU</vcpu>
   <os>
     <type machine="GUESTMACHINE">hvm</type>
-    <kernel>KERNEL</kernel>
-    <initrd>INITRD</initrd>
-    <cmdline>ks=KS</cmdline>
     <boot dev="hd"/>
   </os>
   <features>
@@ -24,12 +21,11 @@
       <source file='DISKPATH'/>
       <target bus='HDDRIVER' dev='DEV'/>
     </disk>
-    <interface type='direct'>
-      <mac address='MACADDR'/>
-      <source dev='INTERFACE' mode='bridge'/>
-      <target dev='macvtap0'/>
-      <model type='NICDRIVER'/>
-    </interface>
+  <interface type="network">
+    <source network="pxeboot"/>
+    <mac address='MACADDR'/>
+    <model type='NICDRIVER'/>
+  </interface>
     <console/>
     <input bus="ps2" type="mouse"/>
     <graphics keymap="en-us" port="-1" type="vnc"/>
