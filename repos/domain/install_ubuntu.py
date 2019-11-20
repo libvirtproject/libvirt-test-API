@@ -28,12 +28,13 @@ optional_params = {
                    'macaddr': '52:54:00:97:e4:28',
                    'uuid': '05867c1a-afeb-300e-e55e-2673391ae080',
                    'type': 'define',
-                   'xml': 'xmls/kvm_linux_guest_install_ubuntu.xml',
+                   'xml': 'xmls/kvm_ubuntu_guest_install.xml',
                    'guestmachine': 'pc',
                    'networksource': 'default',
                    'bridgename': 'virbr0',
                    'graphic': "spice",
-                   'disksymbol': 'sdb'
+                   'disksymbol': 'sdb',
+                   'video': 'qxl'
 }
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
@@ -280,11 +281,7 @@ def install_ubuntu(params):
                 params.get('macaddr', '52:54:00:97:e4:28'))
 
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-    tmpdiskpath = diskpath
-    if not os.path.exists(tmpdiskpath):
-        os.mkdir(tmpdiskpath)
-    diskpath = diskpath + '/' + guestname
-    xmlstr = xmlstr.replace(tmpdiskpath, diskpath)
+    xmlstr = xmlstr.replace('DISKPATH', diskpath)
 
     # prepare the image
     hddriver = params.get('hddriver', 'virtio')

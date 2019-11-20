@@ -132,11 +132,15 @@ def prepare_floppy_image(guestname, guestos, guestarch,
                                          unattended_contents)
 
         logger.debug("Unattended install %s contents:" % dest_fname)
-        logger.debug(unattended_contents)
 
-        driverpath = guestos[0].upper() + guestos[1:]
+        if guestos == "win8u1":
+            driverpath = "Win8.1"
+        else:
+            driverpath = guestos[0].upper() + guestos[1:]
+
         unattended_contents = unattended_contents.replace('PATHOFDRIVER', driverpath)
         open(dest, 'w').write(unattended_contents)
+        logger.debug(unattended_contents)
 
     finally:
         umount_cmd = 'umount %s' % floppy_mount
