@@ -1575,12 +1575,14 @@ def setup_iscsi(portal, target, mountpath, logger):
     device = get_device_name(target, logger)
     create_partition(device, logger)
     create_fs(device, logger)
-    mount_iscsi(device, mountpath, logger)
+    if os.path.exists(mountpath):
+        mount_iscsi(device, mountpath, logger)
     return 0
 
 
 def cleanup_iscsi(target, mountpath, logger):
     if is_login(target, logger):
         iscsi_logout(logger, target)
-    umount_iscsi(mountpath, logger)
+    if os.path.exists(mountpath):
+        umount_iscsi(mountpath, logger)
     return 0

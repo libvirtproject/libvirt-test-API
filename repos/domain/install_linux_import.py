@@ -34,6 +34,8 @@ def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
     """ After guest installation is over, undefine the guest with
         bootting off cdrom, to define the guest to boot off harddisk.
     """
+    xmlstr = xmlstr.replace('<boot dev="cdrom"/>', '<boot dev="hd"/>')
+    xmlstr = re.sub('<disk device="cdrom".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
 
     if installtype != 'create':
         domobj.undefine()
@@ -193,6 +195,6 @@ def install_linux_import(params):
         logger.info("fail to power on vm %s" % guestname)
         return 1
 
-    time.sleep(5)
+    time.sleep(60)
 
     return 0

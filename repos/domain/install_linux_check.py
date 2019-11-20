@@ -2,17 +2,12 @@
 # Checking method for linux domain installation.
 
 import os
-import sys
-import re
 import time
-import copy
 import math
 
 import libvirt
-from libvirt import libvirtError
 
 from src import sharedmod
-from src import env_parser
 from utils import utils
 
 required_params = ('guestname', 'virt_type', 'hddriver', 'nicdriver',)
@@ -126,6 +121,10 @@ def install_linux_check(params):
                 (domain_name, mem_expect))
     cmd = "dmidecode -t 17 | awk -F: '/Size/ {print $2}'"
     out = utils.remote_exec_pexpect(ipaddr, "root", "redhat", cmd)
+    if out[0]:
+        logger.error("CMD failed: %s, out: %s" % (cmd, out[1]))
+        return 1
+
     mem_actual = int(out[1].split(" ")[0]) * 1024
     logger.info("The actual mem size in guest - %s is %s" %
                 (domain_name, mem_actual))
@@ -137,22 +136,6 @@ def install_linux_check(params):
                       the setting your domain config xml")
         Test_Result = 1
         return Test_Result
-
-#    # Check app works fine in guest, such as: wget
-#    logger.info("check point5: check app works fine in guest, such as: wget")
-#    logger.info("get system environment information")
-#    envfile = os.path.join(HOME_PATH, 'global.cfg')
-#    logger.info("the environment file is %s" % envfile)
-#
-#    envparser = env_parser.Envparser(envfile)
-#    file_url = envparser.get_value("other", "wget_url")
-#
-#    if utils.run_wget_app(ipaddr, "root", "redhat", file_url, logger) == 0:
-#        logger.info("run wget successfully in guest.")
-#    else:
-#        logger.error("Error: fail to run wget in guest")
-#        Test_Result = 1
-#        return Test_Result
 
     # Check nic and blk driver in guest
     if 'kvm' in virt_type or 'xenfv' in virt_type:

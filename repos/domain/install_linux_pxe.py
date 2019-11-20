@@ -7,11 +7,10 @@ import time
 import commands
 import shutil
 
-import libvirt
 from libvirt import libvirtError
-
-from src import sharedmod
 from src import env_parser
+from src import sharedmod
+from repos.domain import install_common
 from utils import utils
 
 required_params = ('guestname', 'guestos', 'guestarch',)
@@ -90,67 +89,6 @@ def prepare_install(default_file, logger):
     (status, text) = commands.getstatusoutput(cmd)
 
 
-def prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger):
-    """ After guest installation is over, undefine the guest with
-        bootting off cdrom, to define the guest to boot off harddisk.
-    """
-    xmlstr = xmlstr.replace('<boot dev="cdrom"/>', '<boot dev="hd"/>')
-    xmlstr = re.sub('<disk device="cdrom".*\n.*\n.*\n.*\n.*\n', '', xmlstr)
-
-    if installtype != 'create':
-        domobj.undefine()
-        logger.info("undefine %s : \n" % guestname)
-
-    try:
-        conn = domobj._conn
-        domobj = conn.defineXML(xmlstr)
-    except libvirtError, e:
-        logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
-        logger.error("fail to define domain %s" % guestname)
-        return 1
-
-    logger.info("define guest %s " % guestname)
-    logger.debug("the xml description of guest booting off harddisk is %s" %
-                 xmlstr)
-
-    logger.info('boot guest up ...')
-
-    try:
-        domobj.create()
-    except libvirtError, e:
-        logger.error("API error message: %s, error code is %s"
-                     % (e.message, e.get_error_code()))
-        logger.error("fail to start domain %s" % guestname)
-        return 1
-
-    return 0
-
-
-def check_domain_state(conn, guestname, logger):
-    """ if a guest with the same name exists, remove it """
-    running_guests = []
-    ids = conn.listDomainsID()
-    for id in ids:
-        obj = conn.lookupByID(id)
-        running_guests.append(obj.name())
-
-    if guestname in running_guests:
-        logger.info("A guest with the same name %s is running!" % guestname)
-        logger.info("destroy it...")
-        domobj = conn.lookupByName(guestname)
-        domobj.destroy()
-
-    defined_guests = conn.listDefinedDomains()
-
-    if guestname in defined_guests:
-        logger.info("undefine the guest with the same name %s" % guestname)
-        domobj = conn.lookupByName(guestname)
-        domobj.undefine()
-
-    return 0
-
-
 def install_linux_pxe(params):
     """ install a new virtual machine """
     logger = params['logger']
@@ -159,62 +97,43 @@ def install_linux_pxe(params):
     guestos = params.get('guestos')
     guestarch = params.get('guestarch')
     xmlstr = params['xml']
-
-    graphic = params.get('graphic', 'spice')
-    xmlstr = xmlstr.replace('GRAPHIC', graphic)
-
-    video = params.get('video', 'qxl')
-    if video == "qxl":
-        video_model = "<model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>"
-        xmlstr = xmlstr.replace("<model type='cirrus' vram='16384' heads='1'/>", video_model)
-
-    conn = sharedmod.libvirtobj['conn']
-    check_domain_state(conn, guestname, logger)
-
-    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-    clean_env(diskpath, logger)
-    seeksize = params.get('disksize', 10)
-    imageformat = params.get('imageformat', 'qcow2')
-    disk_create = "qemu-img create -f %s %s %sG" % (imageformat,
-                                                    diskpath, seeksize)
-    logger.debug("the command line of creating disk images is '%s'" %
-                 disk_create)
-
-    (status, message) = commands.getstatusoutput(disk_create)
-    if status != 0:
-        logger.debug(message)
-        return 1
-
-    os.chown(diskpath, 107, 107)
-
-    hddriver = params.get('hddriver', 'virtio')
-    if hddriver == 'virtio':
-        xmlstr = xmlstr.replace('DEV', 'vda')
-    elif hddriver == 'ide':
-        xmlstr = xmlstr.replace('DEV', 'hda')
-    elif hddriver == 'scsi':
-        xmlstr = xmlstr.replace('DEV', 'sda')
-
     nicdriver = params.get('nicdriver', 'virtio')
+    hddriver = params.get('hddriver', 'virtio')
+    diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
+    imageformat = params.get('imageformat', 'qcow2')
+    seeksize = params.get('disksize', 10)
+    graphic = params.get('graphic', 'spice')
+    video = params.get('video', 'qxl')
+    installtype = params.get('type', 'define')
+    rhelnewest = params.get('rhelnewest')
 
-    logger.info("guestname: %s" % guestname)
-    logger.info("%s, %s, %s(network), %s(disk), %s, %s, %s" %
-                (guestos, guestarch, nicdriver, hddriver, imageformat,
-                 graphic, video))
-    logger.info("disk path: %s" % diskpath)
+    options = [guestname, guestos, guestarch, nicdriver, hddriver,
+              imageformat, graphic, video, diskpath, seeksize, "local"]
+    install_common.prepare_env(options, logger)
 
-    logger.info("get system environment information")
-    envfile = os.path.join(HOME_PATH, 'global.cfg')
-    logger.info("the environment file is %s" % envfile)
+    clean_env(diskpath, logger)
+    install_common.create_image(diskpath, seeksize, imageformat, logger)
+
+    xmlstr = xmlstr.replace('GRAPHIC', graphic)
+    xmlstr = install_common.set_disk_xml(hddriver, xmlstr, diskpath, logger)
+    xmlstr = install_common.set_video_xml(video, xmlstr)
 
     os_arch = guestos + "_" + guestarch
-
-    envparser = env_parser.Envparser(envfile)
-    rhelnewest = params.get("rhelnewest", "")
-    if rhelnewest is not None and "RHEL-7" in rhelnewest:
-        default_file = envparser.get_value("guest", "rhel7_newest_pxe_default")
+    if rhelnewest is None:
+        default_file = install_common.get_value_from_global("guest", os_arch + "_pxe_default")
     else:
-        default_file = envparser.get_value("guest", os_arch + "_pxe_default")
+        release_ver = install_common.get_value_from_global("other", "release_ver")
+        location = utils.get_local_hostname()
+        if "pek2" in location:
+            version = rhelnewest.split("/")[6].split("-")[1]
+        else:
+            version = rhelnewest.split("/")[4].split("-")[1]
+        if version in release_ver:
+            default_file = install_common.get_value_from_global("guest", os_arch + "_pxe_default")
+        else:
+            default_file = install_common.get_value_from_global("guest", "rhel%s_newest_%s_pxe_default" %
+                                          (version.split(".")[0], guestarch))
+
     logger.debug('default file:\n    %s' % default_file)
 
     logger.info("begin to prepare network")
@@ -222,107 +141,15 @@ def install_linux_pxe(params):
 
     logger.debug('dump installation guest xml:\n%s' % xmlstr)
 
-    installtype = params.get('type', 'define')
-    if installtype == 'define':
-        logger.info('define guest from xml description')
-        try:
-            domobj = conn.defineXML(xmlstr)
-        except libvirtError, e:
-            logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
-            logger.error("fail to define domain %s" % guestname)
-            return 1
+    conn = sharedmod.libvirtobj['conn']
+    if not install_common.start_guest(conn, installtype, xmlstr, logger):
+        logger.error("fail to define domain %s" % guestname)
+        return 1
 
-        logger.info('start installation guest ...')
+    if not install_common.wait_install(conn, guestname, xmlstr, installtype, "pxe", logger):
+        return 1
 
-        try:
-            domobj.create()
-        except libvirtError, e:
-            logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
-            logger.error("fail to start domain %s" % guestname)
-            return 1
-    elif installtype == 'create':
-        logger.info('create guest from xml description')
-        try:
-            domobj = conn.createXML(xmlstr, 0)
-        except libvirtError, e:
-            logger.error("API error message: %s, error code is %s"
-                         % (e.message, e.get_error_code()))
-            logger.error("fail to define domain %s" % guestname)
-            return 1
-
-    interval = 0
-    while(interval < 8000):
-        time.sleep(10)
-        if installtype == 'define':
-            state = domobj.info()[0]
-            if(state == libvirt.VIR_DOMAIN_SHUTOFF):
-                logger.info("guest installaton of define type is complete.")
-                logger.info("boot guest vm off harddisk")
-                ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger)
-                if ret:
-                    logger.info("booting guest vm off harddisk failed")
-                    return 1
-                break
-            else:
-                interval += 10
-                logger.info('%s seconds passed away...' % interval)
-        elif installtype == 'create':
-            guest_names = []
-            ids = conn.listDomainsID()
-            for id in ids:
-                obj = conn.lookupByID(id)
-                guest_names.append(obj.name())
-
-            if guestname not in guest_names:
-                logger.info("guest installation of create type is complete.")
-                logger.info("define the vm and boot it up")
-                ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger)
-                if ret:
-                    logger.info("booting guest vm off harddisk failed")
-                    return 1
-                break
-            else:
-                interval += 10
-                logger.info('%s seconds passed away...' % interval)
-
-    if interval == 8000:
-        if 'rhel3u9' in guestname:
-            logger.info("guest installaton will be destoryed forcelly for rhel3u9 guest")
-            domobj.destroy()
-            logger.info("boot guest vm off harddisk")
-            ret = prepare_boot_guest(domobj, xmlstr, guestname, installtype, logger)
-            if ret:
-                logger.info("booting guest vm off harddisk failed")
-                return 1
-        else:
-            logger.info("guest installation timeout 8000s")
-            return 1
-    else:
-        logger.info("guest is booting up")
-
-    logger.info("get the mac address of vm %s" % guestname)
-    mac = utils.get_dom_mac_addr(guestname)
-    logger.info("the mac address of vm %s is %s" % (guestname, mac))
-
-    timeout = 300
-
-    while timeout:
-        time.sleep(10)
-        timeout -= 10
-
-        ip = utils.mac_to_ip(mac, 180, "virbr5")
-
-        if not ip:
-            logger.info(str(timeout) + "s left")
-        else:
-            logger.info("vm %s power on successfully" % guestname)
-            logger.info("the ip address of vm %s is %s" % (guestname, ip))
-            break
-
-    if timeout == 0:
-        logger.info("fail to power on vm %s" % guestname)
+    if not install_common.check_guest_ip(guestname, logger, "virbr5"):
         return 1
 
     time.sleep(60)
@@ -334,27 +161,6 @@ def install_linux_pxe_clean(params):
     """ clean testing environment """
     logger = params['logger']
     guestname = params.get('guestname')
-
     diskpath = params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api')
-
-    (status, output) = commands.getstatusoutput(VIRSH_QUIET_LIST % guestname)
-    if not status:
-        logger.info("remove guest %s, and its disk image file" % guestname)
-        (status, output) = commands.getstatusoutput(VM_STAT % guestname)
-        if status:
-            (status, output) = commands.getstatusoutput(VM_DESTROY % guestname)
-            if status:
-                logger.error("failed to destroy guest %s" % guestname)
-                logger.error("%s" % output)
-            else:
-                (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-                if status:
-                    logger.error("failed to undefine guest %s" % guestname)
-                    logger.error("%s" % output)
-        else:
-            (status, output) = commands.getstatusoutput(VM_UNDEFINE % guestname)
-            if status:
-                logger.error("failed to undefine guest %s" % guestname)
-                logger.error("%s" % output)
-
+    install_common.clean_guest(guestname, logger)
     clean_env(diskpath, logger)
