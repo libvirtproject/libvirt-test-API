@@ -217,12 +217,16 @@ def prepare_cdrom(ostree, kscfg, guestname, guestos, cache_folder, logger, rheln
     urllib.urlretrieve(kscfg, '%s/%s' % (new_dir, ks_name))
     logger.info("the url of kickstart is %s" % kscfg)
 
-    if rhelnewest != '':
-        ks_fp = open('%s/%s' % (new_dir, ks_name), "rw+")
-        ks_file = ks_fp.read()
-        ks_file = ks_file.replace("url --url=", "usr --url=%s" % ostree)
-        ks_fp.write(ks_file)
-        ks_fp.close()
+    if "RHEL-7" in rhelnewest:
+        old_ks_fp = open('%s/%s' % (new_dir, ks_name), "rw+")
+        new_ks_fp = open("%s/new_ks.cfg" % new_dir, "w")
+        old_ks_file = old_ks_fp.read()
+        old_ks_file = old_ks_file.replace("url --url=", "url --url=%s" % ostree)
+        old_ks_file = old_ks_file.replace("baseurl=", "baseurl=%s" % ostree)
+        new_ks_fp.write(old_ks_file)
+        new_ks_fp.close()
+        old_ks_fp.close()
+        shutil.move("%s/new_ks.cfg" % new_dir, "%s/%s" % (new_dir, ks_name))
 
     src_path = os.getcwd()
 
@@ -396,12 +400,10 @@ def install_linux_cdrom(params):
     envparser = env_parser.Envparser(envfile)
 
     rhelnewest = params.get('rhelnewest')
-    if rhelnewest != '' and guestarch == 'x86_64':
-        ostree = rhelnewest + "x86_64/os"
-        kscfg = envparser.get_value("guest", "rhelnewest_http_ks")
-    elif rhelnewest != '' and guestarch == 'i386':
-        ostree = rhelnewest + "i386/os"
-        kscfg = envparser.get_value("guest", "rhelnewest_http_ks")
+    logger.info("rhel newest: %s", rhelnewest)
+    if "RHEL-7" in rhelnewest:
+        ostree = rhelnewest + "/x86_64/os"
+        kscfg = envparser.get_value("guest", "rhel7_newest_http_ks")
     else:
         os_arch = guestos + "_" + guestarch
         ostree = envparser.get_value("guest", os_arch)

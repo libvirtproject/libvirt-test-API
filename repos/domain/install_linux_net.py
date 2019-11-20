@@ -32,6 +32,7 @@ optional_params = {'memory': 1048576,
                    'graphic': "spice",
                    'video': 'qxl',
                    'guestmachine': 'pc',
+                   'rhelnewest': '',
                    }
 
 VIRSH_QUIET_LIST = "virsh --quiet list --all|awk '{print $2}'|grep \"^%s$\""
@@ -176,19 +177,42 @@ def install_linux_net(params):
 
     # Get http, ftp or nfs url based on guest os, arch
     # and installation method from global.cfg
-
+    rhelnewest = params.get("rhelnewest")
     os_arch = guestos + "_" + guestarch
 
     if installmethod == 'http':
-        ks = envparser.get_value("guest", os_arch + "_http_ks")
+        if "RHEL-7" in rhelnewest:
+            ostree = rhelnewest + "x86_64/os"
+            ks = envparser.get_value("guest", "rhel7_newest_http_ks")
+        else:
+            ostree = envparser.get_value("guest", os_arch)
+            ks = envparser.get_value("guest", os_arch + "_http_ks")
     elif installmethod == 'ftp':
         ks = envparser.get_value("guest", os_arch + "_ftp_ks")
+        ostree = envparser.get_value("guest", os_arch)
     elif installmethod == "nfs":
         ks = envparser.get_value("guest", os_arch + "_nfs_ks")
+        ostree = envparser.get_value("guest", os_arch)
 
-    xmlstr = xmlstr.replace('KS', ks)
+    ks_name = os.path.basename(ks)
+    if os.path.exists("/tmp/%s" % ks_name):
+        os.remove("/tmp/%s" % ks_name)
 
-    ostree = envparser.get_value("guest", os_arch)
+    urllib.urlretrieve(ks, "/tmp/%s" % ks_name)
+    if "RHEL-7" in rhelnewest:
+        old_ks_fp = open('/tmp/%s' % ks_name, "rw+")
+        new_ks_fp = open("/tmp/test_api_new_ks.cfg", "w")
+        old_ks_file = old_ks_fp.read()
+        old_ks_file = old_ks_file.replace("url --url=", "url --url=%s" % ostree)
+        old_ks_file = old_ks_file.replace("baseurl=", "baseurl=%s" % ostree)
+        new_ks_fp.write(old_ks_file)
+        new_ks_fp.close()
+        old_ks_fp.close()
+        shutil.move("/tmp/test_api_new_ks.cfg", "/tmp/%s" % ks_name)
+        xmlstr = xmlstr.replace('KS', 'file:/tmp/%s' % ks_name)
+    else:
+        xmlstr = xmlstr.replace('KS', ks)
+
     logger.debug('install source:\n    %s' % ostree)
     logger.debug('kisckstart file:\n    %s' % ks)
 

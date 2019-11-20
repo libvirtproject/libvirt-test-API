@@ -304,6 +304,7 @@ def install_windows_cdrom(params):
     elif hddriver == 'ide':
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
+        xmlstr = xmlstr.replace('DEV', 'sda')
     elif hddriver == 'sata':
         xmlstr = xmlstr.replace('DEV', 'sda')
         if guestarch == "x86_64":
@@ -312,7 +313,7 @@ def install_windows_cdrom(params):
             xmlstr = xmlstr.replace(VIRTIO_WIN_64, VIRTIO_WIN_32)
     elif hddriver == 'lun':
         xmlstr = xmlstr.replace('DEV', 'vda')
-    elif hddriver = 'scsilun':
+    elif hddriver == 'scsilun':
         xmlstr = xmlstr.replace('DEV', 'sda')
 
     logger.info("get system environment information")
