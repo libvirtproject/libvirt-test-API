@@ -58,6 +58,12 @@
 			</DiskConfiguration>
 			<ImageInstall>
 				<OSImage>
+					<InstallFrom>
+						<MetaData wcm:action="add">
+							<Key>/IMAGE/INDEX</Key>
+							<Value>1</Value>
+						</MetaData>
+					</InstallFrom>
 					<InstallTo>
 						<DiskID>0</DiskID>
 						<PartitionID>1</PartitionID>
@@ -67,6 +73,7 @@
 			</ImageInstall>
 			<UserData>
 				<ProductKey>
+					<Key>LIBVIRT_TEST_CDKEY</Key>
 					<WillShowUI>OnError</WillShowUI>
 				</ProductKey>
 				<AcceptEula>true</AcceptEula>

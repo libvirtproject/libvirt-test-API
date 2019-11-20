@@ -140,14 +140,18 @@ def create_image(params, diskpath, logger):
     return 0
 
 
-def set_xml(params, xmlstr, hddriver, diskpath, logger):
+def set_xml(params, xmlstr, hddriver, diskpath, ks, nfs_server, logger):
+    boot_driver = 'vda'
     if hddriver == 'virtio':
         xmlstr = xmlstr.replace('DEV', 'vda')
     elif hddriver == 'ide':
+        boot_driver = 'hda'
         xmlstr = xmlstr.replace('DEV', 'hda')
     elif hddriver == 'scsi':
+        boot_driver = 'sda'
         xmlstr = xmlstr.replace('DEV', 'sda')
     elif hddriver == "sata":
+        boot_driver = 'sda'
         xmlstr = xmlstr.replace("DEV", 'sda')
     elif hddriver == 'lun':
         xmlstr = xmlstr.replace("'lun'", "'virtio'")
@@ -159,6 +163,7 @@ def set_xml(params, xmlstr, hddriver, diskpath, logger):
         xmlstr = xmlstr.replace('SDX', disksymbol)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
     elif hddriver == 'scsilun':
+        boot_driver = 'sda'
         xmlstr = xmlstr.replace("'scsilun'", "'scsi'")
         xmlstr = xmlstr.replace('DEV', 'sda')
         xmlstr = xmlstr.replace('"file"', '"block"')
@@ -167,6 +172,31 @@ def set_xml(params, xmlstr, hddriver, diskpath, logger):
         disksymbol = params.get('disksymbol', 'sdb')
         xmlstr = xmlstr.replace('SDX', disksymbol)
         xmlstr = xmlstr.replace('device="cdrom" type="block">', 'device="cdrom" type="file">')
+
+    ks_name = os.path.basename(ks)
+    cmd = "mount -t nfs %s:/srv/www/html/test-api-ks/tmp-ks /mnt" % nfs_server
+    (stat, out) = commands.getstatusoutput(cmd)
+    if stat:
+        logger.error("mount failed: %s" % cmd)
+        return 1
+    if os.path.exists("/mnt/%s" % ks_name):
+        os.remove("/mnt/%s" % ks_name)
+
+    urllib.urlretrieve(ks, "/mnt/%s" % ks_name)
+    old_ks_fp = open('/mnt/%s' % ks_name, "rw+")
+    new_ks_fp = open("/mnt/test_api_iso_ks.cfg", "w")
+    old_ks_file = old_ks_fp.read()
+    old_ks_file = old_ks_file.replace("--boot-drive=", "--boot-drive=%s" % boot_driver)
+    new_ks_fp.write(old_ks_file)
+    new_ks_fp.close()
+    old_ks_fp.close()
+    shutil.move("/mnt/test_api_iso_ks.cfg", "/mnt/%s" % ks_name)
+    cmd = "umount /mnt"
+    (stat, out) = commands.getstatusoutput(cmd)
+    if stat:
+        logger.error("umount failed: %s" % cmd)
+        return 1
+    xmlstr = xmlstr.replace('KS', 'http://%s/test-api-ks/tmp-ks/%s' % (nfs_server, ks_name))
 
     return xmlstr
 
@@ -199,8 +229,6 @@ def install_linux_iso(params):
         if ret:
             return 1
 
-    xmlstr = set_xml(params, xmlstr, hddriver, diskpath, logger)
-
     graphic = params.get('graphic', 'spice')
     xmlstr = xmlstr.replace('GRAPHIC', graphic)
 
@@ -225,12 +253,12 @@ def install_linux_iso(params):
     logger.info("rhel newest: %s" % rhelnewest)
     if rhelnewest is not None and guestarch == 'x86_64':
         ostree = rhelnewest + "x86_64/os"
-        ks = envparser.get_value("guest", "rhelnewest_iso_ks")
+        ks = envparser.get_value("guest", "rhel7_newest_iso_ks")
         repo_name = rhelnewest.split('/')[4]
         isolink = rhelnewest + "x86_64/iso/" + repo_name + "-Server-x86_64-dvd1.iso"
     elif rhelnewest is not None and guestarch == 'i386':
         ostree = rhelnewest + "i386/os"
-        ks = envparser.get_value("guest", "rhelnewest_iso_ks")
+        ks = envparser.get_value("guest", "rhel7_newest_iso_ks")
         repo_name = rhelnewest.split('/')[4]
         isolink = rhelnewest + "i386/iso/" + repo_name + "-Server-x86_64-dvd1.iso"
     else:
@@ -242,6 +270,9 @@ def install_linux_iso(params):
     logger.info('install source:    %s' % ostree)
     logger.info('kisckstart file:    %s' % ks)
     logger.info("iso link:    %s" % isolink)
+
+    nfs_server = envparser.get_value("other", "nfs_server")
+    xmlstr = set_xml(params, xmlstr, hddriver, diskpath, ks, nfs_server, logger)
 
     if (ostree == 'http://'):
         logger.error("no os tree defined in %s for %s" % (envfile, os_arch))
@@ -269,8 +300,6 @@ def install_linux_iso(params):
     urllib.urlretrieve(initrdpath, INITRD)
     logger.debug("vmlinuz and initrd.img are located in %s" % BOOT_DIR)
 
-    xmlstr = xmlstr.replace(params.get('diskpath', '/var/lib/libvirt/images/libvirt-test-api'),
-                            diskpath)
     xmlstr = xmlstr.replace('MACADDR', macaddr)
     xmlstr_bak = xmlstr
 
