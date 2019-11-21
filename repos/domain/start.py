@@ -147,10 +147,7 @@ def start(params):
 
     while timeout:
         state = domobj.info()[0]
-        expect_states = [
-            libvirt.VIR_DOMAIN_RUNNING,
-            libvirt.VIR_DOMAIN_NOSTATE,
-            libvirt.VIR_DOMAIN_BLOCKED]
+        expect_states = [libvirt.VIR_DOMAIN_RUNNING, libvirt.VIR_DOMAIN_NOSTATE, libvirt.VIR_DOMAIN_BLOCKED]
 
         if state in expect_states:
             break

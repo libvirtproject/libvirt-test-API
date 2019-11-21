@@ -139,7 +139,7 @@ class xml_parser(object):
                                 valdic.update(attrdic)
                                 newdict = valdic
                             out[key] = newdict
-                self.parseintodict(thenode, level + 1, out, key)
+                self.parseintodict(thenode, level+1, out, key)
         return out
 
     def keyfindandset(self, thedict, thekey, thenode):
@@ -170,14 +170,14 @@ class xml_parser(object):
                 newval.update(attrdic)
         for key in list(thedict.keys()):
             if key == thekey:
-                if isinstance(thedict[key], dict):
+                if type(thedict[key]) == dict:
                     if newvalkey in thedict[key]:
                         if newval[newvalkey] is not None:
                             tmpdic = thedict[key][newvalkey]
                             thedict[key][newvalkey] = [tmpdic]
                             thedict[key][newvalkey].append(newval)
                         else:
-                            if isinstance(thedict[key][newvalkey], list):
+                            if type(thedict[key][newvalkey]) == list:
                                 thedict[key][newvalkey].append(dict())
                             else:
                                 tmpdic = thedict[key][newvalkey]
@@ -185,12 +185,12 @@ class xml_parser(object):
                                 thedict[key][newvalkey].append(dict())
                     else:
                         thedict[key].update(newval)
-                elif isinstance(thedict[key], list):
+                elif type(thedict[key]) == list:
                     if newvalkey in thedict[key][-1]:
                         thedict[key].append(newval)
                     else:
                         thedict[key][-1].update(newval)
                 else:
                     thedict[key] = newval
-            if isinstance(thedict[key], dict):
+            if type(thedict[key]) == dict:
                 self.keyfindandset(thedict[key], thekey, thenode)

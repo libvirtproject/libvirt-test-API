@@ -242,8 +242,8 @@ def get_memory_list():
     host_mem = get_host_memory()
     mem_list = []
     i = 10
-    while 2 ** i * 1024 <= host_mem:
-        mem_list.append(2 ** i)
+    while 2**i*1024 <= host_mem:
+        mem_list.append(2**i)
         i += 1
     return mem_list
 
@@ -667,7 +667,7 @@ def remote_exec(hostname, username, password, cmd):
                     print("TIMEOUT!!!!")
                     return -1
 
-                i = i + 1
+                i = i+1
 
             subproc_flag = 0
             return ret
@@ -851,7 +851,7 @@ def format_parammap(paramlist, map_test, length):
                 return False
 
             for i in range(length):
-                if i in range(int(param[0]), int(param[1]) + 1):
+                if i in range(int(param[0]), int(param[1])+1):
                     parammap += (True,)
                 else:
                     parammap += (map_test[i],)
@@ -1100,9 +1100,8 @@ def get_standard_deviation(cb1, cb2, opaque1, opaque2, number=1000):
         a1 = cb1(opaque1)
         b = cb2(opaque2)
         a2 = cb1(opaque1)
-        D += ((int(a1) + int(a2)) / 2 - int(b)) ** 2
-    return math.sqrt(D / number)
-
+        D += ((int(a1) + int(a2))/2 - int(b))**2
+    return math.sqrt(D/number)
 
 
 def param_to_tuple_nolength(paramlist):

@@ -41,8 +41,8 @@ def check_nodedev_parent(nodedev_obj, device_parent, device_name):
                     % (device_name, current_parent))
         return True
     else:
-        logger.info("Refer to bug 593995. The parent of node device "
-                    "'%s' is '%s'" % (device_name, current_parent))
+        logger.info("Refer to bug 593995. The parent of node device \
+                    '%s' is '%s'" % (device_name, current_parent))
         return False
 
 

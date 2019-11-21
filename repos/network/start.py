@@ -65,9 +65,7 @@ def start(params):
     net_activated_list = conn.listNetworks()
 
     if networkname not in net_activated_list:
-        logger.error(
-            "virtual network %s failed to be activated." %
-            networkname)
+        logger.error("virtual network %s failed to be activated." % networkname)
         return 1
     else:
         network_list = conn.listAllNetworks()

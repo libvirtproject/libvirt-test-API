@@ -30,7 +30,7 @@ def nwfilter_define(params):
                     (nwfiltername, chain, action, direction))
         logger.info("The nwfilter's xml is %s" % xmlstr)
 
-        # Define the nwfilter with given attribute value from nwfilter.conf"""
+        #Define the nwfilter with given attribute value from nwfilter.conf"""
         conn.nwfilterDefineXML(xmlstr)
         nwfilterxml = conn.nwfilterLookupByName(nwfiltername).XMLDesc(0)
 

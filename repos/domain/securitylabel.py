@@ -106,7 +106,7 @@ def check_DAC_label(api, domain, logger):
     tmp = []
     pid, context = get_pid_context(domain, logger)
     logger.debug("The context of %d is %s" % (int(pid), context))
-    # enforcing is always false in DAC mode
+    #enforcing is always false in DAC mode
     for item in api:
         tmp.append(item)
     get_enforce = False

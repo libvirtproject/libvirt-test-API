@@ -43,7 +43,7 @@ def managedsave_remove(params):
 
     try:
         domobj.managedSaveRemove(0)
-        # Check if domain has managedsave image
+        #Check if domain has managedsave image
         if not domobj.hasManagedSaveImage(0) and \
            check_savefile_remove(guestname):
             logger.info("Domain %s's managedsave image has been removed"

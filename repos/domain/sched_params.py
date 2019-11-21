@@ -71,9 +71,7 @@ def sched_params(params):
                 logger.info("setting scheduler parameters: %s" % dicts)
                 domobj.setSchedulerParameters(dicts)
                 sched_params = domobj.schedulerParameters()
-                logger.info(
-                    "current scheduler parameters: %s\n" %
-                    sched_params)
+                logger.info("current scheduler parameters: %s\n" % sched_params)
 
                 retval = check_sched_params(hypervisor, dicts,
                                             guestname, domobj)

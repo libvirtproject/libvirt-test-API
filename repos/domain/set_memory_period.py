@@ -13,8 +13,7 @@ def get_period_fromxml(vm, running):
     if (running == 1):
         tree = lxml.etree.fromstring(vm.XMLDesc(0))
     else:
-        tree = lxml.etree.fromstring(
-            vm.XMLDesc(libvirt.VIR_DOMAIN_XML_INACTIVE))
+        tree = lxml.etree.fromstring(vm.XMLDesc(libvirt.VIR_DOMAIN_XML_INACTIVE))
 
     set = tree.xpath("//memballoon/stats")
     if len(set) == 0:
@@ -68,8 +67,7 @@ def set_memory_period(params):
 
             if period > 0:
                 if check_memoryStats(vm) == 0:
-                    vm.setMemoryStatsPeriod(
-                        period + 1, libvirt.VIR_DOMAIN_AFFECT_LIVE)
+                    vm.setMemoryStatsPeriod(period + 1, libvirt.VIR_DOMAIN_AFFECT_LIVE)
                     if int(get_period_fromxml(vm, 1)) != period + 1:
                         logger.error("Period value from xml is not right")
                         fail = 1

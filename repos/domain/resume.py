@@ -38,10 +38,7 @@ def resume(params):
         return 1
 
     state = domobj.info()[0]
-    expect_states = [
-        libvirt.VIR_DOMAIN_RUNNING,
-        libvirt.VIR_DOMAIN_NOSTATE,
-        libvirt.VIR_DOMAIN_BLOCKED]
+    expect_states = [libvirt.VIR_DOMAIN_RUNNING, libvirt.VIR_DOMAIN_NOSTATE, libvirt.VIR_DOMAIN_BLOCKED]
 
     if state not in expect_states:
         logger.error('The domain state is not equal to "paused"')

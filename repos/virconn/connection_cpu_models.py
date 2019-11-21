@@ -96,7 +96,7 @@ def connection_cpu_models(params):
         logger.info("The libvirt supported cpu models is %s"
                     % cpu_models_from_libvirt)
 
-        # compare with cpu_map.xml
+        #compare with cpu_map.xml
         for cpu_model in cpu_models_from_libvirt:
             if cpu_model in cpu_models_list:
                 logger.debug("'%s' model: PASS" % cpu_model)

@@ -25,8 +25,7 @@ def check_agent_status(vm):
 
     tree = lxml.etree.fromstring(vm.XMLDesc(0))
 
-    set = tree.xpath(
-        "//channel[@type='unix']/target[@name='org.qemu.guest_agent.0']")
+    set = tree.xpath("//channel[@type='unix']/target[@name='org.qemu.guest_agent.0']")
     for n in set:
         if n.attrib['state'] == 'connected':
             return True
@@ -38,8 +37,7 @@ def check_fsinfo(ipaddr, username, userpasswd, fsinfo, logger):
     """ equal the fsinfo from libvirt and we get in guest mountinfo """
 
     cmd = "cat /proc/self/mountinfo"
-    ret, mounts_needparse = utils.remote_exec_pexpect(
-        ipaddr, username, userpasswd, cmd)
+    ret, mounts_needparse = utils.remote_exec_pexpect(ipaddr, username, userpasswd, cmd)
     mounts = utils.parse_mountinfo(mounts_needparse)
 
     for n in fsinfo:
@@ -53,9 +51,7 @@ def check_fsinfo(ipaddr, username, userpasswd, fsinfo, logger):
             if mountdir == i['mountdir']:
                 found = 1
                 if i['mounttype'] != type1:
-                    logger.error(
-                        "Fail: mount type is not equal: libvirt: %s but we get: %s" %
-                        (type1, i['mounttype']))
+                    logger.error("Fail: mount type is not equal: libvirt: %s but we get: %s" % (type1, i['mounttype']))
                     return False
 
         if found == 0:

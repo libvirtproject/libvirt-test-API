@@ -44,8 +44,7 @@ class CaseCfgCheck(object):
             required_params, optional_params = self.case_params[testcase_name]
 
             case_number += 1
-            ret = self._check_params(
-                required_params, optional_params, actual_params)
+            ret = self._check_params(required_params, optional_params, actual_params)
             if ret:
                 error_flag = 1
                 print("the No.%s : %s\n" % (case_number, testcase_name))

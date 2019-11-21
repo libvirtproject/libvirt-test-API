@@ -149,8 +149,7 @@ class FuncGen(object):
                     else:
                         xml_file_to_str(self.proxy_obj, mod_case, case_params)
 
-                        ret = self.cases_func_ref_dict[
-                            mod_case_func](case_params)
+                        ret = self.cases_func_ref_dict[mod_case_func](case_params)
                         # In the case where testcase return -1 on error
                         if ret < 0:
                             ret = 1
@@ -161,8 +160,7 @@ class FuncGen(object):
                             clean_func = mod_case_func + '_clean'
                             self.fmt.print_string(12*" " + "Cleaning...\n", env_logger)
                             # the return value of clean function is optional
-                            clean_ret = self.cases_func_ref_dict[
-                                clean_func](case_params)
+                            clean_ret = self.cases_func_ref_dict[clean_func](case_params)
                             if clean_ret and clean_ret == 1:
                                 self.fmt.print_string(21*" " + "Fail\n", env_logger)
                                 continue

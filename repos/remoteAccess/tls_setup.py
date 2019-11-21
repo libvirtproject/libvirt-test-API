@@ -41,8 +41,7 @@ def CA_setting_up(target_hostname, logger):
     logger.info("generate CA certificates")
 
     cakey_fd = open(CAKEY, 'w')
-    ret, out = utils.exec_cmd(
-        [CERTTOOL, '--generate-privkey'], outfile=cakey_fd)
+    ret, out = utils.exec_cmd([CERTTOOL, '--generate-privkey'], outfile=cakey_fd)
     cakey_fd.close()
     if ret != 0:
         logger.error("failed to create CA private key")
@@ -59,13 +58,7 @@ def CA_setting_up(target_hostname, logger):
     cainfo_fd.close()
 
     # Generate cacert.pem
-    cacert_args = [
-        CERTTOOL,
-        '--generate-self-signed',
-        '--load-privkey',
-        CAKEY,
-        '--template',
-        cainfo]
+    cacert_args = [CERTTOOL, '--generate-self-signed', '--load-privkey', CAKEY, '--template', cainfo]
     cacert_fd = open(CACERT, 'w')
     ret, out = utils.exec_cmd(cacert_args, outfile=cacert_fd)
     cacert_fd.close()
@@ -83,8 +76,7 @@ def tls_server_cert(target_machine, target_hostname, logger):
     logger.info("generate server certificates")
 
     serverkey_fd = open(SERVERKEY, 'w')
-    ret, out = utils.exec_cmd(
-        [CERTTOOL, '--generate-privkey'], outfile=serverkey_fd)
+    ret, out = utils.exec_cmd([CERTTOOL, '--generate-privkey'], outfile=serverkey_fd)
     serverkey_fd.close()
     if ret != 0:
         logger.error("failed to create server key")
@@ -129,8 +121,7 @@ def tls_client_cert(local_machine, logger):
     logger.info("generate client certificates")
 
     clientkey_fd = open(CLIENTKEY, 'w')
-    ret, out = utils.exec_cmd(
-        [CERTTOOL, '--generate-privkey'], outfile=clientkey_fd)
+    ret, out = utils.exec_cmd([CERTTOOL, '--generate-privkey'], outfile=clientkey_fd)
     clientkey_fd.close()
     if ret != 0:
         logger.error("failed to create client key")
@@ -174,8 +165,7 @@ def tls_client_cert(local_machine, logger):
 def deliver_cert(target_machine, username, password, pkipath, logger):
     """ deliver CA, server and client certificates """
     # transmit cacert.pem to remote host
-    logger.info(
-        "deliver CA, server and client certificates to both local and remote server")
+    logger.info("deliver CA, server and client certificates to both local and remote server")
     ret = utils.scp_file(target_machine, username, password, CA_FOLDER, CACERT)
     if ret:
         logger.error("scp cacert.pem to %s error" % target_machine)
@@ -190,32 +180,19 @@ def deliver_cert(target_machine, username, password, pkipath, logger):
 
     # mkdir /etc/pki/libvirt/private on remote host
     libvirt_priv_cmd = "mkdir -p %s" % PRIVATE_KEY_FOLDER
-    ret, output = utils.remote_exec_pexpect(
-        target_machine, username, password, libvirt_priv_cmd)
+    ret, output = utils.remote_exec_pexpect(target_machine, username, password, libvirt_priv_cmd)
     if ret:
-        logger.error(
-            "failed to make /etc/pki/libvirt/private on %s" %
-            target_machine)
+        logger.error("failed to make /etc/pki/libvirt/private on %s" % target_machine)
         return 1
 
     # transmit serverkey.pem to remote host
-    ret = utils.scp_file(
-        target_machine,
-        username,
-        password,
-        PRIVATE_KEY_FOLDER,
-        SERVERKEY)
+    ret = utils.scp_file(target_machine, username, password, PRIVATE_KEY_FOLDER, SERVERKEY)
     if ret:
         logger.error("failed to scp serverkey.pem to %s" % target_machine)
         return 1
 
     # transmit servercert.pem to remote host
-    ret = utils.scp_file(
-        target_machine,
-        username,
-        password,
-        CERTIFICATE_FOLDER,
-        SERVERCERT)
+    ret = utils.scp_file(target_machine, username, password, CERTIFICATE_FOLDER, SERVERCERT)
     if ret:
         logger.error("failed to scp servercert.pem to %s" % target_machine)
         return 1
@@ -227,21 +204,17 @@ def deliver_cert(target_machine, username, password, pkipath, logger):
         return 1
 
     # copy clientkey.pem to local folder
-    clientkey_cp = [CP, '-f', CLIENTKEY,
-                    (pkipath and pkipath) or PRIVATE_KEY_FOLDER]
+    clientkey_cp = [CP, '-f', CLIENTKEY, (pkipath and pkipath) or PRIVATE_KEY_FOLDER]
     ret, out = utils.exec_cmd(clientkey_cp)
     if ret:
         logger.error("failed to copy clientkey.pem to %s" % PRIVATE_KEY_FOLDER)
         return 1
 
     # copy clientcert.pem to local folder
-    clientcert_cp = [CP, '-f', CLIENTCERT,
-                     (pkipath and pkipath) or CERTIFICATE_FOLDER]
+    clientcert_cp = [CP, '-f', CLIENTCERT, (pkipath and pkipath) or CERTIFICATE_FOLDER]
     ret, out = utils.exec_cmd(clientcert_cp)
     if ret:
-        logger.error(
-            "failed to copy clientcert.pem to %s" %
-            CERTIFICATE_FOLDER)
+        logger.error("failed to copy clientcert.pem to %s" % CERTIFICATE_FOLDER)
         return 1
 
     logger.info("done to delivery")
@@ -251,8 +224,7 @@ def deliver_cert(target_machine, username, password, pkipath, logger):
 def sasl_user_add(target_machine, username, password, logger):
     """ execute saslpasswd2 to add sasl user """
     logger.info("add sasl user on server side")
-    saslpasswd2_add = "echo %s | %s -a libvirt %s" % (
-        password, SASLPASSWD2, username)
+    saslpasswd2_add = "echo %s | %s -a libvirt %s" % (password, SASLPASSWD2, username)
     ret, output = utils.remote_exec_pexpect(target_machine, username,
                                             password, saslpasswd2_add)
     if ret:

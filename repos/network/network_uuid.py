@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# To test "virsh net-uuid" command and related APIs
-# To test 2 APIs in this case:
+#To test "virsh net-uuid" command and related APIs
+#To test 2 APIs in this case:
 #      networkLookupByUUIDString
 #      networkLookupByUUID
 
@@ -85,7 +85,7 @@ def network_uuid(params):
     try:
         UUIDString = netobj.UUIDString()
 
-        # For a transient network, set another path
+        #For a transient network, set another path
         if not netobj.isPersistent() == 1:
             NWPATH = "/var/run/libvirt/network/"
 

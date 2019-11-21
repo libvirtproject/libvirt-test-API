@@ -17,8 +17,7 @@ def find_iothreadid_fromxml(vm, running, iothreadid):
     if (running == 1):
         tree = lxml.etree.fromstring(vm.XMLDesc(0))
     else:
-        tree = lxml.etree.fromstring(
-            vm.XMLDesc(libvirt.VIR_DOMAIN_XML_INACTIVE))
+        tree = lxml.etree.fromstring(vm.XMLDesc(libvirt.VIR_DOMAIN_XML_INACTIVE))
 
     set = tree.xpath("//iothreadids/iothread")
     for n in set:
@@ -33,8 +32,7 @@ def find_iothreadpin_fromxml(vm, running, iothreadid):
     if (running == 1):
         tree = lxml.etree.fromstring(vm.XMLDesc(0))
     else:
-        tree = lxml.etree.fromstring(
-            vm.XMLDesc(libvirt.VIR_DOMAIN_XML_INACTIVE))
+        tree = lxml.etree.fromstring(vm.XMLDesc(libvirt.VIR_DOMAIN_XML_INACTIVE))
 
     set = tree.xpath("//cputune/iothreadpin")
     for n in set:
@@ -74,8 +72,7 @@ def get_qmp_return_iothread(string, iothreadid):
 
 
 def check_iothreadpin(vm, iothreadid, cpuset):
-    ret = libvirt_qemu.qemuMonitorCommand(
-        vm, '{ "execute": "query-iothreads" }', 0)
+    ret = libvirt_qemu.qemuMonitorCommand(vm, '{ "execute": "query-iothreads" }', 0)
     tid = get_qmp_return_iothread(ret, iothreadid)
     if not tid:
         return False
@@ -88,9 +85,7 @@ def check_iothreadpin(vm, iothreadid, cpuset):
 
     logger.info("cpuset from taskset is %s" % output[0])
     if output[0] != cpuset:
-        logger.info(
-            "Cpuset is not equal: taskset is %s and libvirt is %s" %
-            (output, cpuset))
+        logger.info("Cpuset is not equal: taskset is %s and libvirt is %s" % (output, cpuset))
         return False
 
     return True

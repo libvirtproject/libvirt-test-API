@@ -31,7 +31,7 @@ def check_ebtables(*args):
     """ Check the ebtables """
     (nwfiltername, conn, logger) = args
 
-    # Get the filter' attribute value
+    #Get the filter' attribute value
     nwfilter_xml = conn.nwfilterLookupByName(nwfiltername).XMLDesc(0)
     nwfilter_parsedxml = minidom.parseString(nwfilter_xml)
     chain = nwfilter_parsedxml.getElementsByTagName("filter")[0].\
@@ -84,7 +84,7 @@ def nwfilter_check(params):
 
     try:
 
-        # Create the nwfilter's element and append it to domain xml
+        #Create the nwfilter's element and append it to domain xml
         domxml = domobj.XMLDesc(0)
         domain_parsedxml = minidom.parseString(domxml)
         domain_ifxml = domain_parsedxml.getElementsByTagName("interface")
@@ -92,17 +92,17 @@ def nwfilter_check(params):
         filterxml.setAttribute("filter", nwfiltername)
         domain_ifxml[0].appendChild(filterxml)
 
-        # Destroy the domain and redefine it with nwfilter
+        #Destroy the domain and redefine it with nwfilter
         domobj.destroy()
         time.sleep(5)
         domobj.undefine()
 
-        # Define the new domain with the nwfilter
+        #Define the new domain with the nwfilter
         dom_nwfilter = conn.defineXML(domain_parsedxml.toxml())
         logger.debug("The xml of new defined domain with nwfilter %s" %
                      dom_nwfilter.XMLDesc(0))
 
-        # Start the new defined domain
+        #Start the new defined domain
         dom_nwfilter.create()
         time.sleep(5)
 

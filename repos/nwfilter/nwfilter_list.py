@@ -40,16 +40,16 @@ def nwfilter_list(params):
     conn = sharedmod.libvirtobj['conn']
 
     try:
-        # Get the nwfilter name list from API """
+        #Get the nwfilter name list from API """
         nwfilter_namelist_api = conn.listNWFilters()
         nwfilter_namelist_api.sort()
 
-        # Get the nwfilter object list
+        #Get the nwfilter object list
         nwfilter_list_api = conn.listAllNWFilters(0)
         logger.info("The connection URI %s" %
                     nwfilter_list_api[0].connect().getURI())
 
-        # Get the number of nwfilters from API
+        #Get the number of nwfilters from API
         nwfilter_num = conn.numOfNWFilters()
 
         nwfilter_list_dir = get_nwfilterlist_dir()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# To test "virsh pool-uuid" command and related APIs
-# To test 2 APIs in this case:
+#To test "virsh pool-uuid" command and related APIs
+#To test 2 APIs in this case:
 #    storagePoolLookupByUUID
 #    storagePoolLookupByUUIDString
 
@@ -29,13 +29,7 @@ def check_pool_uuid(poolname, UUIDString, logger):
     else:
         UUIDString_virsh = ret.stdout
         logger.debug("UUIDString from API is %s" % UUIDString)
-        logger.debug(
-            "UUIDString from " +
-            "\"" +
-            VIRSH_POOLUUID +
-            "\""
-            " is %s" %
-            UUIDString_virsh)
+        logger.debug("UUIDString from " + "\"" + VIRSH_POOLUUID + "\"" " is %s" % UUIDString_virsh)
         if UUIDString_virsh == UUIDString:
             return True
         else:
@@ -78,11 +72,9 @@ def pool_uuid(params):
 
     try:
         UUIDString = poolobj.UUIDString()
-        logger.info(
-            "the UUID string of pool %s is %s" %
-            (poolname, UUIDString))
+        logger.info("the UUID string of pool %s is %s" % (poolname, UUIDString))
 
-        # For a transient pool, set another path
+        #For a transient pool, set another path
         if not poolobj.isPersistent() == 1:
             logger.info("Can not check a transient pool by now.")
             return 0

@@ -64,8 +64,7 @@ def flag_check(params):
         logger.info("vm %s failed to get ip address" % guestname)
         return 1
 
-    ret, out = utils.remote_exec_pexpect(
-        ipaddr, username, password, FLAG_CHECK)
+    ret, out = utils.remote_exec_pexpect(ipaddr, username, password, FLAG_CHECK)
     if ret:
         logger.error("connecting to guest OS timeout")
         return 1

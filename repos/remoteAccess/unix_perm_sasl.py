@@ -273,8 +273,7 @@ def unix_perm_sasl_clean(params):
 
     # delete sasl user
     if auth_unix_ro == 'sasl' or auth_unix_rw == 'sasl':
-        saslpasswd2_delete = "%s -a libvirt -d %s" % (
-            SASLPASSWD2, TESTING_USER)
+        saslpasswd2_delete = "%s -a libvirt -d %s" % (SASLPASSWD2, TESTING_USER)
         status, output = get_output(saslpasswd2_delete, 0, logger)
         if status:
             logger.error("failed to delete sasl user %s" % TESTING_USER)

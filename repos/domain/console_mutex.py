@@ -33,8 +33,7 @@ def console_mutex(params):
         logger.info("Creating another stream object")
         stream2 = conn.newStream(0)
 
-        logger.info(
-            "Open safe console connection while an existing one is open")
+        logger.info("Open safe console connection while an existing one is open")
         try:
             dom.openConsole(device, stream2, libvirt.VIR_DOMAIN_CONSOLE_SAFE)
         except libvirtError as e:
@@ -70,8 +69,7 @@ def console_mutex(params):
             else:
                 raise e
         else:
-            raise TestError(
-                "stream2 should be aborted after forced console connection")
+            raise TestError("stream2 should be aborted after forced console connection")
 
     except libvirtError as e:
         logger.error("Libvirt call failed: " + str(e))

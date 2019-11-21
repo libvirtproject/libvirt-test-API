@@ -23,8 +23,7 @@ SYSCONFIG_LIBVIRTD = "/etc/sysconfig/libvirtd"
 def sasl_user_add(target_machine, username, password, logger):
     """ execute saslpasswd2 to add sasl user """
     logger.info("add sasl user on server side")
-    saslpasswd2_add = "echo %s | %s -a libvirt %s" % (
-        password, SASLPASSWD2, username)
+    saslpasswd2_add = "echo %s | %s -a libvirt %s" % (password, SASLPASSWD2, username)
     ret, output = utils.remote_exec_pexpect(target_machine, username,
                                             password, saslpasswd2_add)
     if ret:

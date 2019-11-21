@@ -9,12 +9,7 @@ from libvirt import libvirtError
 
 from src import sharedmod
 
-required_params = (
-    'guestname',
-    'hard_limit',
-    'soft_limit',
-    'swap_hard_limit',
-)
+required_params = ('guestname', 'hard_limit', 'soft_limit', 'swap_hard_limit', )
 optional_params = {}
 
 UNLIMITED = 9007199254740991

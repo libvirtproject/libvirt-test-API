@@ -35,7 +35,7 @@ def console_io(params):
     expect = params.get('expect', None)
     timeout = params.get('timeout', 5)
 
-    # store the old signal handler
+    #store the old signal handler
     oldhandler = signal.getsignal(signal.SIGALRM)
 
     try:
@@ -58,9 +58,7 @@ def console_io(params):
             except Exception as e:
                 raise TestError("Can't read input file '%s': %s" % (infile, str(e)))
 
-            logger.info(
-                "Sending %d bytes of contents of file '%s' to console '%s'" %
-                (len(instr), infile, device))
+            logger.info("Sending %d bytes of contents of file '%s' to console '%s'" % (len(instr), infile, device))
             stream.send(instr)
 
         if expect is not None or outfile is not None:
@@ -86,9 +84,8 @@ def console_io(params):
                     f = open(outfile, 'w')
                     f.write(reply)
                     f.close()
-                except Exception as e:
-                    raise TestError(
-                        "Can't write output to file '%s': %s" % (outfile, str(e)))
+                except e:
+                    raise TestError("Can't write output to file '%s': %s" % (outfile, str(e)))
 
             if expect is not None:
                 try:
@@ -101,8 +98,7 @@ def console_io(params):
                 if reply.startswith(expectstr):
                     logger.info("Recieved expected output from the host")
                 else:
-                    raise TestError(
-                        "Reply from the guest doesn't match with expected reply")
+                    raise TestError("Reply from the guest doesn't match with expected reply")
 
     except libvirtError as e:
         logger.error("Libvirt call failed: " + str(e))

@@ -105,7 +105,7 @@ def managedsave(params):
     flags = params['flags']
     global fileflags
     fileflags = ''
-    # Save given flags to sharedmod.data
+    #Save given flags to sharedmod.data
     sharedmod.data['flagsave'] = flags
 
     logger.info("The given flags are %s " % flags)
@@ -153,7 +153,7 @@ def managedsave(params):
             logger.error("Wrong flags be given and fail to managedsave domain")
             return 1
 
-        # If given flags include bypass-cache,check if bypass file system cache
+        #If given flags include bypass-cache,check if bypass file system cache
         if flagn % 2 == 1:
             logger.info("Given flags include --bypass-cache")
             thread.start_new_thread(get_fileflags, ())

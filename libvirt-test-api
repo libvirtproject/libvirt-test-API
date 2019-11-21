@@ -129,12 +129,10 @@ class Main(object):
         # get a list of unique testcase
         # with 'clean' flag appended to its previous testcase
         unique_testcase_keys = filterobj.unique_testcase_cleansuffix()
-        cases_func_ref_dict = proxy_obj.get_func_call_dict(
-            unique_testcase_keys)
+        cases_func_ref_dict = proxy_obj.get_func_call_dict(unique_testcase_keys)
 
         # get check function reference if that is defined in testcase file
-        cases_checkfunc_ref_dict = proxy_obj.get_optionalfunc_call_dict(
-            'check')
+        cases_checkfunc_ref_dict = proxy_obj.get_optionalfunc_call_dict('check')
 
         # create a null list, then, initilize generator to
         # get the callable testcase function

@@ -26,8 +26,7 @@ def check_agent_status(vm):
 
     tree = lxml.etree.fromstring(vm.XMLDesc(0))
 
-    set = tree.xpath(
-        "//channel[@type='unix']/target[@name='org.qemu.guest_agent.0']")
+    set = tree.xpath("//channel[@type='unix']/target[@name='org.qemu.guest_agent.0']")
     for n in set:
         if n.attrib['state'] == 'connected':
             return True

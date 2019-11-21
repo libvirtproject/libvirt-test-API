@@ -108,8 +108,7 @@ def multiple_thread_block_on_domain_create(params):
     hypervisor = utils.get_hypervisor()
     uri = params['uri']
 
-    auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_PASSPHRASE],
-            request_credentials, None]
+    auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_PASSPHRASE], request_credentials, None]
 
     conn = libvirt.openAuth(uri, auth, 0)
 

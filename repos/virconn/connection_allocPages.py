@@ -75,17 +75,13 @@ def connection_allocPages(params):
             else:
                 conn.allocPages({i: 1}, 0, 1, libvirt_flags)
             if get_host_pagecount(i) != cur_count + 1:
-                logger.error(
-                    "libvirt set a wrong page count to %dKiB hugepage" %
-                    i)
+                logger.error("libvirt set a wrong page count to %dKiB hugepage" % i)
                 fail = 1
         except libvirtError as e:
             if "Allocated only" in e.get_error_message():
                 tmp_count = int(e.get_error_message().split()[-1])
                 if tmp_count != get_host_pagecount(i):
-                    logger.error(
-                        "libvirt output %dKiB hugepage count is not right" %
-                        i)
+                    logger.error("libvirt output %dKiB hugepage count is not right" % i)
                     fail = 1
             else:
                 logger.error("API error message: %s" % e.get_error_message())

@@ -11,9 +11,7 @@ optional_params = {}
 
 def display_pool_info(conn):
     """Display current storage pool information"""
-    logger.debug(
-        "current define storage pool: %s" %
-        conn.listDefinedStoragePools())
+    logger.debug("current define storage pool: %s" % conn.listDefinedStoragePools())
     logger.debug("current active storage pool: %s" % conn.listStoragePools())
 
 

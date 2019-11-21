@@ -12,6 +12,5 @@ libvirtobj = {}
 # shared variables for customized use in testcases
 # set variable: sharedmod.data['my_test_variable'] = 'test_value'
 # check the variable: sharedmod.data.has_key('my_test_variable')
-# get the varialbe: sharedmod.data.get('my_test_variable',
-# 'test_variable_default_value')
+# get the varialbe: sharedmod.data.get('my_test_variable', 'test_variable_default_value')
 data = {}

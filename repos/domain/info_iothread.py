@@ -15,8 +15,7 @@ def find_iothreadid_fromxml(vm, running, iothreadid):
     if (running == 1):
         tree = lxml.etree.fromstring(vm.XMLDesc(0))
     else:
-        tree = lxml.etree.fromstring(
-            vm.XMLDesc(libvirt.VIR_DOMAIN_XML_INACTIVE))
+        tree = lxml.etree.fromstring(vm.XMLDesc(libvirt.VIR_DOMAIN_XML_INACTIVE))
 
     set = tree.xpath("//iothreadids/iothread")
     for n in set:

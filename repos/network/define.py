@@ -33,7 +33,7 @@ def check_network_define(networkname, logger):
     #stat, ret = commands.getstatusoutput(valid)
     #logger.debug("virt-xml-validate exit status: %d" % stat)
     #logger.debug("virt-xml-validate exit result: %s" % ret)
-    # if os.access(path, os.R_OK) and stat == 0:
+    #if os.access(path, os.R_OK) and stat == 0:
     if os.access(path, os.R_OK):
         return True
     else:

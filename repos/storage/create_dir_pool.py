@@ -28,9 +28,7 @@ def check_pool_create(conn, poolname, logger):
 
 def display_pool_info(conn, logger):
     """Display current storage pool information"""
-    logger.debug(
-        "current define storage pool: %s" %
-        conn.listDefinedStoragePools())
+    logger.debug("current define storage pool: %s" % conn.listDefinedStoragePools())
     logger.debug("current active storage pool: %s" % conn.listStoragePools())
 
 
@@ -60,9 +58,7 @@ def create_dir_pool(params):
         if check_pool_create(conn, poolname, logger):
             logger.info("creating %s storage pool is SUCCESSFUL!!!" % poolname)
         else:
-            logger.info(
-                "aa creating %s storage pool is UNSUCCESSFUL!!!" %
-                poolname)
+            logger.info("aa creating %s storage pool is UNSUCCESSFUL!!!" % poolname)
             return 1
     except libvirtError as e:
         logger.error("API error message: %s, error code is %s"

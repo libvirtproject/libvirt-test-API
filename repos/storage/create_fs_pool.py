@@ -49,9 +49,7 @@ def check_pool_create_OS(poolobj, logger):
 
 def display_pool_info(conn, logger):
     """Display current storage pool information"""
-    logger.debug(
-        "current define storage pool: %s" %
-        conn.listDefinedStoragePools())
+    logger.debug("current define storage pool: %s" % conn.listDefinedStoragePools())
     logger.debug("current active storage pool: %s" % conn.listStoragePools())
 
 
@@ -79,9 +77,7 @@ def create_fs_pool(params):
         if check_pool_create_libvirt(conn, poolname, logger):
             logger.info("creating %s storage pool is in libvirt" % poolname)
             if check_pool_create_OS(poolobj, logger):
-                logger.info(
-                    "creating %s storage pool is SUCCESSFUL!!!" %
-                    poolname)
+                logger.info("creating %s storage pool is SUCCESSFUL!!!" % poolname)
             else:
                 logger.info("creating %s storage pool is UNSUCCESSFUL!!!" %
                             poolname)

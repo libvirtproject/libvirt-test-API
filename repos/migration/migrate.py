@@ -62,11 +62,9 @@ def env_clean(srcconn, dstconn, target_machine, guestname, logger):
     logger.info("destroy and undefine %s on both side if it exsits", guestname)
     exec_command(logger, "virsh destroy %s" % guestname, 1)
     exec_command(logger, "virsh undefine %s" % guestname, 1)
-    REMOTE_DESTROY = "ssh %s \"virsh destroy %s\"" % (
-        target_machine, guestname)
+    REMOTE_DESTROY = "ssh %s \"virsh destroy %s\"" % (target_machine, guestname)
     exec_command(logger, REMOTE_DESTROY, 1)
-    REMOTE_UNDEFINE = "ssh %s \"virsh undefine %s\"" % (
-        target_machine, guestname)
+    REMOTE_UNDEFINE = "ssh %s \"virsh undefine %s\"" % (target_machine, guestname)
     exec_command(logger, REMOTE_UNDEFINE, 1)
 
     dstconn.close()
@@ -218,8 +216,7 @@ def migrate(params):
         if guestname in guest_names:
             logger.info("Dst VM exists")
         else:
-            logger.error(
-                "Dst VM missing config, should define VM on Dst first")
+            logger.error("Dst VM missing config, should define VM on Dst first")
             env_clean(srcconn, dstconn, target_machine, guestname, logger)
             return 1
 
@@ -292,10 +289,7 @@ def migrate(params):
 
     dstdom_state = dstdom.info()[0]
     if get_state(dstdom_state) != poststate:
-        logger.error(
-            "Dst VM wrong state %s, should be %s",
-            get_state(dstdom_state),
-            poststate)
+        logger.error("Dst VM wrong state %s, should be %s", get_state(dstdom_state), poststate)
         env_clean(srcconn, dstconn, target_machine, guestname, logger)
         return 1
 

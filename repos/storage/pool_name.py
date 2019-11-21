@@ -48,9 +48,7 @@ def pool_name(params):
 
     try:
         UUIDString = poolobj.UUIDString()
-        logger.info(
-            "the UUID string of pool %s is %s" %
-            (poolname, UUIDString))
+        logger.info("the UUID string of pool %s is %s" % (poolname, UUIDString))
         if check_pool_uuid(poolname, UUIDString, logger):
             logger.info(VIRSH_POOLNAME + " test succeeded.")
         else:

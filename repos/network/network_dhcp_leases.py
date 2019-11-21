@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# test DHCPLeases() API for libvirt
+#test DHCPLeases() API for libvirt
 
 import os
 import json
@@ -89,7 +89,6 @@ def get_info_from_dnsmasq(status_file, logger):
     output = json.load(f)
 
     return output
-
 
 
 def compare_values(op1, op2, network, iptype, logger):
